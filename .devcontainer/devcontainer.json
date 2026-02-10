@@ -1,9 +1,10 @@
 {
-    "name": "nonprofit-management-institute-devcontainer",
+    "name": "nonprofit-management-institute-container",
     "dockerFile": "Dockerfile",
     
     // Forward ports
     "forwardPorts": [3000],
+    "postCreateCommand": "npm install",
     "customizations": {
         "vscode": {
             "extensions": [
