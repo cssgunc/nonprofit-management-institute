@@ -22,6 +22,8 @@ RUN apt-get update \
         wget \
         zsh \
     && rm -rf /var/lib/apt/lists/*
+
+ARG USERNAME=vscode
     
 # Create and set the working directory
 RUN mkdir /workspace
@@ -34,7 +36,8 @@ COPY . .
 EXPOSE 3000
 
 # Configure zsh shell and theme
-USER node
-ENV HOME /home/node
-ENV RUNZSH=no CHSH=no KEEP_ZSHRC=yes
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+USER $USERNAMEUSER $USERNAME
+ENV HOME /home/$USERNAMEENV HOME /home/$USERNAME
+RUN curl https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash - \RUN curl https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash - \
+    && sed -i 's/robbyrussell/kennethreitz/g' ~/.zshrc \
+    && echo 'export PATH=$PATH:$HOME/.local/bin' >>~/.zshrc
