@@ -23,7 +23,12 @@ RUN apt-get update \
         zsh \
     && rm -rf /var/lib/apt/lists/*
 
+# Use a non-root user per https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user
 ARG USERNAME=vscode
+
+RUN useradd -m -s /bin/zsh $USERNAME \
+  && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
+  && chmod 0440 /etc/sudoers.d/$USERNAME
     
 # Create and set the working directory
 RUN mkdir /workspace
@@ -36,8 +41,10 @@ COPY . .
 EXPOSE 3000
 
 # Configure zsh shell and theme
-USER $USERNAMEUSER $USERNAME
-ENV HOME /home/$USERNAMEENV HOME /home/$USERNAME
-RUN curl https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash - \RUN curl https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash - \
+USER $USERNAME
+ENV HOME=/home/$USERNAME
+ENV RUNZSH=no CHSH=no KEEP_ZSHRC=yes
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
     && sed -i 's/robbyrussell/kennethreitz/g' ~/.zshrc \
-    && echo 'export PATH=$PATH:$HOME/.local/bin' >>~/.zshrc
+    && echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.zshrc
+
