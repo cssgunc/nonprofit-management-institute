@@ -31,4 +31,4 @@ Close the running app with `Ctrl + C`.
 By the end of this, you should have an interactive app running on your browser.\
 You are ready to start contributing.
 
-Next: Read the Contributing Guidelines before you begin!
+Next: Read the [Contributing Guidelines](contributing_guidelines.md) before you begin!
