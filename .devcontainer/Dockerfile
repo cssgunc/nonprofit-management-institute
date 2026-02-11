@@ -34,8 +34,8 @@ RUN useradd -m -s /bin/zsh $USERNAME \
 RUN mkdir /workspace
 WORKDIR /workspace
 
-# Copy the entire project into the environment
-COPY --chown=vscode:vscode . .
+# # Copy the entire project into the environment
+# COPY --chown=vscode:vscode . .
 
 # Expose ports
 EXPOSE 3000

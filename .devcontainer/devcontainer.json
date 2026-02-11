@@ -5,6 +5,7 @@
     // Forward ports
     "forwardPorts": [3000],
     "postCreateCommand": "npm install",
+    "remoteUser": "root",
     "customizations": {
         "vscode": {
             "extensions": [
