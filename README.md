@@ -25,4 +25,5 @@ Build a secure, cohort-based learning hub for the Institute, organizing each ses
   - PostgreSQL (Supabase-managed database)
 
 ## Get Started
-Look at our environment setup docs: 
+Look at our environment setup docs: [Environment Setup](docs/environment_setup.md)\
+Also, make sure to look over the: [Contributing Guidelines](docs/contributing_guidelines.md)
