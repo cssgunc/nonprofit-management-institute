@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
-
+    "format:check": "prettier . --check",
+    "checks": "npm run format:check && npm run lint && npm run build"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.3",

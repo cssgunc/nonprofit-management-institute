@@ -6,10 +6,7 @@
  * npx drizzle-kit push
  * ```
  */
-import {
-  pgTable,
-  text,
-} from "drizzle-orm/pg-core";
+import { pgTable, text } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export {}
+export {};

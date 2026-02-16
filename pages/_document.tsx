@@ -1,4 +1,3 @@
-
 /**
  * The _document component provides the structure for the
  * HTML document generated during rendering.
