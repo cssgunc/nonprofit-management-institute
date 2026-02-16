@@ -17,9 +17,6 @@ jobs:
 
       - run: npm ci
 
-      - name: Prettier check
-        run: npm run format:check
-
-      - name: ESLint / Next lint
-        run: npm run lint
+      - name: Run checks
+        uses: ./.github/actions/checks
 

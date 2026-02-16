@@ -1,0 +1,13 @@
+name: "Project checks"
+description: "Run formatting + lint checks"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prettier check
+      shell: bash
+      run: npm run format:check
+
+    - name: ESLint / Next lint
+      shell: bash
+      run: npm run lint
