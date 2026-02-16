@@ -8,6 +8,6 @@ runs:
       shell: bash
       run: npm run format:check
 
-    - name: ESLint / Next lint
+    - name: ESLint
       shell: bash
       run: npm run lint
