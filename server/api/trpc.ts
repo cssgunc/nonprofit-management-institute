@@ -20,6 +20,12 @@ export const createTRPCContext = async ({
   req,
   res,
 }: CreateNextContextOptions) => {
+  // DEV ONLY: bypass Supabase auth
+  if (process.env.MOCK_AUTH === "true") {
+    return createInnerTRPCContext({
+      subject: { id: process.env.MOCK_USER_ID ?? "mock-student" },
+    });
+  }
   const supabase = createApiClient(req, res);
   const { data: userData } = await supabase.auth.getClaims();
   return createInnerTRPCContext({
