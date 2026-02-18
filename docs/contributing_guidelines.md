@@ -96,3 +96,9 @@ Developers are expected to have successful PRs every week - this means you shoul
 4. Click **Open Pull Request**
 5. Write a short description of your changes
 6. Click **Create pull request**
+
+### Important note on Github Actions
+
+The project is set up such that upon making a pull request to `stage`, Github Actions will run an automation to ensure your code is formatted and linted. To make sure you don't fail this test be sure to run the following commands before making a PR: 
+1. `npm run format`
+2. `npm run lint`
