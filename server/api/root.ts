@@ -5,6 +5,7 @@
 
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { exampleApiRouter } from "./routers/example";
+import { modulesRouter } from "./routers/modules";
 
 // [NOTE]
 // To expose a new API, add a new router here.
@@ -12,6 +13,7 @@ import { exampleApiRouter } from "./routers/example";
 /** Primary router for the API server. */
 export const appRouter = createTRPCRouter({
   example: exampleApiRouter,
+  modules: modulesRouter,
 });
 
 export type AppRouter = typeof appRouter;
