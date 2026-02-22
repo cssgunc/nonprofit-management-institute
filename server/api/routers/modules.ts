@@ -23,31 +23,23 @@ const ModuleBySlugInput = z.object({
  * List all modules ordered by module_index.
  * Returns locked modules in list, but they cannot be opened unless user is admin.
  */
-const list = publicProcedure
-  .output(z.array(ModuleSummary))
-  .query(async () => {
-    // Sort modules by module_index ascending
-    const sortedModules = [...mockModules].sort(
-      (a, b) => a.module_index - b.module_index
-    );
+const list = publicProcedure.output(z.array(ModuleSummary)).query(async () => {
+  const sortedModules = [...mockModules].sort(
+    (a, b) => a.module_index - b.module_index,
+  );
 
-    // Map to snake_case format
-    return sortedModules.map((module) => ({
-      id: module.id,
-      module_index: module.module_index,
-      slug: module.slug,
-      title: module.title,
-      description: module.description,
-      locked: module.locked,
-    }));
-  });
+  return sortedModules.map((module) => ({
+    id: module.id,
+    module_index: module.module_index,
+    slug: module.slug,
+    title: module.title,
+    description: module.description,
+    locked: module.locked,
+  }));
+});
 
 /**
  * Get module by slug.
- * - Returns module if exists and accessible
- * - Throws NOT_FOUND if slug does not exist
- * - For students, throws FORBIDDEN if locked = true
- * - For admins, returns module regardless of locked status
  */
 const bySlug = protectedProcedure
   .input(ModuleBySlugInput)
@@ -55,35 +47,31 @@ const bySlug = protectedProcedure
   .query(async ({ ctx, input }) => {
     const { slug } = input;
 
-    // Find module by slug
-    const module = mockModules.find((m) => m.slug === slug);
+    const foundModule = mockModules.find((m) => m.slug === slug);
 
-    if (!module) {
+    if (!foundModule) {
       throw new TRPCError({
         code: "NOT_FOUND",
         message: `Module with slug "${slug}" not found`,
       });
     }
 
-    // Get viewer info to check role
     const viewer = getMockViewerFromSubject(ctx.subject);
 
-    // If module is locked and user is a student, throw FORBIDDEN
-    if (module.locked && viewer.role === "student") {
+    if (foundModule.locked && viewer.role === "student") {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "This module is locked",
       });
     }
 
-    // Return module detail in snake_case format
     return {
-      id: module.id,
-      module_index: module.module_index,
-      slug: module.slug,
-      title: module.title,
-      description: module.description,
-      locked: module.locked,
+      id: foundModule.id,
+      module_index: foundModule.module_index,
+      slug: foundModule.slug,
+      title: foundModule.title,
+      description: foundModule.description,
+      locked: foundModule.locked,
     };
   });
 
