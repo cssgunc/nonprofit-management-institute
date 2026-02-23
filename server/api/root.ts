@@ -6,7 +6,7 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { exampleApiRouter } from "./routers/example";
 import { profilesApiRouter } from "./routers/profiles";
-import { modulesRouter } from "./routers/modules";
+import { modulesApiRouter } from "./routers/modules";
 
 // [NOTE]
 // To expose a new API, add a new router here.
@@ -15,7 +15,7 @@ import { modulesRouter } from "./routers/modules";
 export const appRouter = createTRPCRouter({
   example: exampleApiRouter,
   profiles: profilesApiRouter,
-  modules: modulesRouter,
+  modules: modulesApiRouter,
 });
 
 export type AppRouter = typeof appRouter;

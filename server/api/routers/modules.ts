@@ -28,14 +28,7 @@ const list = publicProcedure.output(z.array(ModuleSummary)).query(async () => {
     (a, b) => a.module_index - b.module_index,
   );
 
-  return sortedModules.map((module) => ({
-    id: module.id,
-    module_index: module.module_index,
-    slug: module.slug,
-    title: module.title,
-    description: module.description,
-    locked: module.locked,
-  }));
+  return sortedModules;
 });
 
 /**
@@ -65,20 +58,13 @@ const bySlug = protectedProcedure
       });
     }
 
-    return {
-      id: foundModule.id,
-      module_index: foundModule.module_index,
-      slug: foundModule.slug,
-      title: foundModule.title,
-      description: foundModule.description,
-      locked: foundModule.locked,
-    };
+    return foundModule;
   });
 
 /**
  * Router for all module-related APIs.
  */
-export const modulesRouter = createTRPCRouter({
+export const modulesApiRouter = createTRPCRouter({
   list,
   bySlug,
 });
