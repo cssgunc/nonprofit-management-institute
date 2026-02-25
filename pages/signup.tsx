@@ -1,25 +1,26 @@
-import { useState } from 'react'
-import { useRouter } from 'next/router'
-import { createClient } from '@supabase/supabase-js'
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/router";
+import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
-)
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
+);
 
 export default function SignUp() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignUp = async (e: any) => {
-    e.preventDefault()
-    setError('')
-    setMessage('')
-    setLoading(true)
+  const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    setLoading(true);
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -27,16 +28,16 @@ export default function SignUp() {
       options: {
         emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
       },
-    })
+    });
 
-    setLoading(false)
+    setLoading(false);
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      setMessage('Check your email to confirm your account.')
+      setMessage("Check your email to confirm your account.");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -73,11 +74,11 @@ export default function SignUp() {
             disabled={loading}
             className={`w-full py-3 rounded-lg font-semibold text-white transition ${
               loading
-                ? 'bg-blue-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
-            {loading ? 'Creating account...' : 'Sign Up'}
+            {loading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
@@ -94,14 +95,11 @@ export default function SignUp() {
         )}
 
         <div className="mt-6 text-center text-sm">
-          <a
-            href="/login"
-            className="text-blue-600 hover:underline"
-          >
+          <Link href="/login" className="text-blue-600 hover:underline">
             Already have an account? Login
-          </a>
+          </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

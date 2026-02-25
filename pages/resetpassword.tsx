@@ -1,35 +1,36 @@
-import { createClient } from '@supabase/supabase-js'
-import { useState } from 'react'
+import { createClient } from "@supabase/supabase-js";
+import { FormEvent, useState } from "react";
+import Link from "next/link";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
-)
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
+);
 
 export default function ResetPassword() {
-  const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleReset = async (e: any) => {
-    e.preventDefault()
-    setError('')
-    setMessage('')
-    setLoading(true)
+  const handleReset = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    setLoading(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/changepassword`,
-    })
+    });
 
-    setLoading(false)
+    setLoading(false);
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      setMessage('Password reset email sent. Check your inbox.')
+      setMessage("Password reset email sent. Check your inbox.");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -58,11 +59,11 @@ export default function ResetPassword() {
             disabled={loading}
             className={`w-full py-3 rounded-lg font-semibold text-white transition ${
               loading
-                ? 'bg-blue-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
-            {loading ? 'Sending...' : 'Send Reset Email'}
+            {loading ? "Sending..." : "Send Reset Email"}
           </button>
         </form>
 
@@ -79,14 +80,11 @@ export default function ResetPassword() {
         )}
 
         <div className="mt-6 text-center text-sm">
-          <a
-            href="/login"
-            className="text-blue-600 hover:underline"
-          >
+          <Link href="/login" className="text-blue-600 hover:underline">
             Back to Login
-          </a>
+          </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

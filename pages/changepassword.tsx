@@ -1,50 +1,51 @@
-import { createClient } from '@supabase/supabase-js'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
+import { createClient } from "@supabase/supabase-js";
+import { useState, useEffect, FormEvent } from "react";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
-)
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
+);
 
 export default function ChangePassword() {
-  const router = useRouter()
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: string) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        console.log('Password recovery mode')
+      if (event === "PASSWORD_RECOVERY") {
+        console.log("Password recovery mode");
       }
-    })
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
-  const handleChangePassword = async (e: any) => {
-    e.preventDefault()
-    setError('')
-    setMessage('')
-    setLoading(true)
+  const handleChangePassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    setLoading(true);
 
     const { error } = await supabase.auth.updateUser({
       password,
-    })
+    });
 
-    setLoading(false)
+    setLoading(false);
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      setMessage('Password updated successfully! Redirecting to login...')
-      setTimeout(() => router.push('/login'), 2000)
+      setMessage("Password updated successfully! Redirecting to login...");
+      setTimeout(() => router.push("/login"), 2000);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -70,11 +71,11 @@ export default function ChangePassword() {
             disabled={loading}
             className={`w-full py-3 rounded-lg font-semibold text-white transition ${
               loading
-                ? 'bg-blue-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
-            {loading ? 'Updating...' : 'Update Password'}
+            {loading ? "Updating..." : "Update Password"}
           </button>
         </form>
 
@@ -91,14 +92,11 @@ export default function ChangePassword() {
         )}
 
         <div className="mt-6 text-center text-sm">
-          <a
-            href="/login"
-            className="text-blue-600 hover:underline"
-          >
+          <Link href="/login" className="text-blue-600 hover:underline">
             Back to Login
-          </a>
+          </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

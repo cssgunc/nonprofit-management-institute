@@ -4,40 +4,41 @@
 
 // Added UI for pages for testing purposes
 
-import { createClient } from '@supabase/supabase-js'
-import { useState } from 'react'
-import { useRouter } from 'next/router'
+import { createClient } from "@supabase/supabase-js";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
-)
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
+);
 
 export default function Login() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: any) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
 
-    setLoading(false)
+    setLoading(false);
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      router.push('/signout')
+      router.push("/signout");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -70,11 +71,11 @@ export default function Login() {
             disabled={loading}
             className={`w-full py-3 rounded-lg font-semibold text-white transition ${
               loading
-                ? 'bg-blue-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
-            {loading ? 'Signing in...' : 'Login'}
+            {loading ? "Signing in..." : "Login"}
           </button>
         </form>
 
@@ -85,21 +86,15 @@ export default function Login() {
         )}
 
         <div className="flex justify-between mt-6 text-sm">
-          <a
-            href="/resetpassword"
-            className="text-blue-600 hover:underline"
-          >
+          <Link href="/resetpassword" className="text-blue-600 hover:underline">
             Forgot Password?
-          </a>
+          </Link>
 
-          <a
-            href="/signup"
-            className="text-blue-600 hover:underline"
-          >
+          <Link href="/signup" className="text-blue-600 hover:underline">
             Create Account
-          </a>
+          </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }
