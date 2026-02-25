@@ -2,6 +2,8 @@
 // - http://localhost:3000/login
 // - http://localhost:3000/changepassword
 
+// Added UI for pages for testing purposes
+
 import { createClient } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
