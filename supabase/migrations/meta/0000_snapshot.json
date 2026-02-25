@@ -27,12 +27,8 @@
           "name": "cohort_memberships_cohort_id_cohorts_id_fk",
           "tableFrom": "cohort_memberships",
           "tableTo": "cohorts",
-          "columnsFrom": [
-            "cohort_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cohort_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -139,12 +135,8 @@
           "name": "discussion_posts_module_id_modules_id_fk",
           "tableFrom": "discussion_posts",
           "tableTo": "modules",
-          "columnsFrom": [
-            "module_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["module_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -152,12 +144,8 @@
           "name": "discussion_posts_cohort_id_cohorts_id_fk",
           "tableFrom": "discussion_posts",
           "tableTo": "cohorts",
-          "columnsFrom": [
-            "cohort_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cohort_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -165,12 +153,8 @@
           "name": "discussion_posts_author_id_profiles_id_fk",
           "tableFrom": "discussion_posts",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -178,12 +162,8 @@
           "name": "discussion_posts_parent_post_id_discussion_posts_id_fk",
           "tableFrom": "discussion_posts",
           "tableTo": "discussion_posts",
-          "columnsFrom": [
-            "parent_post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_post_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -242,16 +222,12 @@
         "modules_module_index_unique": {
           "name": "modules_module_index_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "module_index"
-          ]
+          "columns": ["module_index"]
         },
         "modules_slug_unique": {
           "name": "modules_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -372,12 +348,8 @@
           "name": "resources_module_id_modules_id_fk",
           "tableFrom": "resources",
           "tableTo": "modules",
-          "columnsFrom": [
-            "module_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["module_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -385,12 +357,8 @@
           "name": "resources_cohort_id_cohorts_id_fk",
           "tableFrom": "resources",
           "tableTo": "cohorts",
-          "columnsFrom": [
-            "cohort_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cohort_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -398,12 +366,8 @@
           "name": "resources_created_by_profiles_id_fk",
           "tableFrom": "resources",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -419,11 +383,7 @@
     "public.resource_type": {
       "name": "resource_type",
       "schema": "public",
-      "values": [
-        "handout",
-        "recording",
-        "link"
-      ]
+      "values": ["handout", "recording", "link"]
     }
   },
   "schemas": {},
