@@ -17,6 +17,7 @@ import {
   varchar,
   pgEnum,
   primaryKey,
+  pgSchema,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { config } from "dotenv";
@@ -28,12 +29,20 @@ config({ path: "../../.env" });
 const client = postgres(process.env.DATABASE_URL!);
 export const db = drizzle({ client });
 
+const authSchema = pgSchema('auth');
+
+const users = authSchema.table('users', {
+	id: serial('id').primaryKey(),
+});
+
 export const profiles = pgTable("profiles", {
-  id: serial("id").primaryKey(), // foreign key to auth.users.id (issue #1 isn't finished yet).
+  id: serial("id").primaryKey().references(() => users.id),
   role: text("role").notNull(),
   name: text("name").notNull(),
   is_active: boolean("is_active"),
-});
+}, 
+(table) => [check("", sql`WHERE contype = 'c'`)],
+);
 
 export const cohorts = pgTable("cohorts", {
   id: serial("id").primaryKey(),
