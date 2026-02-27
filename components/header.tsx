@@ -44,7 +44,7 @@ export default function Header() {
 
         {/* Far Right – User avatar placeholder */}
         <Link
-          href="/user"
+          href="/profile"
           className="ml-16 flex h-20 w-20 flex-shrink-0 items-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
           aria-label="User profile"
         ></Link>
