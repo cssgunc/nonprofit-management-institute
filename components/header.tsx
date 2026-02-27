@@ -19,7 +19,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
-      <div className="mx-auto flex h-34 items-center px-12">
+      <div className="mx-auto flex h-[8.5rem] items-center px-12">
         {/* Left - Logo */}
         <Link href="/" className="flex-shrink-0">
           <img src={Logo.src} alt="NPMI/NCCN Logo" className="h-20 w-auto" />
