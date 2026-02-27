@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import Logo from "../assets/NCCNonProfit_LOGO.png";
+import Logo from "@/assets/NCCNonProfit_LOGO.png";
 
 export default function Header() {
   const router = useRouter();
