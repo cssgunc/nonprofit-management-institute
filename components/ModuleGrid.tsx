@@ -7,10 +7,10 @@ type ModuleGridProps = {
 };
 
 export default function ModuleGrid({
-	className = "",
+	className = "grid",
 }: ModuleGridProps) {
 	return (
-        <div className={`grid grid-cols-2 lg:grid-cols-3 gap-16 ${className}`}>
+        <div className={`grid grid-cols-2 md:grid-cols-3 gap-14 m-14 ${className}`}>
             {mockModules.map((module) => (
                 <ModuleCard
                     key={module.id}
