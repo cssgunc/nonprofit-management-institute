@@ -63,7 +63,8 @@ export const mockModules: Module[] = [
     module_index: 1,
     slug: "orientation",
     title: "Orientation, Capacity Assessment, Nonprofit Management",
-    description: "Learn the fundamentals of nonprofit organizations and their role in society.",
+    description:
+      "Learn the fundamentals of nonprofit organizations and their role in society.",
     locked: false,
   },
   {
@@ -71,7 +72,8 @@ export const mockModules: Module[] = [
     module_index: 2,
     slug: "board-governance",
     title: "Board Governance",
-    description: "Understand board responsibilities, recruitment, and effective governance practices.",
+    description:
+      "Understand board responsibilities, recruitment, and effective governance practices.",
     locked: false,
   },
   {
@@ -79,7 +81,8 @@ export const mockModules: Module[] = [
     module_index: 3,
     slug: "strategic-planning",
     title: "Strategic Planning",
-    description: "Master the art of creating effective strategic plans for nonprofit success.",
+    description:
+      "Master the art of creating effective strategic plans for nonprofit success.",
     locked: false,
   },
   {
@@ -87,7 +90,8 @@ export const mockModules: Module[] = [
     module_index: 4,
     slug: "fundraising-development",
     title: "Fundraising & Development",
-    description: "Explore donor cultivation, grant writing, and sustainable funding strategies.",
+    description:
+      "Explore donor cultivation, grant writing, and sustainable funding strategies.",
     locked: false,
   },
   {
@@ -95,7 +99,8 @@ export const mockModules: Module[] = [
     module_index: 5,
     slug: "financial-management",
     title: "Financial Management",
-    description: "Build skills in budgeting, financial reporting, and fiscal accountability.",
+    description:
+      "Build skills in budgeting, financial reporting, and fiscal accountability.",
     locked: false,
   },
   {
@@ -103,7 +108,8 @@ export const mockModules: Module[] = [
     module_index: 6,
     slug: "program-evaluation",
     title: "Program Evaluation & Impact",
-    description: "Learn to measure outcomes, demonstrate impact, and improve program effectiveness.",
+    description:
+      "Learn to measure outcomes, demonstrate impact, and improve program effectiveness.",
     locked: false,
   },
 ];
