@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
 import { profiles } from "@/server/db/schema";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { NewUser } from "@/server/models/inputs";
 
 const ProfileSchema = z.object({
   id: z.string(),
@@ -72,9 +73,43 @@ const list = protectedProcedure
     return filtered.orderBy(asc(profiles.full_name), asc(profiles.id));
   });
 
+/**
+ * Creates a new user based on the name and handle provided.
+ *
+ * This endpoint is used whenever a new user authenticates with Supabase Auth
+ * so that we can have a profile entry in our database for that user.
+ */
+const handleNewUser = protectedProcedure //COMPLETED AND TESTED
+  .input(NewUser)
+  .mutation(async ({ ctx, input }) => {
+    const { subject } = ctx;
+    const { full_name, role, organization } = input;
+
+    // YOUR IMPLEMENTATION HERE...
+
+    const user = await db.query.profiles.findFirst({
+      where: eq(profiles.id, subject.id),
+    });
+
+    if (!user) {
+      await db.insert(profiles).values([
+        {
+          id: subject.id,
+          full_name: full_name, // Pulling from input, not subject
+          role: role, // Pulling from input, not subject
+          is_active: true, // Added missing required field
+          organization: organization,
+        },
+      ]);
+    }
+
+    return;
+  });
+
 export const profilesApiRouter = createTRPCRouter({
   me,
   updateMe,
   getById,
   list,
+  handleNewUser,
 });
