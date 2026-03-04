@@ -40,9 +40,7 @@ export const profiles = pgTable("profiles", {
   role: text("role").notNull(),
   name: text("name").notNull(),
   is_active: boolean("is_active"),
-}, 
-(table) => [check("", sql`WHERE contype = 'c'`)],
-);
+});
 
 export const cohorts = pgTable("cohorts", {
   id: serial("id").primaryKey(),
