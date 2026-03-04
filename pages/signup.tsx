@@ -40,9 +40,10 @@ export default function SignUp() {
 
     if (error) {
       setError(error.message);
+    } else {
+      setMessage("Account created successfully!");
     }
 
-    setMessage("Account created successfully!");
     // Now tRPC should have access to the auth cookie
     handleNewUser({ full_name, role, organization });
     apiUtils.invalidate();

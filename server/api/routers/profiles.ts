@@ -73,8 +73,6 @@ const list = protectedProcedure
     return filtered.orderBy(asc(profiles.full_name), asc(profiles.id));
   });
 
-  
-
 /**
  * Creates a new user based on the name and handle provided.
  *
@@ -83,7 +81,7 @@ const list = protectedProcedure
  */
 const handleNewUser = protectedProcedure //COMPLETED AND TESTED
   .input(NewUser)
-  .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
+  .mutation(async ({ ctx, input }) => {
     const { subject } = ctx;
     const { full_name, role, organization } = input;
 
@@ -98,16 +96,15 @@ const handleNewUser = protectedProcedure //COMPLETED AND TESTED
         {
           id: subject.id,
           full_name: full_name, // Pulling from input, not subject
-          role: role,           // Pulling from input, not subject
-          is_active: true,      // Added missing required field
-          organization: organization
+          role: role, // Pulling from input, not subject
+          is_active: true, // Added missing required field
+          organization: organization,
         },
       ]);
     }
 
     return;
   });
-
 
 export const profilesApiRouter = createTRPCRouter({
   me,
