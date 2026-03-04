@@ -24,6 +24,7 @@ import { relations, sql } from "drizzle-orm";
 import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { AnyPgColumn } from "drizzle-orm/pg-core";
 
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
@@ -42,20 +43,17 @@ export const cohorts = pgTable("cohorts", {
 
 export const cohort_memberships = pgTable("cohort_memberships", {
   cohort_id: integer("cohort_id").references(() => cohorts.id),
-  profiles_id: uuid("profiles_id").references(() => profiles.id),// foreign key to auth.user.id (issue #1 isn't finished yet).
+  profiles_id: uuid("profiles_id").references(() => profiles.id), // foreign key to auth.user.id (issue #1 isn't finished yet).
 });
 
-export const modules = pgTable(
-  "modules",
-  {
-    id: serial("id").primaryKey(),
-    module_index: integer("module_index").notNull().unique(),
-    slug: varchar("slug").notNull().unique(),
-    title: text("title").notNull(),
-    description: text("description"),
-    is_locked: boolean("is_locked"),
-  }
-);
+export const modules = pgTable("modules", {
+  id: serial("id").primaryKey(),
+  module_index: integer("module_index").notNull().unique(),
+  slug: varchar("slug").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  is_locked: boolean("is_locked"),
+});
 
 export const resourceTypeEnum = pgEnum("resource_type", [
   "handout",
@@ -76,13 +74,13 @@ export const resources = pgTable("resources", {
   created_by: uuid("created_by").references(() => profiles.id),
 });
 
-export const discussions_post: any = pgTable("discussion_posts", {
+export const discussions_post = pgTable("discussion_posts", {
   id: serial("id").primaryKey(),
   module_id: integer("module_id").references(() => modules.id),
   cohort_id: integer("cohort_id").references(() => cohorts.id),
   author_id: uuid("author_id").references(() => profiles.id),
   parent_post_id: integer("parent_post_id").references(
-    () => discussions_post.id,
+    (): AnyPgColumn => discussions_post.id,
   ),
   body: text("body"),
   created_at: timestamp("created_at"),
