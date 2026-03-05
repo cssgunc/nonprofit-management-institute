@@ -8,6 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { api } from "@/utils/trpc/api";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -36,7 +37,17 @@ export default function Login() {
     if (error) {
       setError(error.message);
     } else {
-      router.push("/signout");
+      //router.push("/signout");
+      const { data } = await supabase.auth.getSession();
+      const userId = data?.session?.user?.id;
+      if (userId) {
+        const { data: cohort, error: queryError } = api.cohorts.hasCohortMembership.useQuery({ userId });
+        if (cohort) {
+          router.push(`/cohorts/${cohort.slug}/dashboard`);
+        } else if (queryError) {
+          router.push("/cohort-access");
+        }
+      }
     }
   };
 
