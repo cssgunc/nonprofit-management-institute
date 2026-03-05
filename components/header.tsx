@@ -8,19 +8,16 @@ export default function Header() {
   const router = useRouter();
   const { cohort_slug } = router.query;
 
-
   // Build cohort navigation links when a cohort slug is available
   const basePath = cohort_slug ? `/cohorts/${cohort_slug as string}` : "";
 
-
   const navLinks = cohort_slug
     ? [
-      { label: "Dashboard", href: `${basePath}/dashboard` },
-      { label: "Discussion", href: `${basePath}/discussion` },
-      { label: "Contact", href: `${basePath}/contact` },
-    ]
+        { label: "Dashboard", href: `${basePath}/dashboard` },
+        { label: "Discussion", href: `${basePath}/discussion` },
+        { label: "Contact", href: `${basePath}/contact` },
+      ]
     : [];
-
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
@@ -30,23 +27,22 @@ export default function Header() {
           <Image src={Logo} alt="NPMI/NCCN Logo" className="h-24 w-auto" />
         </Link>
 
-
         {/* Middle / Right – Navigation links */}
         <nav className="ml-auto flex items-center gap-12">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-xl font-medium transition-colors hover:text-gray-900 ${router.asPath === link.href
+              className={`text-xl font-medium transition-colors hover:text-gray-900 ${
+                router.asPath === link.href
                   ? "text-gray-900 underline underline-offset-4"
                   : "text-gray-500"
-                }`}
+              }`}
             >
               {link.label}
             </Link>
           ))}
         </nav>
-
 
         {/* Far Right – User avatar placeholder */}
         <Link

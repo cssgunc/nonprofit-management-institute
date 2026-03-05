@@ -7,7 +7,6 @@ import { api } from "@/utils/trpc/api";
 function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
-
   const routesWithoutHeader = new Set([
     "/login",
     "/signup",
