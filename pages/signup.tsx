@@ -40,6 +40,7 @@ export default function SignUp() {
 
     if (error) {
       setError(error.message);
+      setLoading(false);
     } else {
       setMessage("Account created successfully!");
     }
