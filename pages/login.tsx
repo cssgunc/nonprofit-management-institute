@@ -1,9 +1,3 @@
-//Add these as redirect URLS in supabase auth url configuration:
-// - http://localhost:3000/login
-// - http://localhost:3000/changepassword
-
-// Added UI for pages for testing purposes
-
 import { createClient } from "@supabase/supabase-js";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
@@ -17,38 +11,45 @@ const supabase = createClient(
 
 export default function Login() {
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { refetch: checkMembership } =
+    api.cohorts.hasCohortMembership.useQuery(undefined, { enabled: false });
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    setLoading(false);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      //router.push("/signout");
-      const { data } = await supabase.auth.getSession();
-      const userId = data?.session?.user?.id;
-      if (userId) {
-        const { data: cohort, error: queryError } = api.cohorts.hasCohortMembership.useQuery({ userId });
-        if (cohort) {
-          router.push(`/cohorts/${cohort.slug}/dashboard`);
-        } else if (queryError) {
-          router.push("/cohort-access");
-        }
-      }
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
     }
+
+    try {
+      const result = await checkMembership();
+      const cohort = result.data;
+
+      if (cohort) {
+        router.push(`/cohorts/${cohort.slug}/dashboard`);
+      } else {
+        router.push("/cohort-access");
+      }
+    } catch {
+      router.push("/cohort-access");
+    }
+
+    setLoading(false);
   };
 
   return (

@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { api } from "@/utils/trpc/api";
 import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
+);
 
 export default function CohortAccessPage() {
   const [accessHash, setAccessHash] = useState("");
@@ -17,10 +23,24 @@ export default function CohortAccessPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    joinMutation.mutate({ accessHash });
+
+    const trimmed = accessHash.trim();
+
+    const { data } = await supabase.auth.getSession();
+    const userId = data.session?.user?.id;
+
+    if (!userId) {
+      setError("User not authenticated");
+      return;
+    }
+
+    joinMutation.mutate({
+      accessHash: trimmed,
+      userId,
+    });
   };
 
   return (

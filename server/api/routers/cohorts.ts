@@ -14,7 +14,6 @@ const CohortSchema = z.object({
 
 
 const hasCohortMembership = protectedProcedure
-  .input(z.object({ userId: z.string(), }))
   .output(CohortSchema)
   .query(async ({ ctx }) => {
     const userId = ctx.subject.id;
@@ -30,23 +29,43 @@ const hasCohortMembership = protectedProcedure
   });
 
   const joinCohort = protectedProcedure
-  .input(z.object({ accessHash: z.string(), }))
+  .input(
+    z.object({
+      accessHash: z.string(),
+      userId: z.string(),
+    })
+  )
   .output(CohortSchema)
-  .mutation(async ({ ctx, input }) => {
-    const userId = ctx.subject.id;
+  .mutation(async ({ input }) => {
+    const userId = input.userId;
+
     const cohort = await db.query.cohorts.findFirst({
       where: eq(cohorts.access_hash, input.accessHash),
     });
-    if (!cohort) throw new TRPCError({ code: "NOT_FOUND", message: "Invalid access code" });
+
+    if (!cohort) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Invalid access code",
+      });
+    }
+
     const existingMembership = await db.query.cohort_memberships.findFirst({
       where: eq(cohort_memberships.profiles_id, userId),
     });
 
-    if (existingMembership) throw new TRPCError({code: "CONFLICT", message: "User already belongs to a cohort",});
+    if (existingMembership) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "User already belongs to a cohort",
+      });
+    }
+
     await db.insert(cohort_memberships).values({
       profiles_id: userId,
       cohort_id: cohort.id,
     });
+
     return cohort;
   });
 
