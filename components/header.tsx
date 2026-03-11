@@ -20,11 +20,11 @@ export default function Header() {
     : [];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
-      <div className="mx-auto flex h-[8.5rem] items-center px-12">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-white shadow-sm">
+      <div className="mx-auto flex h-[7rem] items-center px-12">
         {/* Left - Logo */}
         <Link href="/" className="flex-shrink-0">
-          <Image src={Logo} alt="NPMI/NCCN Logo" className="h-24 w-auto" />
+          <Image src={Logo} alt="NPMI/NCCN Logo" className="h-20 w-auto" />
         </Link>
 
         {/* Middle / Right – Navigation links */}
@@ -47,7 +47,7 @@ export default function Header() {
         {/* Far Right – User avatar placeholder */}
         <Link
           href="/profile"
-          className="ml-16 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+          className="ml-16 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
           aria-label="User profile"
         ></Link>
       </div>
