@@ -1,7 +1,9 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 import Link from "next/link";
+import { api } from "@/utils/trpc/api";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -9,12 +11,21 @@ const supabase = createClient(
 );
 
 export default function SignUp() {
+  const apiUtils = api.useUtils();
+  const supabase = createSupabaseComponentClient();
+
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [full_name, setFullName] = useState("");
+  const [role, setRole] = useState<"admin" | "student">("student");
+  const [organization, setOrganization] = useState("");
+
+  // for handle new user
+  const { mutate: handleNewUser } = api.profiles.handleNewUser.useMutation();
 
   const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,18 +36,18 @@ export default function SignUp() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
-      },
     });
-
-    setLoading(false);
 
     if (error) {
       setError(error.message);
+      setLoading(false);
     } else {
-      setMessage("Check your email to confirm your account.");
+      setMessage("Account created successfully!");
     }
+
+    // Now tRPC should have access to the auth cookie
+    handleNewUser({ full_name, role, organization });
+    apiUtils.invalidate();
   };
 
   return (
@@ -63,6 +74,26 @@ export default function SignUp() {
             placeholder="Password (min 6 chars)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 
+                       text-black placeholder-black caret-black
+                       focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+          />
+
+          <input
+            placeholder="Enter your full name"
+            value={full_name}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 
+                       text-black placeholder-black caret-black
+                       focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+          />
+
+          <input
+            placeholder="Enter your organization name"
+            value={organization}
+            onChange={(e) => setOrganization(e.target.value)}
             required
             className="w-full px-4 py-3 rounded-lg border border-gray-300 
                        text-black placeholder-black caret-black
