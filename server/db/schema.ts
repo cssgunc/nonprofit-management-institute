@@ -32,6 +32,7 @@ export const profiles = pgTable("profiles", {
   full_name: text("full_name").notNull(),
   is_active: boolean("is_active").notNull(),
   organization: text("organization"),
+  avatarUrl: text("avatar_url"),
 });
 
 export const cohorts = pgTable("cohorts", {

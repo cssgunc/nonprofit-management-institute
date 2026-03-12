@@ -6,6 +6,7 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { exampleApiRouter } from "./routers/example";
 import { profilesApiRouter } from "./routers/profiles";
+import { modulesApiRouter } from "./routers/modules";
 import { cohortsApiRouter } from "./routers/cohorts";
 import { cohorts } from "../db/schema";
 
@@ -16,6 +17,7 @@ import { cohorts } from "../db/schema";
 export const appRouter = createTRPCRouter({
   example: exampleApiRouter,
   profiles: profilesApiRouter,
+  modules: modulesApiRouter,
   cohorts: cohortsApiRouter,
 });
 
