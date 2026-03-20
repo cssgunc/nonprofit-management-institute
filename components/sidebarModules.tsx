@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
 import SidebarDiscussions from "@/components/sidebarDiscussions";
+import { Menu } from "lucide-react";
 
 export type SidebarNavItem = {
 	id: number;
@@ -109,16 +110,9 @@ export default function SidebarModules({
 					type="button"
 					onClick={handleToggleSidebar}
 					aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-					className="flex cursor-pointer flex-col gap-[5px] rounded p-1"
+					className="cursor-pointer"
 				>
-					<span className="block h-0.5 w-[22px] rounded bg-zinc-900" />
-					<span
-						className={cn(
-							"block h-0.5 w-[22px] rounded bg-zinc-900 transition-opacity duration-200",
-							isOpen ? "opacity-100" : "opacity-50",
-						)}
-					/>
-					<span className="block h-0.5 w-[22px] rounded bg-zinc-900" />
+					<Menu className="h-6 w-6" aria-hidden="true" />
 				</button>
 			</div>
 
