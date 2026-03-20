@@ -28,9 +28,6 @@ type SidebarDiscussionsProps = {
   className?: string;
 };
 
-/**
- * Renders discussion navigation UI that can sit on top of the base sidebar.
- */
 export default function SidebarDiscussions({
   activeId = 0,
   items = discussionsSidebarItems,
@@ -55,19 +52,24 @@ export default function SidebarDiscussions({
         className,
       )}
     >
-      {/* <div className="px-4 pb-2 pt-1">
+      <div
+        className={cn(
+          "px-4 py-2.5 transition-opacity duration-150",
+          isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+        )}
+      >
         <button
           type="button"
           onClick={onClose}
-          className="text-sm font-medium text-zinc-700 transition-colors hover:text-zinc-900"
+          className="cursor-pointer whitespace-nowrap text-sm font-medium text-zinc-700 transition-colors hover:text-zinc-900"
         >
           Back to modules
         </button>
-      </div> */}
+      </div>
 
       <nav
         className={cn(
-          "flex-1 pt-1 transition-opacity duration-150",
+          "flex-1 transition-opacity duration-150",
           isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >
@@ -77,13 +79,12 @@ export default function SidebarDiscussions({
 
             return (
               <li key={item.id}>
-                <div className="mx-4 h-px bg-zinc-200" />
                 <a
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
                   onClick={(event) => handleSelect(event, item.id)}
                   className={cn(
-                    "relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
+                    "relative block whitespace-nowrap px-4 py-2.5 text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
                     isActive ? "font-bold" : "font-normal hover:bg-zinc-100",
                   )}
                 >
@@ -95,23 +96,19 @@ export default function SidebarDiscussions({
               </li>
             );
           })}
-
-          <li>
-            <div className="mx-4 h-px bg-zinc-200" />
-          </li>
         </ul>
       </nav>
 
       <div
         className={cn(
-          "p-4 transition-opacity duration-150",
+          "px-4 py-2.5 transition-opacity duration-150",
           isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         <button
           type="button"
           onClick={onPost}
-          className="w-full cursor-pointer rounded-full border-none bg-zinc-200 py-[13px] text-[15px] font-medium tracking-[0.02em] text-zinc-900 transition-colors hover:bg-zinc-300"
+          className="w-full cursor-pointer rounded-full border-none bg-zinc-200 py-2.5 px-4 text-[15px] font-medium tracking-[0.02em] text-zinc-900 transition-colors hover:bg-zinc-300"
         >
           Post
         </button>

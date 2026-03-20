@@ -15,10 +15,11 @@ type SidebarConfig = {
 };
 
 const defaultSidebarItems: SidebarNavItem[] = [
-	{ id: 0, title: "Overview", href: "#overview" },
-	{ id: 1, title: "Modules", href: "#modules" },
+	{ id: 0, title: "Home", href: "#home" },
+	{ id: 1, title: "Recording", href: "#recording" },
 	{ id: 2, title: "Discussions", href: "#discussions" },
-	{ id: 3, title: "Resources", href: "#resources" },
+	{ id: 3, title: "Handouts", href: "#handouts" },
+	{ id: 4, title: "Resources", href: "#resources" },
 ];
 
 type SidebarModulesProps = {
@@ -47,6 +48,10 @@ export default function SidebarModules({
 }: SidebarModulesProps) {
 	const sidebarConfig = getSidebarConfig(items);
 	const resolvedItems = sidebarConfig.items;
+	const defaultHomeId =
+		resolvedItems.find((item) => item.title.toLowerCase() === "home")?.id ??
+		resolvedItems[0]?.id ??
+		0;
 
 	const [isOpen, setIsOpen] = useState(true);
 	const [active, setActive] = useState(activeId);
@@ -74,6 +79,7 @@ export default function SidebarModules({
 		event.preventDefault();
 
 		if (title.toLowerCase() === "discussions") {
+			setActiveDiscussionId(0);
 			setIsDiscussionsOpen(true);
 			return;
 		}
@@ -83,6 +89,7 @@ export default function SidebarModules({
 
 	const handleCloseDiscussions = () => {
 		setIsDiscussionsOpen(false);
+		handleSelect(defaultHomeId);
 	};
 
 	const handleDiscussionSelect = (id: number) => {
@@ -124,50 +131,42 @@ export default function SidebarModules({
 					onPost={onAction}
 				/>
 			) : (
-				<>
-					<nav
-						className={cn(
-							"flex-1 pt-1 transition-opacity duration-150",
-							isOpen
-								? "pointer-events-auto opacity-100"
-								: "pointer-events-none opacity-0",
-						)}
-					>
-						<ul className="m-0 list-none p-0">
-							{resolvedItems.map((item) => {
-								const isActive = active === item.id;
+				<nav
+					className={cn(
+						"flex-1 transition-opacity duration-150",
+						isOpen
+							? "pointer-events-auto opacity-100"
+							: "pointer-events-none opacity-0",
+					)}
+				>
+					<ul className="m-0 list-none p-0">
+						{resolvedItems.map((item) => {
+							const isActive = active === item.id;
 
-								return (
-									<li key={item.id}>
-										<div className="mx-4 h-px bg-zinc-200" />
+							return (
+								<li key={item.id}>
+									<a
+										href={item.href}
+										aria-current={isActive ? "page" : undefined}
+										onClick={(event) =>
+											handleItemClick(event, item.id, item.title)
+										}
+										className={cn(
+											"relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
+											isActive ? "font-bold" : "font-normal hover:bg-zinc-100",
+										)}
+									>
+										{renderItemLabel ? renderItemLabel(item, isActive) : item.title}
 
-										<a
-											href={item.href}
-											aria-current={isActive ? "page" : undefined}
-											onClick={(event) =>
-												handleItemClick(event, item.id, item.title)
-											}
-											className={cn(
-												"relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
-												isActive ? "font-bold" : "font-normal hover:bg-zinc-100",
-											)}
-										>
-											{renderItemLabel ? renderItemLabel(item, isActive) : item.title}
-
-											{isActive && (
-												<span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-zinc-900" />
-											)}
-										</a>
-									</li>
-								);
-							})}
-
-							<li>
-								<div className="mx-4 h-px bg-zinc-200" />
-							</li>
-						</ul>
-					</nav>
-				</>
+										{isActive && (
+											<span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-zinc-900" />
+										)}
+									</a>
+								</li>
+							);
+						})}
+					</ul>
+				</nav>
 			)}
 		</aside>
 	);
