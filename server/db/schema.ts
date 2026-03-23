@@ -31,6 +31,8 @@ export const profiles = pgTable("profiles", {
   role: text("role", { enum: ["admin", "student"] }).notNull(),
   full_name: text("full_name").notNull(),
   is_active: boolean("is_active").notNull(),
+  email: text("email"),
+  jobRole: text("job_role"),
   organization: text("organization"),
   avatarUrl: text("avatar_url"),
 });

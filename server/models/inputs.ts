@@ -25,6 +25,8 @@ export const placeholder = {};
 /** Defines the schema for a new user. */
 export const NewUser = z.object({
   full_name: z.string(),
+  email: z.string().email(),
   role: z.enum(["admin", "student"]), // Made this an enum to match your DB schema
-  organization: z.string(),
+  job_role: z.string().optional(),
+  organization: z.string().optional(),
 });
