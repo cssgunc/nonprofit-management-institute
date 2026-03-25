@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
-  "id": "0788cc7e-7467-46b7-8167-bc5f103d66b1",
-=======
   "id": "68a26d78-dc46-4539-961b-ef1456422c0d",
->>>>>>> origin
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -18,15 +14,9 @@
           "primaryKey": false,
           "notNull": false
         },
-<<<<<<< HEAD
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-=======
         "profiles_id": {
           "name": "profiles_id",
           "type": "uuid",
->>>>>>> origin
           "primaryKey": false,
           "notNull": false
         }
@@ -41,8 +31,6 @@
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
-<<<<<<< HEAD
-=======
         },
         "cohort_memberships_profiles_id_profiles_id_fk": {
           "name": "cohort_memberships_profiles_id_profiles_id_fk",
@@ -52,7 +40,6 @@
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
->>>>>>> origin
         }
       },
       "compositePrimaryKeys": {},
@@ -122,11 +109,7 @@
         },
         "author_id": {
           "name": "author_id",
-<<<<<<< HEAD
-          "type": "integer",
-=======
           "type": "uuid",
->>>>>>> origin
           "primaryKey": false,
           "notNull": false
         },
@@ -257,16 +240,7 @@
         }
       },
       "policies": {},
-<<<<<<< HEAD
-      "checkConstraints": {
-        "module_index_range": {
-          "name": "module_index_range",
-          "value": "\"modules\".\"module_index\" >= 1 AND \"modules\".\"module_index\" <=6"
-        }
-      },
-=======
       "checkConstraints": {},
->>>>>>> origin
       "isRLSEnabled": false
     },
     "public.profiles": {
@@ -275,11 +249,7 @@
       "columns": {
         "id": {
           "name": "id",
-<<<<<<< HEAD
-          "type": "serial",
-=======
           "type": "uuid",
->>>>>>> origin
           "primaryKey": true,
           "notNull": true
         },
@@ -289,13 +259,8 @@
           "primaryKey": false,
           "notNull": true
         },
-<<<<<<< HEAD
-        "name": {
-          "name": "name",
-=======
         "full_name": {
           "name": "full_name",
->>>>>>> origin
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -304,8 +269,6 @@
           "name": "is_active",
           "type": "boolean",
           "primaryKey": false,
-<<<<<<< HEAD
-=======
           "notNull": true
         },
         "organization": {
@@ -318,7 +281,6 @@
           "name": "avatar_url",
           "type": "text",
           "primaryKey": false,
->>>>>>> origin
           "notNull": false
         }
       },
@@ -391,11 +353,7 @@
         },
         "created_by": {
           "name": "created_by",
-<<<<<<< HEAD
-          "type": "integer",
-=======
           "type": "uuid",
->>>>>>> origin
           "primaryKey": false,
           "notNull": false
         }
