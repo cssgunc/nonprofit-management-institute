@@ -20,7 +20,7 @@ import {
   primaryKey,
   pgSchema,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -85,4 +85,5 @@ export const discussions_post = pgTable("discussion_posts", {
   body: text("body"),
   created_at: timestamp("created_at"),
   edited_at: timestamp("edited_at"),
+  is_deleted: boolean("is_deleted").default(false),
 });
