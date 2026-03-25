@@ -34,7 +34,7 @@ export const profiles = pgTable("profiles", {
   organization: text("organization"),
   avatarUrl: text("avatar_url"),
   email: text("email"),
-  job_role: text("job_role")
+  job_role: text("job_role"),
 });
 
 export const cohorts = pgTable("cohorts", {
@@ -46,7 +46,7 @@ export const cohorts = pgTable("cohorts", {
 
 export const cohort_memberships = pgTable("cohort_memberships", {
   cohort_id: integer("cohort_id").references(() => cohorts.id),
-  profiles_id: uuid("profiles_id").references(() => profiles.id), 
+  profiles_id: uuid("profiles_id").references(() => profiles.id),
 });
 
 export const modules = pgTable("modules", {
