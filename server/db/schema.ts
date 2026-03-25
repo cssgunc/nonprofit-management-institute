@@ -32,6 +32,9 @@ export const profiles = pgTable("profiles", {
   full_name: text("full_name").notNull(),
   is_active: boolean("is_active").notNull(),
   organization: text("organization"),
+  avatarUrl: text("avatar_url"),
+  email: text("email"),
+  job_role: text("job_role"),
 });
 
 export const cohorts = pgTable("cohorts", {
@@ -43,7 +46,7 @@ export const cohorts = pgTable("cohorts", {
 
 export const cohort_memberships = pgTable("cohort_memberships", {
   cohort_id: integer("cohort_id").references(() => cohorts.id),
-  profiles_id: uuid("profiles_id").references(() => profiles.id), // foreign key to auth.user.id (issue #1 isn't finished yet).
+  profiles_id: uuid("profiles_id").references(() => profiles.id),
 });
 
 export const modules = pgTable("modules", {

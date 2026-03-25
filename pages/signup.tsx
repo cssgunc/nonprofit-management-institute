@@ -22,6 +22,7 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [full_name, setFullName] = useState("");
   const [role, setRole] = useState<"admin" | "student">("student");
+  const [job_role, setJobRole] = useState("");
   const [organization, setOrganization] = useState("");
 
   // for handle new user
@@ -40,12 +41,13 @@ export default function SignUp() {
 
     if (error) {
       setError(error.message);
+      setLoading(false);
     } else {
       setMessage("Account created successfully!");
     }
 
     // Now tRPC should have access to the auth cookie
-    handleNewUser({ full_name, role, organization });
+    handleNewUser({ full_name, role, organization, job_role, email });
     apiUtils.invalidate();
   };
 
