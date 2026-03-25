@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/server/db";
 import { discussions_post } from "@/server/db/schema"
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { createGzip } from "zlib";
 
 const DiscussionsSchema = z.object({
@@ -34,7 +34,6 @@ async function checkAdmin(user_id: string) {
     })
     return admin_status?.role === "admin"
 }
-
 
 const discussionsRouter = createTRPCRouter({    
     updatePost: protectedProcedure
@@ -84,4 +83,41 @@ const discussionsRouter = createTRPCRouter({
             .where(eq(discussions_post.id, input.post_id));
 
     }),
+    
+    createPost: publicProcedure
+        .input(z.object({
+            module_id: z.number().int().optional(),
+            cohort_id: z.number().int().optional(),
+            parent_post_id: z.number().int().nullable().optional(),
+            body: z.string().min(1).max(10000),
+        }),
+    )
+    .mutation(async({ctx, input}) => {
+        if (!input.parent_post_id) {
+            await db.insert(discussions_post).values({
+                module_id: input.module_id,
+                cohort_id: input.cohort_id,
+                author_id: ctx.subject?.id,
+                parent_post_id: null,
+                body: input.body,
+                created_at: new Date(),
+                edited_at: new Date(),
+                is_deleted: false,
+            })
+        } else {
+            const parent_post = await fetchPost(input.parent_post_id);
+            await db.insert(discussions_post).values({
+                module_id: parent_post.module_id,
+                cohort_id: parent_post.cohort_id,
+                author_id: ctx.subject?.id,
+                parent_post_id: input.parent_post_id,
+                body: input.body,
+                created_at: new Date(),
+                edited_at: new Date(),
+                is_deleted: false,
+            })
+        }
+    })
+
+    
 });
