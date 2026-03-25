@@ -21,3 +21,10 @@ import { convertKeysToCamelCase } from "../api/helpers/camel-case";
 
 // Placeholder to prevent errors in the build step for members.
 export const placeholder = {};
+
+/** Defines the schema for a new user. */
+export const NewUser = z.object({
+  full_name: z.string(),
+  role: z.enum(["admin", "student"]), // Made this an enum to match your DB schema
+  organization: z.string(),
+});

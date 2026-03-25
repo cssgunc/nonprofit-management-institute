@@ -7,6 +7,7 @@
  * ```
  */
 import {
+  uuid,
   check,
   integer,
   pgTable,
@@ -23,23 +24,15 @@ import { relations, sql } from "drizzle-orm";
 import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-
-config({ path: "../../.env" });
-
-const client = postgres(process.env.DATABASE_URL!);
-export const db = drizzle({ client });
-
-const authSchema = pgSchema('auth');
-
-const users = authSchema.table('users', {
-	id: serial('id').primaryKey(),
-});
+import { AnyPgColumn } from "drizzle-orm/pg-core";
 
 export const profiles = pgTable("profiles", {
-  id: serial("id").primaryKey().references(() => users.id),
-  role: text("role").notNull(),
-  name: text("name").notNull(),
-  is_active: boolean("is_active"),
+  id: uuid("id").primaryKey(),
+  role: text("role", { enum: ["admin", "student"] }).notNull(),
+  full_name: text("full_name").notNull(),
+  is_active: boolean("is_active").notNull(),
+  organization: text("organization"),
+  avatarUrl: text("avatar_url"),
 });
 
 export const cohorts = pgTable("cohorts", {
@@ -51,26 +44,17 @@ export const cohorts = pgTable("cohorts", {
 
 export const cohort_memberships = pgTable("cohort_memberships", {
   cohort_id: integer("cohort_id").references(() => cohorts.id),
-  user_id: integer("user_id"), // foreign key to auth.user.id (issue #1 isn't finished yet).
+  profiles_id: uuid("profiles_id").references(() => profiles.id), // foreign key to auth.user.id (issue #1 isn't finished yet).
 });
 
-export const modules = pgTable(
-  "modules",
-  {
-    id: serial("id").primaryKey(),
-    module_index: integer("module_index").notNull().unique(),
-    slug: varchar("slug").notNull().unique(),
-    title: text("title").notNull(),
-    description: text("description"),
-    is_locked: boolean("is_locked"),
-  },
-  (table) => [
-    check(
-      "module_index_range",
-      sql`${table.module_index} >= 1 AND ${table.module_index} <=6`,
-    ),
-  ],
-);
+export const modules = pgTable("modules", {
+  id: serial("id").primaryKey(),
+  module_index: integer("module_index").notNull().unique(),
+  slug: varchar("slug").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  is_locked: boolean("is_locked"),
+});
 
 export const resourceTypeEnum = pgEnum("resource_type", [
   "handout",
@@ -88,16 +72,16 @@ export const resources = pgTable("resources", {
   url: text("url"),
   mime_type: varchar("mime_type"),
   size_bytes: integer("size_bytes"),
-  created_by: integer("created_by").references(() => profiles.id),
+  created_by: uuid("created_by").references(() => profiles.id),
 });
 
-export const discussions_post: any = pgTable("discussion_posts", {
+export const discussions_post = pgTable("discussion_posts", {
   id: serial("id").primaryKey(),
   module_id: integer("module_id").references(() => modules.id),
   cohort_id: integer("cohort_id").references(() => cohorts.id),
-  author_id: integer("author_id").references(() => profiles.id),
+  author_id: uuid("author_id").references(() => profiles.id),
   parent_post_id: integer("parent_post_id").references(
-    () => discussions_post.id,
+    (): AnyPgColumn => discussions_post.id,
   ),
   body: text("body"),
   created_at: timestamp("created_at"),
