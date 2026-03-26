@@ -1,11 +1,33 @@
 import { useState } from "react";
 import { api } from "@/utils/trpc/api";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
-const supabase = createClient(
+const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    cookies: {
+      get(name: string) {
+        if (typeof window === "undefined") return "";
+        return (
+          document.cookie
+            .split("; ")
+            .find((row) => row.startsWith(name + "="))
+            ?.split("=")[1] || ""
+        );
+      },
+      set(name: string, value: string, options: any) {
+        if (typeof window === "undefined") return;
+        const secure = window.location.protocol === "https:" ? "; secure" : "";
+        document.cookie = `${name}=${value}; path=/; max-age=${options.maxAge || 31536000}; samesite=lax${secure}`;
+      },
+      remove(name: string) {
+        if (typeof window === "undefined") return;
+        document.cookie = `${name}=; path=/; max-age=0`;
+      },
+    },
+  },
 );
 
 export default function CohortAccessPage() {
@@ -52,7 +74,9 @@ export default function CohortAccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-black text-center mb-2">Join Cohort</h1>
+        <h1 className="text-3xl font-bold text-black text-center mb-2">
+          Join Cohort
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-4 text-black">
           <input
             type="text"

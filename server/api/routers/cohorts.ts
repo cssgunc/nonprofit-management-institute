@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
-import { cohorts, cohort_memberships } from "@/server/db/schema";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { cohorts, cohort_memberships, profiles } from "@/server/db/schema";
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 
 const CohortSchema = z.object({
   id: z.number(),
@@ -13,24 +13,42 @@ const CohortSchema = z.object({
 });
 
 export const cohortsApiRouter = createTRPCRouter({
-  hasCohortMembership: protectedProcedure
+  hasCohortMembership: publicProcedure
+    .input(z.object({ userId: z.string().uuid().optional() }))
     .output(CohortSchema.nullable())
-    .query(async ({ ctx }) => {
-      const userId = ctx.subject.id;
-      if (!userId) throw new TRPCError({ code: "UNAUTHORIZED" });
+    .query(async ({ ctx, input }) => {
+      console.log('hasCohortMembership called, ctx.subject:', ctx.subject);
+      if (!ctx.subject) {
+        console.log('No ctx.subject, returning null');
+        return null;
+      }
+
+      const userId = input.userId || ctx.subject.id;
+      if (ctx.subject.id !== userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
 
       const membership = await db.query.cohort_memberships.findFirst({
         where: eq(cohort_memberships.profiles_id, userId),
       });
+      console.log('Membership found:', membership);
 
-      if (!membership?.cohort_id) return null;
+      if (!membership?.cohort_id) {
+        console.log('No membership, returning null');
+        return null;
+      }
 
       const cohort = await db.query.cohorts.findFirst({
-        where: eq(cohorts.id, membership.cohort_id),
+        where: and(eq(cohorts.id, membership.cohort_id), eq(cohorts.is_active, true)),
       });
+      console.log('Cohort found:', cohort);
 
-      if (!cohort) return null;
+      if (!cohort || !cohort.slug) {
+        console.log('Cohort not valid, returning null');
+        return null;
+      }
 
+      console.log('Returning cohort:', cohort);
       return CohortSchema.parse(cohort);
     }),
 
@@ -55,12 +73,39 @@ export const cohortsApiRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Invalid access code" });
       }
 
+      if (cohort.is_active !== true) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Cohort is not active" });
+      }
+
+      if (!cohort.slug) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Cohort is not properly configured" });
+      }
+
+      // Get user profile to check role
+      const userProfile = await db.query.profiles.findFirst({
+        where: eq(profiles.id, userId),
+      });
+
+      if (!userProfile) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User profile not found" });
+      }
+
       const existingMembership = await db.query.cohort_memberships.findFirst({
         where: eq(cohort_memberships.profiles_id, userId),
       });
 
-      if (existingMembership) {
-        throw new TRPCError({ code: "CONFLICT", message: "User already belongs to a cohort" });
+      // If user is a student and already has a membership, prevent joining
+      if (userProfile.role === "student" && existingMembership) {
+        throw new TRPCError({ code: "CONFLICT", message: "Students can only belong to one cohort" });
+      }
+
+      // Check if user is already a member of this specific cohort
+      const existingMembershipForCohort = await db.query.cohort_memberships.findFirst({
+        where: and(eq(cohort_memberships.profiles_id, userId), eq(cohort_memberships.cohort_id, cohort.id)),
+      });
+
+      if (existingMembershipForCohort) {
+        throw new TRPCError({ code: "CONFLICT", message: "User is already a member of this cohort" });
       }
 
       await db.insert(cohort_memberships).values({

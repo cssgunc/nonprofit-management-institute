@@ -1,11 +1,33 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
 import { api } from "@/utils/trpc/api";
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
-const supabase = createClient(
+const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    cookies: {
+      get(name: string) {
+        if (typeof window === "undefined") return "";
+        return (
+          document.cookie
+            .split("; ")
+            .find((row) => row.startsWith(name + "="))
+            ?.split("=")[1] || ""
+        );
+      },
+      set(name: string, value: string, options: any) {
+        if (typeof window === "undefined") return;
+        const secure = window.location.protocol === "https:" ? "; secure" : "";
+        document.cookie = `${name}=${value}; path=/; max-age=${options.maxAge || 31536000}; samesite=lax${secure}`;
+      },
+      remove(name: string) {
+        if (typeof window === "undefined") return;
+        document.cookie = `${name}=; path=/; max-age=0`;
+      },
+    },
+  },
 );
 
 export default function Login() {
@@ -15,25 +37,38 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const checkMembership = api.cohorts.hasCohortMembership.useQuery(undefined, { enabled: false });
+  const checkMembership = api.cohorts.hasCohortMembership.useQuery(
+    {},
+    { enabled: false },
+  );
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError) {
-      setError(signInError.message);
-      setLoading(false);
-      return;
-    }
-
     try {
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+      if (signInError) {
+        setError(signInError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!data.user) {
+        setError("Login failed");
+        setLoading(false);
+        return;
+      }
+
+      // Wait for session to be set
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       const result = await checkMembership.refetch();
       const cohort = result.data;
 
@@ -52,7 +87,9 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-black text-center mb-2">Login</h1>
+        <h1 className="text-3xl font-bold text-black text-center mb-2">
+          Login
+        </h1>
         <form onSubmit={handleLogin} className="space-y-4 text-black">
           <input
             type="email"
@@ -74,7 +111,9 @@ export default function Login() {
             type="submit"
             disabled={loading}
             className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-              loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              loading
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {loading ? "Signing in..." : "Login"}

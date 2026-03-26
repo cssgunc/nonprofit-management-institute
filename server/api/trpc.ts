@@ -26,12 +26,14 @@ export const createTRPCContext = async ({
       subject: { id: process.env.MOCK_USER_ID ?? "mock-student" },
     });
   }
+  console.log('req.cookies:', req.cookies);
   const supabase = createApiClient(req, res);
-  const { data: userData } = await supabase.auth.getClaims();
+  const { data: userData } = await supabase.auth.getUser();
+  console.log('userData:', userData);
   return createInnerTRPCContext({
-    subject: userData
+    subject: userData.user
       ? {
-          id: userData.claims.sub,
+          id: userData.user.id,
         }
       : null,
   });
