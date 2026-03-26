@@ -1,13 +1,18 @@
 import Resource from "@/components/resource";
 
 export default function ResourcePreviewPage() {
+  const handleRemove = () => {
+    // Replace this with your real delete API call.
+    console.log("Resource deleted");
+  };
+
   return (
     <main className="p-8">
       <Resource
         title="Sample Handout"
-        fileUrl="https://www.learningcontainer.com/wp-content/uploads/2019/09/sample-pdf-file.pdf"
+        fileUrl="https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"
         isAdmin={true}
-        onRemove={() => alert("Remove clicked")}
+        onRemove={handleRemove}
       />
     </main>
   );
