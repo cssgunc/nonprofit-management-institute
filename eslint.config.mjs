@@ -15,5 +15,12 @@ export default defineConfig([
     extends: ["next/core-web-vitals", "next/typescript", "prettier"],
   }),
 
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "**/pdf.worker.min.js", "**/pdf.worker.min.mjs"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "**/pdf.worker.min.js",
+    "**/pdf.worker.min.mjs",
+  ]),
 ]);
