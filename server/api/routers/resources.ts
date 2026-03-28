@@ -1,6 +1,6 @@
 import z from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/server/db";
 import {
   cohort_memberships,
@@ -181,9 +181,16 @@ export const resourcesRouter = createTRPCRouter({
       const foundModule = await findModuleBySlugOrThrow(input.moduleSlug);
       assertStudentNotLockedFromModule(viewer, foundModule.is_locked);
 
+      const visibilityWhere = isAdmin(viewer)
+        ? undefined
+        : viewer.cohortId !== null
+          ? or(isNull(resources.cohort_id), eq(resources.cohort_id, Number(viewer.cohortId)))
+          : isNull(resources.cohort_id);
+
       const baseWhere = and(
         eq(resources.module_id, foundModule.id),
         input.type ? eq(resources.type, input.type) : undefined,
+        visibilityWhere,
       );
 
       const rows = await db
@@ -198,14 +205,7 @@ export const resourcesRouter = createTRPCRouter({
         .from(resources)
         .where(baseWhere);
 
-      return rows
-        .filter((r) =>
-          userCanAccessCohortScopedResource(
-            viewer,
-            r.cohortId !== null ? String(r.cohortId) : null,
-          ),
-        )
-        .map((r) => mapResourceRowToDto(r, foundModule.slug));
+      return rows.map((r) => mapResourceRowToDto(r, foundModule.slug));
     }),
 
   /**
