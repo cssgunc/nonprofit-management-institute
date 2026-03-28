@@ -18,11 +18,8 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-zinc-50 px-6 py-10">
-      <div className="mx-auto w-full max-w-6xl">
-        <h1 className="text-3xl font-bold text-zinc-900">Cohort Members</h1>
-        <p className="mt-2 text-zinc-600">
-          View member details and contact information
-        </p>
+      <div className="mx-auto w-full max-w-[1162px]">
+        <h1 className="text-4xl font-bold text-zinc-900">Cohort Members</h1>
 
         {isLoading && <p className="mt-8 text-zinc-600">Loading contacts...</p>}
 
@@ -39,7 +36,14 @@ export default function Contact() {
         )}
 
         {!!members?.length && (
-          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 flex flex-col gap-4">
+            <div className="hidden grid-cols-[minmax(0,2fr)_2fr_2fr_2fr] gap-6 px-4 text-[20px] font-bold text-zinc-900 md:grid">
+              <h2>Name</h2>
+              <h2>Contact</h2>
+              <h2>Organization</h2>
+              <h2>Job Position</h2>
+            </div>
+
             {members.map((member) => (
               <MemberCard
                 key={member.id}
