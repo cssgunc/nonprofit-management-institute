@@ -18,8 +18,7 @@ type SidebarConfig = {
 const defaultSidebarItems: SidebarNavItem[] = [
 	{ id: 0, title: "Recording", href: "#recording" },
 	{ id: 1, title: "Discussions", href: "#discussions" },
-	{ id: 2, title: "Handouts", href: "#handouts" },
-	{ id: 3, title: "Resources", href: "#resources" },
+	{ id: 2, title: "Materials", href: "#materials" },
 ];
 
 type SidebarModulesProps = {
