@@ -246,6 +246,10 @@ export const resourcesRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
+      if (!row.moduleSlug) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+      }
+
       return mapResourceRowToDto(
         {
           id: row.id,
@@ -255,7 +259,7 @@ export const resourcesRouter = createTRPCRouter({
           cohortId: row.cohortId,
           created_by: row.created_by,
         },
-        row.moduleSlug ?? "",
+        row.moduleSlug,
       );
     }),
 
@@ -385,7 +389,11 @@ export const resourcesRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
       }
 
-      return mapResourceRowToDto(updated, exists.moduleSlug ?? "");
+      if (!exists.moduleSlug) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+      }
+
+      return mapResourceRowToDto(updated, exists.moduleSlug);
     }),
 
   /**
@@ -419,14 +427,18 @@ export const resourcesRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
       }
 
-      let moduleSlug = "";
-      if (deleted.moduleId !== null) {
-        const [foundModule] = await db
-          .select({ slug: modules.slug })
-          .from(modules)
-          .where(eq(modules.id, deleted.moduleId))
-          .limit(1);
-        moduleSlug = foundModule?.slug ?? "";
+      if (deleted.moduleId === null) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+      }
+
+      const [foundModule] = await db
+        .select({ slug: modules.slug })
+        .from(modules)
+        .where(eq(modules.id, deleted.moduleId))
+        .limit(1);
+
+      if (!foundModule) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
       }
 
       return mapResourceRowToDto(
@@ -438,7 +450,7 @@ export const resourcesRouter = createTRPCRouter({
           cohortId: deleted.cohortId,
           created_by: deleted.created_by,
         },
-        moduleSlug,
+        foundModule.slug,
       );
     }),
 });
