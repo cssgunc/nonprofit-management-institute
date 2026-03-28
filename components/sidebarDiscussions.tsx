@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/utils/cn";
+import Link from "next/link";
 
 export type DiscussionNavItem = {
   id: number;
@@ -37,11 +38,7 @@ export default function SidebarDiscussions({
   onPost,
   className,
 }: SidebarDiscussionsProps) {
-  const handleSelect = (
-    event: React.MouseEvent<HTMLAnchorElement>,
-    id: number,
-  ) => {
-    event.preventDefault();
+  const handleSelect = (id: number) => {
     onSelect?.(id);
   };
 
@@ -79,10 +76,10 @@ export default function SidebarDiscussions({
 
             return (
               <li key={item.id}>
-                <a
+                <Link
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  onClick={(event) => handleSelect(event, item.id)}
+                  onClick={() => handleSelect(item.id)}
                   className={cn(
                     "relative block whitespace-nowrap px-4 py-2.5 text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
                     isActive ? "font-bold" : "font-normal hover:bg-zinc-100",
@@ -92,7 +89,7 @@ export default function SidebarDiscussions({
                   {isActive && (
                     <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-zinc-900" />
                   )}
-                </a>
+                </Link>
               </li>
             );
           })}

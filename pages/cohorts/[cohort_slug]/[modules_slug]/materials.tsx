@@ -2,7 +2,7 @@ import SidebarModules from "@/components/sidebarModules";
 import type { SidebarNavItem } from "@/components/sidebarModules";
 import { useRouter } from "next/router";
 
-export default function ModuleDiscussion() {
+export default function ModuleMaterials() {
 	const router = useRouter();
   
 	const cohortSlug =
@@ -36,13 +36,13 @@ export default function ModuleDiscussion() {
 
 	return (
 		<>
-			<SidebarModules items={sidebarItems} activeId={1} />
+			<SidebarModules items={sidebarItems} activeId={2} />
 			<div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
 				<h1 className="text-3xl font-bold text-black dark:text-white">
-					Module Discussion
+					Materials
 				</h1>
 				<p className="text-zinc-600 dark:text-zinc-400">
-					This is the discussion page for this module.
+					This page is intentionally blank for now.
 				</p>
 			</div>
 		</>

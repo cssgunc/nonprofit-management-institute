@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
 import SidebarDiscussions from "@/components/sidebarDiscussions";
 import { Menu } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 export type SidebarNavItem = {
 	id: number;
@@ -45,6 +47,7 @@ export default function SidebarModules({
 	className,
 	renderItemLabel,
 }: SidebarModulesProps) {
+	const router = useRouter();
 	const sidebarConfig = getSidebarConfig(items);
 	const resolvedItems = sidebarConfig.items;
 	const defaultHomeId =
@@ -54,12 +57,20 @@ export default function SidebarModules({
 
 	const [isOpen, setIsOpen] = useState(true);
 	const [active, setActive] = useState(activeId);
-	const [isDiscussionsOpen, setIsDiscussionsOpen] = useState(false);
+	const [isDiscussionsOpen, setIsDiscussionsOpen] = useState(() => {
+		const currentItem = resolvedItems.find((item) => item.id === activeId);
+		return currentItem?.title.toLowerCase() === "discussions";
+	});
 	const [activeDiscussionId, setActiveDiscussionId] = useState(0);
 
 	useEffect(() => {
 		setActive(activeId);
 	}, [activeId]);
+
+	useEffect(() => {
+		const currentItem = resolvedItems.find((item) => item.id === activeId);
+		setIsDiscussionsOpen(currentItem?.title.toLowerCase() === "discussions");
+	}, [activeId, resolvedItems]);
 
 	const handleToggleSidebar = () => {
 		setIsOpen((prev) => !prev);
@@ -74,12 +85,17 @@ export default function SidebarModules({
 		event: React.MouseEvent<HTMLAnchorElement>,
 		id: number,
 		title: string,
+		href: string,
 	) => {
-		event.preventDefault();
-
 		if (title.toLowerCase() === "discussions") {
 			setActiveDiscussionId(0);
 			setIsDiscussionsOpen(true);
+			handleSelect(id);
+
+			if (href.startsWith("#")) {
+				event.preventDefault();
+			}
+
 			return;
 		}
 
@@ -89,6 +105,11 @@ export default function SidebarModules({
 	const handleCloseDiscussions = () => {
 		setIsDiscussionsOpen(false);
 		handleSelect(defaultHomeId);
+
+		const defaultHomeItem = resolvedItems.find((item) => item.id === defaultHomeId);
+		if (defaultHomeItem && !defaultHomeItem.href.startsWith("#")) {
+			void router.push(defaultHomeItem.href);
+		}
 	};
 
 	const handleDiscussionSelect = (id: number) => {
@@ -137,11 +158,11 @@ export default function SidebarModules({
 
 							return (
 								<li key={item.id}>
-									<a
+									<Link
 										href={item.href}
 										aria-current={isActive ? "page" : undefined}
 										onClick={(event) =>
-											handleItemClick(event, item.id, item.title)
+											handleItemClick(event, item.id, item.title, item.href)
 										}
 										className={cn(
 											"relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
@@ -153,7 +174,7 @@ export default function SidebarModules({
 										{isActive && (
 											<span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-zinc-900" />
 										)}
-									</a>
+									</Link>
 								</li>
 							);
 						})}

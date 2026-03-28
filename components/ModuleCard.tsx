@@ -16,7 +16,7 @@ export default function ModuleCard({
   cohortSlug,
   className = "card",
 }: ModuleCardProps) {
-  const href = `/cohorts/${cohortSlug}/modules/${slug}`;
+  const href = cohortSlug ? `/cohorts/${cohortSlug}/${slug}/module` : "#";
 
   return (
     <Link href={href}>
