@@ -3,6 +3,8 @@ import { api } from "@/utils/trpc/api";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 
+type CookieOptions = { maxAge?: number };
+
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -17,7 +19,7 @@ const supabase = createBrowserClient(
             ?.split("=")[1] || ""
         );
       },
-      set(name: string, value: string, options: any) {
+      set(name: string, value: string, options: CookieOptions) {
         if (typeof window === "undefined") return;
         const secure = window.location.protocol === "https:" ? "; secure" : "";
         document.cookie = `${name}=${value}; path=/; max-age=${options.maxAge || 31536000}; samesite=lax${secure}`;
@@ -66,8 +68,8 @@ export default function CohortAccessPage() {
         accessHash: trimmed,
         userId,
       });
-    } catch (err: any) {
-      setError(err.message || "Failed to join cohort");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to join cohort");
     }
   };
 

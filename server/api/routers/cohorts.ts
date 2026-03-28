@@ -17,9 +17,8 @@ export const cohortsApiRouter = createTRPCRouter({
     .input(z.object({ userId: z.string().uuid().optional() }))
     .output(CohortSchema.nullable())
     .query(async ({ ctx, input }) => {
-      console.log('hasCohortMembership called, ctx.subject:', ctx.subject);
       if (!ctx.subject) {
-        console.log('No ctx.subject, returning null');
+        console.log("No ctx.subject, returning null");
         return null;
       }
 
@@ -31,24 +30,24 @@ export const cohortsApiRouter = createTRPCRouter({
       const membership = await db.query.cohort_memberships.findFirst({
         where: eq(cohort_memberships.profiles_id, userId),
       });
-      console.log('Membership found:', membership);
 
       if (!membership?.cohort_id) {
-        console.log('No membership, returning null');
+        console.log("No membership, returning null");
         return null;
       }
 
       const cohort = await db.query.cohorts.findFirst({
-        where: and(eq(cohorts.id, membership.cohort_id), eq(cohorts.is_active, true)),
+        where: and(
+          eq(cohorts.id, membership.cohort_id),
+          eq(cohorts.is_active, true),
+        ),
       });
-      console.log('Cohort found:', cohort);
 
       if (!cohort || !cohort.slug) {
-        console.log('Cohort not valid, returning null');
+        console.log("Cohort not valid, returning null");
         return null;
       }
 
-      console.log('Returning cohort:', cohort);
       return CohortSchema.parse(cohort);
     }),
 
@@ -57,12 +56,10 @@ export const cohortsApiRouter = createTRPCRouter({
       z.object({
         accessHash: z.string().min(1),
         userId: z.string().uuid(),
-      })
+      }),
     )
     .output(CohortSchema)
     .mutation(async ({ input, ctx }) => {
-      console.log("joinCohort input:", input);
-      console.log("ctx.subject:", ctx.subject);
       const { accessHash, userId } = input;
 
       const cohort = await db.query.cohorts.findFirst({
@@ -70,15 +67,24 @@ export const cohortsApiRouter = createTRPCRouter({
       });
 
       if (!cohort) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Invalid access code" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invalid access code",
+        });
       }
 
       if (cohort.is_active !== true) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Cohort is not active" });
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cohort is not active",
+        });
       }
 
       if (!cohort.slug) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Cohort is not properly configured" });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Cohort is not properly configured",
+        });
       }
 
       // Get user profile to check role
@@ -87,7 +93,10 @@ export const cohortsApiRouter = createTRPCRouter({
       });
 
       if (!userProfile) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "User profile not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User profile not found",
+        });
       }
 
       const existingMembership = await db.query.cohort_memberships.findFirst({
@@ -96,16 +105,26 @@ export const cohortsApiRouter = createTRPCRouter({
 
       // If user is a student and already has a membership, prevent joining
       if (userProfile.role === "student" && existingMembership) {
-        throw new TRPCError({ code: "CONFLICT", message: "Students can only belong to one cohort" });
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Students can only belong to one cohort",
+        });
       }
 
       // Check if user is already a member of this specific cohort
-      const existingMembershipForCohort = await db.query.cohort_memberships.findFirst({
-        where: and(eq(cohort_memberships.profiles_id, userId), eq(cohort_memberships.cohort_id, cohort.id)),
-      });
+      const existingMembershipForCohort =
+        await db.query.cohort_memberships.findFirst({
+          where: and(
+            eq(cohort_memberships.profiles_id, userId),
+            eq(cohort_memberships.cohort_id, cohort.id),
+          ),
+        });
 
       if (existingMembershipForCohort) {
-        throw new TRPCError({ code: "CONFLICT", message: "User is already a member of this cohort" });
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "User is already a member of this cohort",
+        });
       }
 
       await db.insert(cohort_memberships).values({
