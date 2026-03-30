@@ -13,7 +13,7 @@ import { resourcesRouter } from "./routers/resources";
 /** Primary router for the API server. */
 export const appRouter = createTRPCRouter({
   example: exampleApiRouter,
-  resources: resourcesRouter
+  resources: resourcesRouter,
 });
 
 export type AppRouter = typeof appRouter;

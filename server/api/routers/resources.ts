@@ -11,11 +11,7 @@ import {
 } from "@/server/db/schema";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-const ResourceTypeEnum = z.enum([
-  "handout",
-  "recording",
-  "link",
-]);
+const ResourceTypeEnum = z.enum(["handout", "recording", "link"]);
 
 export type ResourceType = z.infer<typeof ResourceTypeEnum>;
 
@@ -83,7 +79,10 @@ function assertAdmin(viewer: Viewer): void {
  * - Admins can see everything.
  * - Students can only see resources whose cohort matches their own.
  */
-function userCanAccessCohortScopedResource(viewer: Viewer, cohortId: string | null): boolean {
+function userCanAccessCohortScopedResource(
+  viewer: Viewer,
+  cohortId: string | null,
+): boolean {
   if (!cohortId) return true;
   if (isAdmin(viewer)) return true;
   return viewer.cohortId === cohortId;
@@ -94,7 +93,11 @@ function userCanAccessCohortScopedResource(viewer: Viewer, cohortId: string | nu
  */
 async function findModuleBySlugOrThrow(moduleSlug: string) {
   const [mod] = await db
-    .select({ id: modules.id, slug: modules.slug, is_locked: modules.is_locked })
+    .select({
+      id: modules.id,
+      slug: modules.slug,
+      is_locked: modules.is_locked,
+    })
     .from(modules)
     .where(eq(modules.slug, moduleSlug))
     .limit(1);
@@ -106,7 +109,10 @@ async function findModuleBySlugOrThrow(moduleSlug: string) {
   return mod;
 }
 
-function assertStudentNotLockedFromModule(viewer: Viewer, isLocked: boolean | null | undefined): void {
+function assertStudentNotLockedFromModule(
+  viewer: Viewer,
+  isLocked: boolean | null | undefined,
+): void {
   if (isStudent(viewer) && isLocked === true) {
     throw new TRPCError({ code: "FORBIDDEN", message: "Module is locked" });
   }
@@ -115,12 +121,17 @@ function assertStudentNotLockedFromModule(viewer: Viewer, isLocked: boolean | nu
 function parseResourceIdOrThrow(id: string): number {
   const parsed = Number(id);
   if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid resource id" });
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Invalid resource id",
+    });
   }
   return parsed;
 }
 
-async function assertCohortIdValidOrNull(cohortId: string | null): Promise<void> {
+async function assertCohortIdValidOrNull(
+  cohortId: string | null,
+): Promise<void> {
   if (cohortId === null) return;
   const parsed = Number(cohortId);
   if (!Number.isInteger(parsed) || parsed <= 0) {
@@ -184,7 +195,10 @@ export const resourcesRouter = createTRPCRouter({
       const visibilityWhere = isAdmin(viewer)
         ? undefined
         : viewer.cohortId !== null
-          ? or(isNull(resources.cohort_id), eq(resources.cohort_id, Number(viewer.cohortId)))
+          ? or(
+              isNull(resources.cohort_id),
+              eq(resources.cohort_id, Number(viewer.cohortId)),
+            )
           : isNull(resources.cohort_id);
 
       const baseWhere = and(
@@ -237,12 +251,20 @@ export const resourcesRouter = createTRPCRouter({
         .limit(1);
 
       if (!row) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Resource not found",
+        });
       }
 
       assertStudentNotLockedFromModule(viewer, row.moduleLocked);
 
-      if (!userCanAccessCohortScopedResource(viewer, row.cohortId !== null ? String(row.cohortId) : null)) {
+      if (
+        !userCanAccessCohortScopedResource(
+          viewer,
+          row.cohortId !== null ? String(row.cohortId) : null,
+        )
+      ) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
@@ -288,7 +310,8 @@ export const resourcesRouter = createTRPCRouter({
       const foundModule = await findModuleBySlugOrThrow(input.moduleSlug);
       await assertCohortIdValidOrNull(input.cohortId);
 
-      const cohortIdAsInt = input.cohortId !== null ? Number(input.cohortId) : null;
+      const cohortIdAsInt =
+        input.cohortId !== null ? Number(input.cohortId) : null;
 
       const [inserted] = await db
         .insert(resources)
@@ -310,7 +333,10 @@ export const resourcesRouter = createTRPCRouter({
         });
 
       if (!inserted) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create resource" });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create resource",
+        });
       }
 
       return mapResourceRowToDto(inserted, foundModule.slug);
@@ -355,7 +381,10 @@ export const resourcesRouter = createTRPCRouter({
         .limit(1);
 
       if (!exists) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Resource not found",
+        });
       }
 
       if (input.cohortId !== undefined) {
@@ -386,7 +415,10 @@ export const resourcesRouter = createTRPCRouter({
         });
 
       if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Resource not found",
+        });
       }
 
       if (!exists.moduleSlug) {
@@ -424,7 +456,10 @@ export const resourcesRouter = createTRPCRouter({
         });
 
       if (!deleted) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Resource not found",
+        });
       }
 
       if (deleted.moduleId === null) {
