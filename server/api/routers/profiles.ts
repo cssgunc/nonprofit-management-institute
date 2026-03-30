@@ -119,7 +119,7 @@ const handleNewUser = protectedProcedure //COMPLETED AND TESTED
   .input(NewUser)
   .mutation(async ({ ctx, input }) => {
     const { subject } = ctx;
-    const { full_name, email, role, job_role, organization } = input;
+    const { full_name, role, organization, job_role, email } = input;
 
     // YOUR IMPLEMENTATION HERE...
 
@@ -137,6 +137,8 @@ const handleNewUser = protectedProcedure //COMPLETED AND TESTED
           jobRole: job_role,
           is_active: true, // Added missing required field
           organization: organization,
+          job_role: job_role,
+          email: email,
         },
       ]);
     }

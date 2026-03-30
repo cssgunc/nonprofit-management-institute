@@ -47,7 +47,7 @@ export default function SignUp() {
     }
 
     // Now tRPC should have access to the auth cookie
-    handleNewUser({ full_name, email, role, job_role, organization });
+    handleNewUser({ full_name, role, organization, job_role, email });
     apiUtils.invalidate();
   };
 

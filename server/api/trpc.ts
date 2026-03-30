@@ -27,11 +27,11 @@ export const createTRPCContext = async ({
     });
   }
   const supabase = createApiClient(req, res);
-  const { data: userData } = await supabase.auth.getClaims();
+  const { data: userData } = await supabase.auth.getUser();
   return createInnerTRPCContext({
-    subject: userData
+    subject: userData.user
       ? {
-          id: userData.claims.sub,
+          id: userData.user.id,
         }
       : null,
   });
