@@ -1,10 +1,63 @@
+import { useRouter } from "next/router";
+import MemberCard from "@/components/MemberCard";
+import { api } from "@/utils/trpc/api";
+
 export default function Contact() {
+  const router = useRouter();
+  const { cohort_slug } = router.query;
+  const cohortSlug = typeof cohort_slug === "string" ? cohort_slug : "";
+
+  const {
+    data: members,
+    isLoading,
+    isError,
+  } = api.profiles.getContactsBySlug.useQuery(
+    { cohort_slug: cohortSlug },
+    { enabled: !!cohortSlug },
+  );
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
-      <h1 className="text-3xl font-bold text-black dark:text-white">Contact</h1>
-      <p className="text-zinc-600 dark:text-zinc-400">
-        This is the contact page for the cohort.
-      </p>
+    <div className="min-h-screen bg-zinc-50 px-6 py-10">
+      <div className="mx-auto w-full max-w-[1162px]">
+        <h1 className="text-4xl font-bold text-zinc-900">Cohort Members</h1>
+
+        {isLoading && <p className="mt-8 text-zinc-600">Loading contacts...</p>}
+
+        {isError && (
+          <p className="mt-8 text-red-600">
+            Unable to load contacts for this cohort right now.
+          </p>
+        )}
+
+        {!isLoading && !isError && (members?.length ?? 0) === 0 && (
+          <p className="mt-8 text-zinc-600">
+            No members found for this cohort.
+          </p>
+        )}
+
+        {!!members?.length && (
+          <div className="mt-8 flex flex-col gap-4">
+            <div className="hidden grid-cols-[minmax(0,2fr)_2fr_2fr_2fr] gap-6 px-4 text-[20px] font-bold text-zinc-900 md:grid">
+              <h2>Name</h2>
+              <h2>Contact</h2>
+              <h2>Organization</h2>
+              <h2>Job Position</h2>
+            </div>
+
+            {members.map((member) => (
+              <MemberCard
+                key={member.id}
+                fullName={member.full_name}
+                profilePictureUrl={member.avatar_url}
+                email={member.email}
+                jobRole={member.job_role}
+                organization={member.organization}
+                role={member.role}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
