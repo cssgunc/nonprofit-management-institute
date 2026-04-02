@@ -5,7 +5,6 @@ import { cn } from "@/utils/cn";
 import SidebarDiscussions from "@/components/sidebarDiscussions";
 import { Menu } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/router";
 
 export type SidebarNavItem = {
 	id: number;
@@ -47,13 +46,8 @@ export default function SidebarModules({
 	className,
 	renderItemLabel,
 }: SidebarModulesProps) {
-	const router = useRouter();
 	const sidebarConfig = getSidebarConfig(items);
 	const resolvedItems = sidebarConfig.items;
-	const defaultHomeId =
-		resolvedItems.find((item) => item.title.toLowerCase() === "home")?.id ??
-		resolvedItems[0]?.id ??
-		0;
 
 	const [isOpen, setIsOpen] = useState(true);
 	const [active, setActive] = useState(activeId);
@@ -104,12 +98,10 @@ export default function SidebarModules({
 
 	const handleCloseDiscussions = () => {
 		setIsDiscussionsOpen(false);
-		handleSelect(defaultHomeId);
-
-		const defaultHomeItem = resolvedItems.find((item) => item.id === defaultHomeId);
-		if (defaultHomeItem && !defaultHomeItem.href.startsWith("#")) {
-			void router.push(defaultHomeItem.href);
-		}
+		const discussionsId =
+			resolvedItems.find((item) => item.title.toLowerCase() === "discussions")?.id ??
+			active;
+		handleSelect(discussionsId);
 	};
 
 	const handleDiscussionSelect = (id: number) => {

@@ -60,7 +60,7 @@ export default function SidebarDiscussions({
           onClick={onClose}
           className="cursor-pointer whitespace-nowrap text-sm font-medium text-zinc-700 transition-colors hover:text-zinc-900"
         >
-          Back to modules
+          Back to module
         </button>
       </div>
 
