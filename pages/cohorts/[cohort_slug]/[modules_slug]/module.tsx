@@ -14,23 +14,23 @@ export default function ModulePage() {
 			: "";
 
 	const baseModulePath =
-		cohortSlug && moduleSlug ? `/cohorts/${cohortSlug}/${moduleSlug}` : "#";
+		cohortSlug && moduleSlug ? `/cohorts/${cohortSlug}/${moduleSlug}` : "/cohorts";
 
 	const sidebarItems: SidebarNavItem[] = [
 		{
 			id: 0,
 			title: "Recording",
-			href: baseModulePath === "#" ? "#" : `${baseModulePath}/module`,
+			href: `${baseModulePath}/module`,
 		},
 		{
 			id: 1,
 			title: "Discussions",
-			href: baseModulePath === "#" ? "#" : `${baseModulePath}/discussion`,
+			href: `${baseModulePath}/discussion`,
 		},
 		{
 			id: 2,
 			title: "Materials",
-			href: baseModulePath === "#" ? "#" : `${baseModulePath}/materials`,
+			href: `${baseModulePath}/materials`,
 		},
 	];
 

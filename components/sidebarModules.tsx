@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
-import SidebarDiscussions from "@/components/sidebarDiscussions";
+import SidebarDiscussions, { discussionsSidebarItems } from "@/components/sidebarDiscussions";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 
@@ -17,9 +17,9 @@ type SidebarConfig = {
 };
 
 const defaultSidebarItems: SidebarNavItem[] = [
-	{ id: 0, title: "Recording", href: "#recording" },
-	{ id: 1, title: "Discussions", href: "#discussions" },
-	{ id: 2, title: "Materials", href: "#materials" },
+	{ id: 0, title: "Recording", href: "/recording" },
+	{ id: 1, title: "Discussions", href: "/discussion" },
+	{ id: 2, title: "Materials", href: "/materials" },
 ];
 
 type SidebarModulesProps = {
@@ -81,16 +81,11 @@ export default function SidebarModules({
 		event: React.MouseEvent<HTMLAnchorElement>,
 		id: number,
 		title: string,
-		href: string,
 	) => {
 		if (title.toLowerCase() === "discussions") {
 			setActiveDiscussionId(0);
 			setIsDiscussionsOpen(true);
 			handleSelect(id);
-
-			if (href.startsWith("#")) {
-				event.preventDefault();
-			}
 
 			return;
 		}
@@ -109,6 +104,14 @@ export default function SidebarModules({
 	const handleDiscussionSelect = (id: number) => {
 		setActiveDiscussionId(id);
 	};
+
+	const discussionsHref =
+		resolvedItems.find((item) => item.title.toLowerCase() === "discussions")?.href ??
+		"/discussion";
+	const mappedDiscussionItems = discussionsSidebarItems.map((item) => ({
+		...item,
+		href: discussionsHref,
+	}));
 
 	return (
 		<aside
@@ -132,6 +135,7 @@ export default function SidebarModules({
 			{isDiscussionsOpen ? (
 				<SidebarDiscussions
 					activeId={activeDiscussionId}
+					items={mappedDiscussionItems}
 					isOpen={isOpen}
 					showBackToModule={showBackToModule}
 					onSelect={handleDiscussionSelect}
@@ -157,7 +161,7 @@ export default function SidebarModules({
 										href={item.href}
 										aria-current={isActive ? "page" : undefined}
 										onClick={(event) =>
-											handleItemClick(event, item.id, item.title, item.href)
+											handleItemClick(event, item.id, item.title)
 										}
 										className={cn(
 											"relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",

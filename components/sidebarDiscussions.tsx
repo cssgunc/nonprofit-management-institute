@@ -10,13 +10,13 @@ export type DiscussionNavItem = {
 };
 
 export const discussionsSidebarItems: DiscussionNavItem[] = [
-  { id: 0, title: "General", href: "#general" },
-  { id: 1, title: "Session 1", href: "#session-1" },
-  { id: 2, title: "Session 2", href: "#session-2" },
-  { id: 3, title: "Session 3", href: "#session-3" },
-  { id: 4, title: "Session 4", href: "#session-4" },
-  { id: 5, title: "Session 5", href: "#session-5" },
-  { id: 6, title: "Session 6", href: "#session-6" },
+  { id: 0, title: "General", href: "/discussion" },
+  { id: 1, title: "Session 1", href: "/discussion" },
+  { id: 2, title: "Session 2", href: "/discussion" },
+  { id: 3, title: "Session 3", href: "/discussion" },
+  { id: 4, title: "Session 4", href: "/discussion" },
+  { id: 5, title: "Session 5", href: "/discussion" },
+  { id: 6, title: "Session 6", href: "/discussion" },
 ];
 
 type SidebarDiscussionsProps = {

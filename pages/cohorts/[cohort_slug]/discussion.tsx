@@ -8,29 +8,23 @@ export default function DiscussionPage() {
   const cohortSlug =
     typeof router.query.cohort_slug === "string" ? router.query.cohort_slug : "";
 
-  const moduleSlug =
-		typeof router.query.modules_slug === "string"
-			? router.query.modules_slug
-			: "";
-
-  const baseModulePath =
-		cohortSlug && moduleSlug ? `/cohorts/${cohortSlug}/${moduleSlug}` : "#";
+  const baseCohortPath = cohortSlug ? `/cohorts/${cohortSlug}` : "/cohorts";
 
   const sidebarItems: SidebarNavItem[] = [
     {
 			id: 0,
 			title: "Recording",
-			href: baseModulePath === "#" ? "#" : `${baseModulePath}/module`,
+      href: `${baseCohortPath}/dashboard`,
 		},
 		{
 			id: 1,
 			title: "Discussions",
-			href: "#discussions",
+      href: `${baseCohortPath}/discussion`,
 		},
 		{
 			id: 2,
 			title: "Materials",
-			href: baseModulePath === "#" ? "#" : `${baseModulePath}/materials`,
+      href: `${baseCohortPath}/contact`,
 		},
   ];
 
