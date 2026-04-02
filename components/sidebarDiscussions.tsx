@@ -23,6 +23,7 @@ type SidebarDiscussionsProps = {
   activeId?: number;
   items?: DiscussionNavItem[];
   isOpen?: boolean;
+  showBackToModule?: boolean;
   onSelect?: (id: number) => void;
   onClose?: () => void;
   onPost?: () => void;
@@ -33,6 +34,7 @@ export default function SidebarDiscussions({
   activeId = 0,
   items = discussionsSidebarItems,
   isOpen = true,
+  showBackToModule = true,
   onSelect,
   onClose,
   onPost,
@@ -49,24 +51,26 @@ export default function SidebarDiscussions({
         className,
       )}
     >
-      <div
-        className={cn(
-          "px-4 py-2.5 transition-opacity duration-150",
-          isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-        )}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="cursor-pointer whitespace-nowrap text-sm font-medium text-zinc-700 transition-colors hover:text-zinc-900"
+      {showBackToModule && (
+        <div
+          className={cn(
+            "px-4 py-2.5 transition-opacity duration-150",
+            isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+          )}
         >
-          Back to module
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer whitespace-nowrap text-sm font-medium text-zinc-700 transition-colors hover:text-zinc-900"
+          >
+            Back to module
+          </button>
+        </div>
+      )}
 
       <nav
         className={cn(
-          "flex-1 transition-opacity duration-150",
+          "min-h-0 flex-1 overflow-y-auto transition-opacity duration-150",
           isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >
@@ -98,16 +102,16 @@ export default function SidebarDiscussions({
 
       <div
         className={cn(
-          "px-4 py-2.5 transition-opacity duration-150",
+          "shrink-0 bg-white px-4 pt-[8px] pb-[18px] transition-opacity duration-150",
           isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         <button
           type="button"
           onClick={onPost}
-          className="w-full cursor-pointer rounded-full border-none bg-zinc-200 py-2.5 px-4 text-[15px] font-medium tracking-[0.02em] text-zinc-900 transition-colors hover:bg-zinc-300"
+          className="w-full cursor-pointer rounded-full border-none bg-zinc-200 px-4 py-2.5 text-[15px] font-medium tracking-[0.02em] text-zinc-900 transition-colors hover:bg-zinc-300"
         >
-          Post
+          Create new post
         </button>
       </div>
     </div>

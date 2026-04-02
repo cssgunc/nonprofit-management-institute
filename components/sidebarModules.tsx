@@ -25,6 +25,7 @@ const defaultSidebarItems: SidebarNavItem[] = [
 type SidebarModulesProps = {
 	items?: SidebarNavItem[];
 	activeId?: number;
+	showBackToModule?: boolean;
 	onSelect?: (id: number) => void;
 	onAction?: () => void;
 	className?: string;
@@ -41,6 +42,7 @@ function getSidebarConfig(items?: SidebarNavItem[]): SidebarConfig {
 export default function SidebarModules({
 	items,
 	activeId = 0,
+	showBackToModule = true,
 	onSelect,
 	onAction,
 	className,
@@ -111,7 +113,7 @@ export default function SidebarModules({
 	return (
 		<aside
 			className={cn(
-				"flex min-h-screen flex-col overflow-hidden border-r border-zinc-200 bg-white font-sans transition-[width] duration-200 ease-out",
+				"flex h-[calc(100vh-7rem)] min-h-0 flex-col overflow-hidden border-r border-zinc-200 bg-white font-sans transition-[width] duration-200 ease-out",
 				isOpen ? "w-[220px]" : "w-14",
 				className,
 			)}
@@ -131,6 +133,7 @@ export default function SidebarModules({
 				<SidebarDiscussions
 					activeId={activeDiscussionId}
 					isOpen={isOpen}
+					showBackToModule={showBackToModule}
 					onSelect={handleDiscussionSelect}
 					onClose={handleCloseDiscussions}
 					onPost={onAction}

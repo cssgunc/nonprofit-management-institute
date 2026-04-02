@@ -36,7 +36,7 @@ export default function DiscussionPage() {
 
   return (
     <>
-      <SidebarModules items={sidebarItems} activeId={1} />
+      <SidebarModules items={sidebarItems} activeId={1} showBackToModule={false} />
       <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
         <h1 className="text-3xl font-bold text-black dark:text-white">
           Discussion
