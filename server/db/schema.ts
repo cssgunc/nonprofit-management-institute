@@ -35,7 +35,6 @@ export const profiles = pgTable("profiles", {
   jobRole: text("job_role"),
   organization: text("organization"),
   avatarUrl: text("avatar_url"),
-  email: text("email"),
   job_role: text("job_role"),
 });
 
@@ -58,6 +57,7 @@ export const modules = pgTable("modules", {
   title: text("title").notNull(),
   description: text("description"),
   is_locked: boolean("is_locked"),
+  is_active: boolean("is_active").default(true),
 });
 
 export const resourceTypeEnum = pgEnum("resource_type", [

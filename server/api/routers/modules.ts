@@ -12,6 +12,7 @@ const ModuleSummary = z.object({
   title: z.string(),
   description: z.string().nullable(),
   locked: z.boolean(),
+  is_active: z.boolean(),
 });
 
 const ModuleDetail = ModuleSummary;
@@ -37,6 +38,7 @@ const list = publicProcedure.output(z.array(ModuleSummary)).query(async () => {
     title: row.title,
     description: row.description ?? null,
     locked: row.is_locked ?? false,
+    is_active: row.is_active ?? true,
   }));
 });
 
@@ -84,6 +86,45 @@ const bySlug = protectedProcedure
       title: foundModule.title,
       description: foundModule.description ?? null,
       locked: foundModule.is_locked ?? false,
+      is_active: foundModule.is_active ?? true,
+    };
+  });
+
+/**
+ * Update a module's is_active status. Admin only.
+ */
+const updateModuleStatus = protectedProcedure
+  .input(z.object({ slug: z.string(), isActive: z.boolean() }))
+  .mutation(async ({ ctx, input }) => {
+    const [profile] = await db
+      .select({ role: profiles.role })
+      .from(profiles)
+      .where(eq(profiles.id, ctx.subject.id))
+      .limit(1);
+
+    if (!profile || profile.role !== "admin") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Only admins can update module status",
+      });
+    }
+
+    const [updated] = await db
+      .update(modules)
+      .set({ is_active: input.isActive })
+      .where(eq(modules.slug, input.slug))
+      .returning();
+
+    if (!updated) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Module with slug "${input.slug}" not found`,
+      });
+    }
+
+    return {
+      slug: updated.slug,
+      isActive: updated.is_active ?? true,
     };
   });
 
@@ -93,4 +134,5 @@ const bySlug = protectedProcedure
 export const modulesApiRouter = createTRPCRouter({
   list,
   bySlug,
+  updateModuleStatus,
 });
