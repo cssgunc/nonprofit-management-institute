@@ -125,7 +125,10 @@ export default function ModulePage() {
           </div>
         ) : (
           <div className="flex items-center gap-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-5 py-6">
-            <FileText className="w-6 h-6 text-gray-400 shrink-0" strokeWidth={1.5} />
+            <FileText
+              className="w-6 h-6 text-gray-400 shrink-0"
+              strokeWidth={1.5}
+            />
             <p className="text-sm text-gray-400">
               No handouts have been attached to this module yet.
             </p>
