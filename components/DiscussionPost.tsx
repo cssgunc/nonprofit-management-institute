@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import { Edit2, Trash2 } from "lucide-react";
-
-// Types
+import { Edit2, Trash2, MoreHorizontal, MessageCircle } from "lucide-react";
 
 export type Author = {
   name: string;
@@ -15,6 +13,7 @@ export type Post = {
   author: Author;
   content: string;
   createdAt: string | number | Date;
+  replyCount?: number;
   replies?: Post[];
 };
 
@@ -27,7 +26,7 @@ export type DiscussionPostProps = {
   children?: React.ReactNode;
 };
 
-// utility functions
+// Utility Functions
 
 function relativeTime(from: string | number | Date): string {
   const then = new Date(from).getTime();
@@ -56,7 +55,15 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
+function countAllReplies(replies: Post[]): number {
+  return replies.reduce(
+    (acc, r) => acc + 1 + countAllReplies(r.replies ?? []),
+    0
+  );
+}
+
 const AVATAR_COLORS = [
+  "bg-zinc-300 text-zinc-700",
   "bg-violet-200 text-violet-800",
   "bg-sky-200 text-sky-800",
   "bg-emerald-200 text-emerald-800",
@@ -64,29 +71,38 @@ const AVATAR_COLORS = [
   "bg-rose-200 text-rose-800",
 ] as const;
 
-// Sub-components in main Discussion Post component
+// Determining Avatar symbol
 
 function Avatar({
   name,
   avatarUrl,
   colorIndex = 0,
+  size = "md",
 }: {
   name: string;
   avatarUrl?: string | null;
   colorIndex?: number;
+  size?: "sm" | "md" | "lg";
 }) {
+  const sizeClass =
+    size === "lg"
+      ? "h-12 w-12 text-sm"
+      : size === "sm"
+      ? "h-7 w-7 text-[10px]"
+      : "h-10 w-10 text-xs";
+
   if (avatarUrl) {
     return (
       <img
         src={avatarUrl}
         alt={`${name} avatar`}
-        className="h-9 w-9 rounded-full object-cover ring-2 ring-white"
+        className={`${sizeClass} rounded-full object-cover flex-shrink-0`}
       />
     );
   }
   return (
     <div
-      className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold ring-2 ring-white ${
+      className={`flex ${sizeClass} items-center justify-center rounded-full font-semibold flex-shrink-0 ${
         AVATAR_COLORS[colorIndex % AVATAR_COLORS.length]
       }`}
     >
@@ -95,7 +111,278 @@ function Avatar({
   );
 }
 
-// Discussion Post Component
+// Nested Layout of Replies
+
+function ReplyPost({
+  post,
+  isLast = false,
+  onReply,
+  onEdit,
+  onDelete,
+  children,
+}: DiscussionPostProps & { isLast?: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(post.content);
+
+  const handleSaveEdit = () => {
+    onEdit?.(post.id, editText);
+    setEditing(false);
+  };
+
+  return (
+    <div className="flex">
+      {/* L-shaped connector line */}
+      <div className="flex flex-col flex-shrink-0" style={{ width: 40 }}>
+        {/* top vertical segment, down to the elbow */}
+        <div
+          className="border-l border-b border-zinc-200"
+          style={{ height: 24, width: 20, borderBottomLeftRadius: 4 }}
+        />
+        {/* bottom vertical continuation (if not last reply) */}
+        {!isLast ? (
+          <div className="border-l border-zinc-200 flex-1" style={{ marginLeft: 0 }} />
+        ) : (
+          <div className="flex-1" />
+        )}
+      </div>
+
+      {/* Reply body */}
+      <div className="flex-1 pb-4 group">
+        <div className="flex gap-3 items-start">
+          <Avatar
+            name={post.author.name}
+            avatarUrl={post.author.avatarUrl}
+            colorIndex={post.author.colorIndex}
+            size="md"
+          />
+
+          <div className="flex-1 min-w-0">
+            {/* Name + date stacked */}
+            <span className="text-sm font-semibold text-zinc-900">{post.author.name}</span>
+            {post.author.badge && (
+              <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
+                {post.author.badge}
+              </span>
+            )}
+            <div className="text-xs text-zinc-400">{relativeTime(post.createdAt)}</div>
+
+            {/* Content */}
+            {editing ? (
+              <div className="mt-2 space-y-2">
+                <textarea
+                  className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  rows={3}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveEdit}
+                    className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setEditing(false); setEditText(post.content); }}
+                    className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-1 text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">
+                {post.content}
+              </p>
+            )}
+
+            {/* Actions: edit/delete on hover (left), Reply right-aligned */}
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  aria-label="Edit"
+                  className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete?.(post.id)}
+                  aria-label="Delete"
+                  className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => onReply?.(post)}
+                className="text-sm text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
+              >
+                Reply
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Nested deeper replies */}
+        {children && <div className="mt-2">{children}</div>}
+      </div>
+    </div>
+  );
+}
+
+// Main Discussion Post
+
+function TopLevelPost({
+  post,
+  onReply,
+  onEdit,
+  onDelete,
+  children,
+}: DiscussionPostProps) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(post.content);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleSaveEdit = () => {
+    onEdit?.(post.id, editText);
+    setEditing(false);
+  };
+
+  const replyCount =
+    post.replyCount ?? (post.replies ? countAllReplies(post.replies) : 0);
+
+  return (
+    <article className="rounded-xl border border-zinc-200 bg-white p-5">
+      {/* Header row */}
+      <div className="flex items-start gap-3">
+        <Avatar
+          name={post.author.name}
+          avatarUrl={post.author.avatarUrl}
+          colorIndex={post.author.colorIndex}
+          size="lg"
+        />
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold text-zinc-900">
+                  {post.author.name}
+                </span>
+                {post.author.badge && (
+                  <span className="text-sm text-zinc-500">{post.author.badge}</span>
+                )}
+              </div>
+              <time className="text-xs text-zinc-400">
+                {relativeTime(post.createdAt)}
+              </time>
+            </div>
+
+            {/* ⋯ dropdown menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="More options"
+                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
+              {menuOpen && (
+                <>
+                  {/* backdrop to close on outside click */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-9 z-20 w-32 rounded-lg border border-zinc-100 bg-white shadow-lg py-1">
+                    <button
+                      type="button"
+                      onClick={() => { setEditing(true); setMenuOpen(false); }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { onDelete?.(post.id); setMenuOpen(false); }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="mt-3 ml-1">
+        {editing ? (
+          <div className="space-y-2">
+            <textarea
+              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={4}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 transition-colors"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEditing(false); setEditText(post.content); }}
+                className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">
+            {post.content}
+          </p>
+        )}
+      </div>
+
+      {/* Reply count pill */}
+      <button
+        type="button"
+        onClick={() => onReply?.(post)}
+        title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
+        className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+      >
+        <MessageCircle className="h-3.5 w-3.5 flex-shrink-0 fill-current" />
+        <span className="text-xs font-semibold">{replyCount}</span>
+        <span className="text-xs font-normal">
+          {replyCount === 1 ? "reply" : "replies"}
+        </span>
+      </button>
+
+      {/* Nested replies */}
+      {children && (
+        <div className="mt-3 border-t border-zinc-100 pt-3">{children}</div>
+      )}
+    </article>
+  );
+}
+
+// Discussion Post Export
 
 export default function DiscussionPost({
   post,
@@ -105,114 +392,27 @@ export default function DiscussionPost({
   onDelete,
   children,
 }: DiscussionPostProps) {
-  const [editing, setEditing] = useState(false);
-  const [editText, setEditText] = useState(post.content);
-
-  const handleSaveEdit = () => {
-    onEdit?.(post.id, editText);
-    setEditing(false);
-  };
-
-  const handleCancelEdit = () => {
-    setEditing(false);
-    setEditText(post.content);
-  };
+  if (isReply) {
+    return (
+      <ReplyPost
+        post={post}
+        onReply={onReply}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      >
+        {children}
+      </ReplyPost>
+    );
+  }
 
   return (
-    <article
-      className={`group w-full py-3 ${
-        isReply ? "ml-8 border-l-2 border-zinc-100 pl-4" : ""
-      }`}
+    <TopLevelPost
+      post={post}
+      onReply={onReply}
+      onEdit={onEdit}
+      onDelete={onDelete}
     >
-      {/* Header: avatar + name on left, edit/delete + date on right */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Avatar
-            name={post.author.name}
-            avatarUrl={post.author.avatarUrl}
-            colorIndex={post.author.colorIndex}
-          />
-          <span className="text-sm font-semibold text-zinc-900">
-            {post.author.name}
-          </span>
-          {post.author.badge && (
-            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
-              {post.author.badge}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Edit / Delete — revealed on hover */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              aria-label="Edit post"
-              className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
-            >
-              <Edit2 className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onDelete?.(post.id)}
-              aria-label="Delete post"
-              className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          <time className="text-xs text-zinc-400">
-            {relativeTime(post.createdAt)}
-          </time>
-        </div>
-      </div>
-
-      {/* Content */}
-      {editing ? (
-        <div className="space-y-2 mb-2">
-          <textarea
-            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            rows={3}
-            autoFocus
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleSaveEdit}
-              className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 transition-colors"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={handleCancelEdit}
-              className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap mb-2">
-          {post.content}
-        </p>
-      )}
-
-      {/* Reply link */}
-      <button
-        type="button"
-        onClick={() => onReply?.(post)}
-        className="text-xs text-zinc-500 hover:text-blue-600 font-medium transition-colors"
-      >
-        Reply
-      </button>
-
-      {/* Nested replies */}
-      {children && <div className="mt-1">{children}</div>}
-    </article>
+      {children}
+    </TopLevelPost>
   );
 }
