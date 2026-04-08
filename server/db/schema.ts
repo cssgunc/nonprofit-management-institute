@@ -35,8 +35,6 @@ export const profiles = pgTable("profiles", {
   jobRole: text("job_role"),
   organization: text("organization"),
   avatarUrl: text("avatar_url"),
-  email: text("email"),
-  job_role: text("job_role"),
 });
 
 export const cohorts = pgTable("cohorts", {
