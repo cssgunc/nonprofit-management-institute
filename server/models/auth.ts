@@ -1,3 +1,3 @@
 export type Subject = {
-    id: string;
-}
+  id: string;
+};

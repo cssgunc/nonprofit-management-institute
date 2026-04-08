@@ -7,7 +7,7 @@ import { type NextApiRequest, type NextApiResponse } from "next";
 
 export default function createApiClient(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,12 +24,12 @@ export default function createApiClient(
           res.setHeader(
             "Set-Cookie",
             cookiesToSet.map(({ name, value, options }) =>
-              serializeCookieHeader(name, value, options)
-            )
+              serializeCookieHeader(name, value, options),
+            ),
           );
         },
       },
-    }
+    },
   );
 
   return supabase;

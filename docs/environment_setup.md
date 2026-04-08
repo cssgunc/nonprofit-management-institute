@@ -16,9 +16,11 @@ Before you begin, ensure you have the following installed:
 Open the project in VS Code.\
 Open a terminal at the project root and run `npm install` to install all required dependencies.\
 Also, run the following command to set up the environment variables:
+
 ```
 cp .env.example .env # duplicates the template and renames it to .env
 ```
+
 Make sure to contact one of us for the environment variables.\
 Next, run `npm run dev` and you should be able to navigate to http://localhost:3000 to view the running website.
 
