@@ -137,8 +137,6 @@ const handleNewUser = protectedProcedure //COMPLETED AND TESTED
           jobRole: job_role,
           is_active: true, // Added missing required field
           organization: organization,
-          job_role: job_role,
-          email: email,
         },
       ]);
     }
