@@ -25,7 +25,7 @@ export default function ModulePage() {
 		{
 			id: 1,
 			title: "Discussions",
-			href: `${baseModulePath}/discussion`,
+			href: `${baseModulePath}/discussions`,
 		},
 		{
 			id: 2,

@@ -2,7 +2,7 @@ import SidebarModules from "@/components/sidebarModules";
 import type { SidebarNavItem } from "@/components/sidebarModules";
 import { useRouter } from "next/router";
 
-export default function ModuleDiscussion() {
+export default function ModuleDiscussions() {
 	const router = useRouter();
   
 	const cohortSlug =
@@ -25,7 +25,7 @@ export default function ModuleDiscussion() {
 		{
 			id: 1,
 			title: "Discussions",
-			href: `${baseModulePath}/discussion`,
+			href: `${baseModulePath}/discussions`,
 		},
 		{
 			id: 2,
