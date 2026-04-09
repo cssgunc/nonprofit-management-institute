@@ -1,5 +1,6 @@
-import SidebarModules from "@/components/sidebarModules";
-import type { SidebarNavItem } from "@/components/sidebarModules";
+import SidebarDiscussions, {
+  discussionsSidebarItems,
+} from "@/components/sidebarDiscussions";
 import { useRouter } from "next/router";
 
 export default function DiscussionPage() {
@@ -10,27 +11,16 @@ export default function DiscussionPage() {
 
   const baseCohortPath = cohortSlug ? `/cohorts/${cohortSlug}` : "/cohorts";
 
-  const sidebarItems: SidebarNavItem[] = [
-    {
-			id: 0,
-			title: "Recording",
-      href: `${baseCohortPath}/dashboard`,
-		},
-		{
-			id: 1,
-			title: "Discussions",
-      href: `${baseCohortPath}/discussion`,
-		},
-		{
-			id: 2,
-			title: "Materials",
-      href: `${baseCohortPath}/contact`,
-		},
-  ];
+  const discussionItems = discussionsSidebarItems.map((item) => ({
+    ...item,
+    href: item.moduleSlug
+      ? `${baseCohortPath}/${item.moduleSlug}/discussions`
+      : `${baseCohortPath}/discussion`,
+  }));
 
   return (
     <>
-      <SidebarModules items={sidebarItems} activeId={1} />
+      <SidebarDiscussions items={discussionItems} activeId={0} />
       <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
         <h1 className="text-3xl font-bold text-black dark:text-white">
           Discussion
