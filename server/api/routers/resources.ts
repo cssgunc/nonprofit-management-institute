@@ -96,7 +96,6 @@ async function findModuleBySlugOrThrow(moduleSlug: string) {
     .select({
       id: modules.id,
       slug: modules.slug,
-      is_locked: modules.is_locked,
     })
     .from(modules)
     .where(eq(modules.slug, moduleSlug))
@@ -110,13 +109,9 @@ async function findModuleBySlugOrThrow(moduleSlug: string) {
 }
 
 function assertStudentNotLockedFromModule(
-  viewer: Viewer,
-  isLocked: boolean | null | undefined,
-): void {
-  if (isStudent(viewer) && isLocked === true) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Module is locked" });
-  }
-}
+  _viewer: Viewer,
+  _isLocked: boolean | null | undefined,
+): void {}
 
 function parseResourceIdOrThrow(id: string): number {
   const parsed = Number(id);
@@ -190,7 +185,6 @@ export const resourcesRouter = createTRPCRouter({
       const viewer = await getViewer(ctx.subject.id);
 
       const foundModule = await findModuleBySlugOrThrow(input.moduleSlug);
-      assertStudentNotLockedFromModule(viewer, foundModule.is_locked);
 
       const visibilityWhere = isAdmin(viewer)
         ? undefined
@@ -243,7 +237,6 @@ export const resourcesRouter = createTRPCRouter({
           cohortId: resources.cohort_id,
           created_by: resources.created_by,
           moduleSlug: modules.slug,
-          moduleLocked: modules.is_locked,
         })
         .from(resources)
         .leftJoin(modules, eq(resources.module_id, modules.id))
@@ -256,8 +249,6 @@ export const resourcesRouter = createTRPCRouter({
           message: "Resource not found",
         });
       }
-
-      assertStudentNotLockedFromModule(viewer, row.moduleLocked);
 
       if (
         !userCanAccessCohortScopedResource(
