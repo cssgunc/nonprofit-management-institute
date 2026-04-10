@@ -6,12 +6,10 @@ import { toast } from "sonner";
 export default function DashboardPage() {
   const router = useRouter();
   const { cohort_slug } = router.query;
-
   const profileQuery = api.profiles.me.useQuery(undefined, {
     retry: false,
   });
   const isAdmin = profileQuery.data?.role === "admin";
-
   const utils = api.useUtils();
 
   const updateStatus = api.modules.updateModuleStatus.useMutation({
@@ -27,21 +25,21 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="h-full w-full bg-blue">
-      {/* Header placeholder. Import /components/Header module here. */}
-      <div className="h-25 w-full bg-white" />
-      <ModuleGrid
-        cohortSlug={cohort_slug as string}
-        isAdmin={isAdmin}
-        onToggleStatus={(slug, isActive) =>
-          updateStatus.mutate({
-            slug,
-            cohortSlug: cohort_slug as string,
-            isActive,
-          })
-        }
-        isToggling={updateStatus.isPending}
-      />
+    <div className="min-h-screen w-full bg-[#f5f5f5]">
+      <div className="mx-auto max-w-7xl px-6 py-8 md:px-10">
+        <ModuleGrid
+          cohortSlug={cohort_slug as string}
+          isAdmin={isAdmin}
+          onToggleStatus={(slug, isActive) =>
+            updateStatus.mutate({
+              slug,
+              cohortSlug: cohort_slug as string,
+              isActive,
+            })
+          }
+          isToggling={updateStatus.isPending}
+        />
+      </div>
     </div>
   );
 }
