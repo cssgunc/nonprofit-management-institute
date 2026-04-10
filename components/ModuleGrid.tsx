@@ -1,6 +1,6 @@
 import React from "react";
 import type { StaticImageData } from "next/image";
-import ModuleCard from "@/components/moduleCard";
+import ModuleCard from "@/components/ModuleCard";
 import { api } from "@/utils/trpc/api";
 import boardGovernanceImage from "@/assets/board_governance.png";
 import fundraisingImage from "@/assets/fundraising.png";

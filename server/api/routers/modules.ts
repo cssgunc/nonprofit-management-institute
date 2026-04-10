@@ -53,14 +53,14 @@ async function getRole(userId: string) {
 
 /**
  * List all modules for a cohort, ordered by module_index.
- * Non-admins only see active modules.
+ * Callers receive active status so the UI can show locked modules differently.
  */
 const list = protectedProcedure
   .input(CohortSlugInput)
   .output(z.array(ModuleSummary))
   .query(async ({ ctx, input }) => {
     const cohort = await resolveCohort(input.cohortSlug);
-    const role = await getRole(ctx.subject.id);
+    await getRole(ctx.subject.id);
 
     const rows = await db
       .select({
@@ -89,10 +89,6 @@ const list = protectedProcedure
       description: row.description ?? null,
       is_active: row.is_active,
     }));
-
-    if (role !== "admin") {
-      return result.filter((m) => m.is_active);
-    }
 
     return result;
   });

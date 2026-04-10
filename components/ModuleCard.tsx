@@ -28,14 +28,17 @@ export default function ModuleCard({
   className = "card",
 }: ModuleCardProps) {
   const href = cohortSlug ? `/cohorts/${cohortSlug}/${slug}/module` : null;
+  const isInactive = isActive !== true;
   const cardClassName = `block h-[260px] w-full max-w-[470px] overflow-hidden rounded-lg transition-transform hover:scale-[1.02] ${className} ${
-    !isActive && isAdmin ? "opacity-70" : ""
+    isInactive ? "opacity-70" : ""
   }`;
   const image = (
     <Image
       src={imageSrc}
       alt={title}
-      className={`h-full w-full object-cover transition-transform ${imageClassName}`}
+      className={`h-full w-full object-cover transition-transform ${
+        isInactive ? "saturate-0" : ""
+      } ${imageClassName}`}
       placeholder="blur"
       priority
     />
@@ -43,7 +46,7 @@ export default function ModuleCard({
 
   return (
     <div className="relative">
-      {isAdmin && (
+      {isAdmin === true && (
         <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-white/90 px-2 py-1 shadow-sm">
           <span
             className={`h-2.5 w-2.5 rounded-full ${
