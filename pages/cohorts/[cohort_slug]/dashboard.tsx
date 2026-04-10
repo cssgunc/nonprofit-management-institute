@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import ModuleGrid from "@/components/moduleGrid";
+import ModuleGrid from "@/components/ModuleGrid";
 import { api } from "@/utils/trpc/api";
 import { toast } from "sonner";
 
@@ -9,7 +9,7 @@ export default function DashboardPage() {
   const profileQuery = api.profiles.me.useQuery(undefined, {
     retry: false,
   });
-  const isAdmin = profileQuery.data?.role === "admin";
+  const isAdmin = profileQuery.isSuccess && profileQuery.data.role === "admin";
   const utils = api.useUtils();
 
   const updateStatus = api.modules.updateModuleStatus.useMutation({
@@ -30,12 +30,15 @@ export default function DashboardPage() {
         <ModuleGrid
           cohortSlug={cohort_slug as string}
           isAdmin={isAdmin}
-          onToggleStatus={(slug, isActive) =>
-            updateStatus.mutate({
-              slug,
-              cohortSlug: cohort_slug as string,
-              isActive,
-            })
+          onToggleStatus={
+            isAdmin
+              ? (slug, isActive) =>
+                  updateStatus.mutate({
+                    slug,
+                    cohortSlug: cohort_slug as string,
+                    isActive,
+                  })
+              : undefined
           }
           isToggling={updateStatus.isPending}
         />
