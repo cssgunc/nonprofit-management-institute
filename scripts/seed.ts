@@ -6,6 +6,54 @@ type ModuleSeed = {
   slug: string;
   title: string;
   description?: string | null;
+  is_locked?: boolean | null;
+};
+
+type ModuleRow = {
+  id: number;
+  module_index: number;
+  slug: string;
+};
+
+type ResourceSeed = {
+  module_id: number;
+  cohort_id: number;
+  type: "handout" | "recording" | "link";
+  title: string;
+  description?: string | null;
+  url?: string | null;
+  mime_type?: string | null;
+  size_bytes?: number | null;
+  created_by: string;
+};
+
+type ResourceRow = {
+  id: number;
+};
+
+type ProfileRow = {
+  id: string;
+};
+
+type CohortRow = {
+  id: number;
+};
+
+type DiscussionSeed = {
+  module_id: number;
+  cohort_id: number;
+  author_id: string;
+  parent_post_id?: number | null;
+  body: string;
+  created_at: string;
+};
+
+type DiscussionRow = {
+  id: number;
+};
+
+type ModuleIndexRow = {
+  module_index: number;
 };
 
 const MODULES: ModuleSeed[] = [
@@ -14,36 +62,42 @@ const MODULES: ModuleSeed[] = [
     slug: "module-1-introduction",
     title: "Introduction",
     description: "Overview and orientation",
+    is_locked: false,
   },
   {
     module_index: 2,
     slug: "module-2-fundraising-basics",
     title: "Fundraising Basics",
     description: "Principles of fundraising",
+    is_locked: false,
   },
   {
     module_index: 3,
     slug: "module-3-governance",
     title: "Governance & Board",
     description: "Board roles and governance",
+    is_locked: false,
   },
   {
     module_index: 4,
     slug: "module-4-finance",
     title: "Finance & Budgeting",
     description: "Basic nonprofit finance",
+    is_locked: false,
   },
   {
     module_index: 5,
     slug: "module-5-programs",
     title: "Programs & Impact",
     description: "Program design and measurement",
+    is_locked: false,
   },
   {
     module_index: 6,
     slug: "module-6-operations",
     title: "Operations & HR",
     description: "Operations, policies, and HR",
+    is_locked: false,
   },
 ];
 
@@ -52,8 +106,8 @@ const DUMMY_PROFILE_ID = "00000000-0000-0000-0000-000000000001";
 async function upsertModules() {
   for (const m of MODULES) {
     await client`
-			INSERT INTO modules (module_index, slug, title, description)
-			VALUES (${m.module_index}, ${m.slug}, ${m.title}, ${m.description ?? null})
+			INSERT INTO modules (module_index, slug, title, description, is_locked)
+			VALUES (${m.module_index}, ${m.slug}, ${m.title}, ${m.description ?? null}, ${m.is_locked ?? null})
 			ON CONFLICT (module_index) DO UPDATE
 			SET slug = EXCLUDED.slug,
 					title = EXCLUDED.title,
@@ -61,22 +115,26 @@ async function upsertModules() {
 		`;
   }
 
-  const rows =
-    await client`SELECT id, module_index, slug FROM modules ORDER BY module_index`;
+  const rows = (await client`
+  SELECT id, module_index, slug
+  FROM modules
+  ORDER BY module_index
+`) as ModuleRow[];
+
   if (rows.length !== 6) {
     throw new Error(`Expected 6 modules after seeding, found ${rows.length}`);
   }
+
   console.log(
-    "Modules upserted: ",
-    rows
-      .map((r: Record<string, unknown>) => `${r.module_index}:${r.slug}`)
-      .join(", "),
+    "Modules upserted:",
+    rows.map((r) => `${r.module_index}:${r.slug}`).join(", "),
   );
 }
 
 async function findOrCreateProfile() {
-  const existing =
-    await client`SELECT id FROM profiles WHERE id = ${DUMMY_PROFILE_ID}`;
+  const existing = (await client`
+    SELECT id FROM profiles WHERE id = ${DUMMY_PROFILE_ID}
+  `) as ProfileRow[];
   if (existing.length) return existing[0].id;
 
   await client`
@@ -93,72 +151,58 @@ async function findOrCreateCohort(
   accessHash: string,
   isActive = true,
 ) {
-  const existing =
-    await client`SELECT id FROM cohorts WHERE slug = ${slug} LIMIT 1`;
+  const existing = (await client`
+    SELECT id FROM cohorts WHERE slug = ${slug} LIMIT 1
+  `) as CohortRow[];
   if (existing.length) return existing[0].id;
 
-  const res = await client`
+  const res = (await client`
 		INSERT INTO cohorts (is_active, access_hash, slug)
 		VALUES (${isActive}, ${accessHash}, ${slug})
 		RETURNING id
-	`;
+	`) as CohortRow[];
 
   return res[0].id;
 }
 
-async function findOrCreateResource(resource: {
-  module_id: number;
-  cohort_id: number;
-  type: string;
-  title: string;
-  description?: string | null;
-  url?: string | null;
-  mime_type?: string | null;
-  size_bytes?: number | null;
-  created_by: string;
-}) {
-  const exists = await client`
+async function findOrCreateResource(resource: ResourceSeed) {
+  const exists = (await client`
 		SELECT id FROM resources
 		WHERE module_id = ${resource.module_id}
 			AND cohort_id = ${resource.cohort_id}
 			AND title = ${resource.title}
 			AND type = ${resource.type}
 		LIMIT 1
-	`;
+	`) as ResourceRow[];
   if (exists.length) return exists[0].id;
 
-  const inserted = await client`
+  const inserted = (await client`
 		INSERT INTO resources (module_id, cohort_id, type, title, description, url, mime_type, size_bytes, created_by)
 		VALUES (${resource.module_id}, ${resource.cohort_id}, ${resource.type}, ${resource.title}, ${resource.description ?? null}, ${resource.url ?? null}, ${resource.mime_type ?? null}, ${resource.size_bytes ?? null}, ${resource.created_by})
 		RETURNING id
-	`;
+	`) as ResourceRow[];
   return inserted[0].id;
 }
 
-async function findOrCreateDiscussion(post: {
-  module_id: number;
-  cohort_id: number;
-  author_id: string;
-  parent_post_id?: number | null;
-  body: string;
-  created_at: string;
-}) {
-  const exists = await client`
+async function findOrCreateDiscussion(post: DiscussionSeed) {
+  const parentPostId = post.parent_post_id ?? null;
+
+  const exists = (await client`
 		SELECT id FROM discussion_posts
 		WHERE module_id = ${post.module_id}
 			AND cohort_id = ${post.cohort_id}
 			AND author_id = ${post.author_id}
 			AND body = ${post.body}
-			AND coalesce(parent_post_id, 0) = coalesce(${post.parent_post_id ?? null}, 0)
+			AND coalesce(parent_post_id, 0) = coalesce(${parentPostId}, 0)
 		LIMIT 1
-	`;
+	`) as DiscussionRow[];
   if (exists.length) return exists[0].id;
 
-  const inserted = await client`
+  const inserted = (await client`
 		INSERT INTO discussion_posts (module_id, cohort_id, author_id, parent_post_id, body, created_at)
-		VALUES (${post.module_id}, ${post.cohort_id}, ${post.author_id}, ${post.parent_post_id ?? null}, ${post.body}, ${post.created_at})
+		VALUES (${post.module_id}, ${post.cohort_id}, ${post.author_id}, ${parentPostId}, ${post.body}, ${post.created_at})
 		RETURNING id
-	`;
+	`) as DiscussionRow[];
   return inserted[0].id;
 }
 
@@ -187,8 +231,9 @@ async function main() {
     console.log("Cohorts ensured:", cohortA, cohortB);
 
     // 4) Resources - create a sample of each enum type
-    const modulesRows =
-      await client`SELECT id, module_index FROM modules ORDER BY module_index`;
+    const modulesRows = (await client`
+      SELECT id, module_index FROM modules ORDER BY module_index
+    `) as Pick<ModuleRow, "id" | "module_index">[];
     const firstModuleId = modulesRows[0].id;
     const secondModuleId = modulesRows[1].id;
 
@@ -231,7 +276,7 @@ async function main() {
     // 5) Discussion posts - top-level and a reply
     const now = new Date().toISOString();
 
-    const top1 = {
+    const top1: DiscussionSeed = {
       module_id: firstModuleId,
       cohort_id: cohortA,
       author_id: profileId,
@@ -242,7 +287,7 @@ async function main() {
 
     const top1Id = await findOrCreateDiscussion(top1);
 
-    const reply1 = {
+    const reply1: DiscussionSeed = {
       module_id: firstModuleId,
       cohort_id: cohortA,
       author_id: profileId,
@@ -256,11 +301,10 @@ async function main() {
     console.log("Discussion posts ensured.");
 
     // Final verification for modules
-    const finalModules =
-      await client`SELECT module_index FROM modules ORDER BY module_index`;
-    const indices = finalModules.map(
-      (r: Record<string, unknown>) => r.module_index,
-    );
+    const finalModules = (await client`
+      SELECT module_index FROM modules ORDER BY module_index
+    `) as ModuleIndexRow[];
+    const indices = finalModules.map((r) => r.module_index);
     if (
       indices.length !== 6 ||
       ![1, 2, 3, 4, 5, 6].every((v, i) => v === indices[i])
@@ -274,7 +318,7 @@ async function main() {
     process.exitCode = 1;
   } finally {
     try {
-      await (client as unknown as { end(): Promise<void> }).end();
+      await client.end();
     } catch {}
   }
 }

@@ -29,5 +29,4 @@ export const NewUser = z.object({
   role: z.enum(["admin", "student"]), // Made this an enum to match your DB schema
   organization: z.string(),
   job_role: z.string(),
-  email: z.string(),
 });
