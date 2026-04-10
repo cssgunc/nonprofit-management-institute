@@ -57,15 +57,19 @@ export const modules = pgTable("modules", {
   description: text("description"),
 });
 
-export const cohort_modules = pgTable("cohort_modules", {
-  cohort_id: integer("cohort_id")
-    .notNull()
-    .references(() => cohorts.id),
-  module_id: integer("module_id")
-    .notNull()
-    .references(() => modules.id),
-  is_active: boolean("is_active").notNull().default(true),
-});
+export const cohort_modules = pgTable(
+  "cohort_modules",
+  {
+    cohort_id: integer("cohort_id")
+      .notNull()
+      .references(() => cohorts.id),
+    module_id: integer("module_id")
+      .notNull()
+      .references(() => modules.id),
+    is_active: boolean("is_active").notNull().default(true),
+  },
+  (t) => [primaryKey({ columns: [t.cohort_id, t.module_id] })],
+);
 
 export const resourceTypeEnum = pgEnum("resource_type", [
   "handout",

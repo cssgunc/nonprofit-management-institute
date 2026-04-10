@@ -1,7 +1,8 @@
 CREATE TABLE "cohort_modules" (
   "cohort_id" integer NOT NULL REFERENCES "cohorts"("id"),
   "module_id" integer NOT NULL REFERENCES "modules"("id"),
-  "is_active" boolean NOT NULL DEFAULT true
+  "is_active" boolean NOT NULL DEFAULT true,
+  PRIMARY KEY ("cohort_id", "module_id")
 );
 
 -- Seed: link all existing cohorts to all existing modules as active

@@ -6,7 +6,6 @@ type ModuleSeed = {
   slug: string;
   title: string;
   description?: string | null;
-  is_locked?: boolean | null;
 };
 
 type ModuleRow = {
@@ -62,42 +61,36 @@ const MODULES: ModuleSeed[] = [
     slug: "module-1-introduction",
     title: "Introduction",
     description: "Overview and orientation",
-    is_locked: false,
   },
   {
     module_index: 2,
     slug: "module-2-fundraising-basics",
     title: "Fundraising Basics",
     description: "Principles of fundraising",
-    is_locked: false,
   },
   {
     module_index: 3,
     slug: "module-3-governance",
     title: "Governance & Board",
     description: "Board roles and governance",
-    is_locked: false,
   },
   {
     module_index: 4,
     slug: "module-4-finance",
     title: "Finance & Budgeting",
     description: "Basic nonprofit finance",
-    is_locked: false,
   },
   {
     module_index: 5,
     slug: "module-5-programs",
     title: "Programs & Impact",
     description: "Program design and measurement",
-    is_locked: false,
   },
   {
     module_index: 6,
     slug: "module-6-operations",
     title: "Operations & HR",
     description: "Operations, policies, and HR",
-    is_locked: false,
   },
 ];
 
@@ -106,8 +99,8 @@ const DUMMY_PROFILE_ID = "00000000-0000-0000-0000-000000000001";
 async function upsertModules() {
   for (const m of MODULES) {
     await client`
-			INSERT INTO modules (module_index, slug, title, description, is_locked)
-			VALUES (${m.module_index}, ${m.slug}, ${m.title}, ${m.description ?? null}, ${m.is_locked ?? null})
+			INSERT INTO modules (module_index, slug, title, description)
+			VALUES (${m.module_index}, ${m.slug}, ${m.title}, ${m.description ?? null})
 			ON CONFLICT (module_index) DO UPDATE
 			SET slug = EXCLUDED.slug,
 					title = EXCLUDED.title,
@@ -230,7 +223,22 @@ async function main() {
     );
     console.log("Cohorts ensured:", cohortA, cohortB);
 
-    // 4) Resources - create a sample of each enum type
+    // 4) Cohort-module links
+    const allModules = (await client`
+      SELECT id FROM modules ORDER BY module_index
+    `) as { id: number }[];
+    for (const cohortId of [cohortA, cohortB]) {
+      for (const mod of allModules) {
+        await client`
+          INSERT INTO cohort_modules (cohort_id, module_id, is_active)
+          VALUES (${cohortId}, ${mod.id}, true)
+          ON CONFLICT (cohort_id, module_id) DO NOTHING
+        `;
+      }
+    }
+    console.log("Cohort-module links ensured.");
+
+    // 5) Resources - create a sample of each enum type
     const modulesRows = (await client`
       SELECT id, module_index FROM modules ORDER BY module_index
     `) as Pick<ModuleRow, "id" | "module_index">[];
@@ -273,7 +281,7 @@ async function main() {
 
     console.log("Resources ensured.");
 
-    // 5) Discussion posts - top-level and a reply
+    // 6) Discussion posts - top-level and a reply
     const now = new Date().toISOString();
 
     const top1: DiscussionSeed = {
