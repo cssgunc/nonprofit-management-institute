@@ -2,7 +2,7 @@ import Link from "next/link";
 import Logo from "@/assets/NCCNonProfit_LOGO.png";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import ProfileMenu from "@/components/ProfileMenu";
+import ProfileMenu from "@/components/profileMenu";
 
 export default function Header() {
   const router = useRouter();

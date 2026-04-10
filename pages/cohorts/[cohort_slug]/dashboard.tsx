@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import ModuleGrid from "@/components/ModuleGrid";
+import ModuleGrid from "@/components/moduleGrid";
 import { api } from "@/utils/trpc/api";
 import { toast } from "sonner";
 

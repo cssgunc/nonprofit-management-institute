@@ -1,5 +1,5 @@
 import React from "react";
-import ModuleCard from "@/components/ModuleCard";
+import ModuleCard from "@/components/moduleCard";
 import { api } from "@/utils/trpc/api";
 
 type ModuleGridProps = {
