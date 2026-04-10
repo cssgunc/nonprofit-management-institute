@@ -17,7 +17,10 @@ export default function ModuleGrid({
   onToggleStatus,
   isToggling = false,
 }: ModuleGridProps) {
-  const { data: modules } = api.modules.list.useQuery();
+  const { data: modules } = api.modules.list.useQuery(
+    { cohortSlug },
+    { enabled: !!cohortSlug },
+  );
 
   return (
     <div className={`grid grid-cols-2 md:grid-cols-3 gap-14 m-14 ${className}`}>

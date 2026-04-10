@@ -35,7 +35,6 @@ export const profiles = pgTable("profiles", {
   jobRole: text("job_role"),
   organization: text("organization"),
   avatarUrl: text("avatar_url"),
-  job_role: text("job_role"),
 });
 
 export const cohorts = pgTable("cohorts", {
@@ -56,8 +55,16 @@ export const modules = pgTable("modules", {
   slug: varchar("slug").notNull().unique(),
   title: text("title").notNull(),
   description: text("description"),
-  is_locked: boolean("is_locked"),
-  is_active: boolean("is_active").default(true),
+});
+
+export const cohort_modules = pgTable("cohort_modules", {
+  cohort_id: integer("cohort_id")
+    .notNull()
+    .references(() => cohorts.id),
+  module_id: integer("module_id")
+    .notNull()
+    .references(() => modules.id),
+  is_active: boolean("is_active").notNull().default(true),
 });
 
 export const resourceTypeEnum = pgEnum("resource_type", [

@@ -42,6 +42,7 @@ export default function ModuleCard({
             type="button"
             role="switch"
             aria-checked={isActive}
+            aria-label={`Toggle active status for ${title}`}
             disabled={isToggling}
             onClick={(e) => {
               e.preventDefault();

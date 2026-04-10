@@ -17,7 +17,7 @@ export default function DashboardPage() {
   const updateStatus = api.modules.updateModuleStatus.useMutation({
     onSuccess: (data) => {
       toast.success(
-        `Module "${data.slug}" is now ${data.isActive ? "active" : "inactive"}`,
+        `Module "${data.slug}" is now ${data.is_active ? "active" : "inactive"}`,
       );
       utils.modules.list.invalidate();
     },
@@ -34,7 +34,11 @@ export default function DashboardPage() {
         cohortSlug={cohort_slug as string}
         isAdmin={isAdmin}
         onToggleStatus={(slug, isActive) =>
-          updateStatus.mutate({ slug, isActive })
+          updateStatus.mutate({
+            slug,
+            cohortSlug: cohort_slug as string,
+            isActive,
+          })
         }
         isToggling={updateStatus.isPending}
       />
