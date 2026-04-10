@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import MemberCard from "@/components/MemberCard";
+import MemberCard from "@/components/memberCard";
 import { api } from "@/utils/trpc/api";
 
 export default function Contact() {
