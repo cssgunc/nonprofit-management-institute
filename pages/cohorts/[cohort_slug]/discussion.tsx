@@ -21,11 +21,16 @@ export default function DiscussionPage() {
       : "";
 
   const selectedModuleSlug =
-    typeof router.query.topic === "string" ? router.query.topic : "";
+    typeof router.query.modules_slug === "string"
+      ? router.query.modules_slug
+      : "";
 
   const baseCohortPath = cohortSlug ? `/cohorts/${cohortSlug}` : "/cohorts";
 
-  const modulesQuery = api.modules.list.useQuery();
+  const modulesQuery = api.modules.list.useQuery(
+    { cohortSlug },
+    { enabled: !!cohortSlug },
+  );
 
   const discussionItems: DiscussionNavItem[] = [
     { id: 0, title: "General", href: `${baseCohortPath}/discussion` },
@@ -42,21 +47,21 @@ export default function DiscussionPage() {
       ?.id ?? 0;
 
   return (
-    <>
+    <div className="flex min-h-[calc(100vh-7rem)] w-full">
       {mounted && (
         <SidebarDiscussions
           items={discussionItems}
           activeId={activeDiscussionId}
         />
       )}
-      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
-        <h1 className="text-3xl font-bold text-black dark:text-white">
+      <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
+        <h1 className="text-3xl font-bold text-black">
           Discussion
         </h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
+        <p className="text-black">
           This is the discussion page for the cohort.
         </p>
       </div>
-    </>
+    </div>
   );
 }

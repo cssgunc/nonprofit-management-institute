@@ -43,7 +43,14 @@ export default function ModuleDiscussions() {
       : "/cohorts";
 
   const baseCohortPath = cohortSlug ? `/cohorts/${cohortSlug}` : "/cohorts";
-  const modulesQuery = api.modules.list.useQuery();
+  const modulesQuery = api.modules.list.useQuery(
+    { cohortSlug },
+    { enabled: !!cohortSlug },
+  );
+  const moduleQuery = api.modules.bySlug.useQuery(
+    { slug: moduleSlug, cohortSlug },
+    { enabled: !!cohortSlug && !!moduleSlug },
+  );
 
   const sidebarItems: SidebarNavItem[] = [
     {
@@ -77,7 +84,7 @@ export default function ModuleDiscussions() {
     discussionItems.find((item) => item.moduleSlug === moduleSlug)?.id ?? 0;
 
   return (
-    <>
+    <div className="flex min-h-[calc(100vh-7rem)] w-full">
       {mounted &&
         (sidebarContext === "discussions" ? (
           <SidebarDiscussions
@@ -87,14 +94,16 @@ export default function ModuleDiscussions() {
         ) : (
           <SidebarModules items={sidebarItems} activeId={1} />
         ))}
-      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
-        <h1 className="text-3xl font-bold text-black dark:text-white">
-          Module Discussion
+      <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
+        <h1 className="text-3xl font-bold text-black">
+          {moduleQuery.data?.title ?? "Module Discussion"}
         </h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          This is the discussion page for this module.
+        <p className="text-black">
+          {moduleQuery.data
+            ? `This is the discussion page for ${moduleQuery.data.title}.`
+            : "This is the discussion page for this module."}
         </p>
       </div>
-    </>
+    </div>
   );
 }

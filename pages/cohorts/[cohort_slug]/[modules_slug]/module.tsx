@@ -39,16 +39,16 @@ export default function ModulePage() {
   ];
 
   return (
-    <>
+    <div className="flex min-h-[calc(100vh-7rem)] w-full">
       <SidebarModules items={sidebarItems} activeId={0} />
-      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
-        <h1 className="text-3xl font-bold text-black dark:text-white">
+      <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
+        <h1 className="text-3xl font-bold text-black">
           Module
         </h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
+        <p className="text-black">
           This is the module page.
         </p>
       </div>
-    </>
+    </div>
   );
 }
