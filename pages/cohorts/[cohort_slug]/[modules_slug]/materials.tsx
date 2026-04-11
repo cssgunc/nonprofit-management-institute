@@ -42,12 +42,8 @@ export default function ModuleMaterials() {
     <div className="flex min-h-[calc(100vh-7rem)] w-full">
       <SidebarModules items={sidebarItems} activeId={2} />
       <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
-        <h1 className="text-3xl font-bold text-black">
-          Materials
-        </h1>
-        <p className="text-black">
-          This page is intentionally blank for now.
-        </p>
+        <h1 className="text-3xl font-bold text-black">Materials</h1>
+        <p className="text-black">This page is intentionally blank for now.</p>
       </div>
     </div>
   );

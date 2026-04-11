@@ -55,9 +55,7 @@ export default function DiscussionPage() {
         />
       )}
       <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
-        <h1 className="text-3xl font-bold text-black">
-          Discussion
-        </h1>
+        <h1 className="text-3xl font-bold text-black">Discussion</h1>
         <p className="text-black">
           This is the discussion page for the cohort.
         </p>
