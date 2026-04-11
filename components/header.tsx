@@ -9,6 +9,7 @@ export default function Header() {
   const { cohort_slug } = router.query;
 
   const basePath = cohort_slug ? `/cohorts/${cohort_slug as string}` : "";
+  const profileHref = cohort_slug ? `${basePath}/profile` : "/profile";
 
   const navLinks = cohort_slug
     ? [
@@ -41,7 +42,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <ProfileMenu className="ml-16" />
+        <ProfileMenu profileHref={profileHref} className="ml-16" />
       </div>
     </header>
   );

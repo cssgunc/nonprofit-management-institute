@@ -11,6 +11,10 @@ const ProfileSchema = z.object({
   role: z.enum(["admin", "student"]),
   full_name: z.string(),
   is_active: z.boolean(),
+  email: z.string().nullable(),
+  job_role: z.string().nullable(),
+  organization: z.string().nullable(),
+  avatar_url: z.string().nullable(),
 });
 
 const ContactSchema = z.object({
@@ -26,7 +30,16 @@ const ContactSchema = z.object({
 async function fetchProfile(userId: string) {
   const [row] = await db.select().from(profiles).where(eq(profiles.id, userId));
   if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-  return row;
+  return {
+    id: row.id,
+    role: row.role,
+    full_name: row.full_name,
+    is_active: row.is_active,
+    email: row.email ?? null,
+    job_role: row.jobRole ?? null,
+    organization: row.organization ?? null,
+    avatar_url: row.avatarUrl ?? null,
+  };
 }
 
 async function requireAdmin(userId: string) {
@@ -44,17 +57,35 @@ const updateMe = protectedProcedure
     z.object({
       full_name: z.string().optional(),
       is_active: z.boolean().optional(),
+      email: z.string().email().optional(),
+      job_role: z.string().optional(),
+      organization: z.string().optional(),
     }),
   )
   .output(ProfileSchema)
   .mutation(async ({ ctx, input }) => {
     const [updated] = await db
       .update(profiles)
-      .set(input)
+      .set({
+        full_name: input.full_name,
+        is_active: input.is_active,
+        email: input.email,
+        jobRole: input.job_role,
+        organization: input.organization,
+      })
       .where(eq(profiles.id, ctx.subject.id))
       .returning();
     if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
-    return updated;
+    return {
+      id: updated.id,
+      role: updated.role,
+      full_name: updated.full_name,
+      is_active: updated.is_active,
+      email: updated.email ?? null,
+      job_role: updated.jobRole ?? null,
+      organization: updated.organization ?? null,
+      avatar_url: updated.avatarUrl ?? null,
+    };
   });
 
 const getById = protectedProcedure
