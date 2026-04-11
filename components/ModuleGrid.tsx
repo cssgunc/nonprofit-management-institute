@@ -1,6 +1,6 @@
 import React from "react";
 import ModuleCard from "@/components/ModuleCard";
-import { mockModules } from "@/server/mock/data";
+import { api } from "@/utils/trpc/api";
 
 type ModuleGridProps = {
   className?: string;
@@ -11,9 +11,11 @@ export default function ModuleGrid({
   className = "grid",
   cohortSlug = "",
 }: ModuleGridProps) {
+  const { data: modules } = api.modules.list.useQuery();
+
   return (
     <div className={`grid grid-cols-2 md:grid-cols-3 gap-14 m-14 ${className}`}>
-      {mockModules.map((module) => (
+      {(modules ?? []).map((module) => (
         <ModuleCard
           key={module.id}
           title={module.title}

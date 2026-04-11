@@ -13,16 +13,6 @@ export type DiscussionNavItem = {
   moduleSlug?: string;
 };
 
-export const discussionsSidebarItems: DiscussionNavItem[] = [
-  { id: 0, title: "General", href: "/discussion" },
-  { id: 1, title: "Discussion 1", href: "/discussion", moduleSlug: "module-1" },
-  { id: 2, title: "Discussion 2", href: "/discussion", moduleSlug: "module-2" },
-  { id: 3, title: "Discussion 3", href: "/discussion", moduleSlug: "module-3" },
-  { id: 4, title: "Discussion 4", href: "/discussion", moduleSlug: "module-4" },
-  { id: 5, title: "Discussion 5", href: "/discussion", moduleSlug: "module-5" },
-  { id: 6, title: "Discussion 6", href: "/discussion", moduleSlug: "module-6" },
-];
-
 type SidebarDiscussionsProps = {
   activeId?: number;
   items?: DiscussionNavItem[];
@@ -32,7 +22,7 @@ type SidebarDiscussionsProps = {
 
 export default function SidebarDiscussions({
   activeId = 0,
-  items = discussionsSidebarItems,
+  items = [],
   onSelect,
   className,
 }: SidebarDiscussionsProps) {

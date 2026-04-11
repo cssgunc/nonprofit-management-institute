@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, asc } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { db } from "@/server/db";
-import { modules, profiles } from "@/server/db/schema";
+import { modules } from "@/server/db/schema";
 
 const ModuleSummary = z.object({
   id: z.number(),
@@ -22,11 +22,16 @@ const ModuleBySlugInput = z.object({
 
 /**
  * List all modules ordered by module_index.
- * Returns locked modules in list, but they cannot be opened unless user is admin.
  */
 const list = publicProcedure.output(z.array(ModuleSummary)).query(async () => {
   const rows = await db
-    .select()
+    .select({
+      id: modules.id,
+      module_index: modules.module_index,
+      slug: modules.slug,
+      title: modules.title,
+      description: modules.description,
+    })
     .from(modules)
     .orderBy(asc(modules.module_index));
 
@@ -36,7 +41,7 @@ const list = publicProcedure.output(z.array(ModuleSummary)).query(async () => {
     slug: row.slug,
     title: row.title,
     description: row.description ?? null,
-    locked: row.is_locked ?? false,
+    locked: false,
   }));
 });
 
@@ -46,11 +51,17 @@ const list = publicProcedure.output(z.array(ModuleSummary)).query(async () => {
 const bySlug = protectedProcedure
   .input(ModuleBySlugInput)
   .output(ModuleDetail)
-  .query(async ({ ctx, input }) => {
+  .query(async ({ input }) => {
     const { slug } = input;
 
     const [foundModule] = await db
-      .select()
+      .select({
+        id: modules.id,
+        module_index: modules.module_index,
+        slug: modules.slug,
+        title: modules.title,
+        description: modules.description,
+      })
       .from(modules)
       .where(eq(modules.slug, slug))
       .limit(1);
@@ -62,28 +73,13 @@ const bySlug = protectedProcedure
       });
     }
 
-    const [profile] = await db
-      .select({ role: profiles.role })
-      .from(profiles)
-      .where(eq(profiles.id, ctx.subject.id))
-      .limit(1);
-
-    const role = profile?.role ?? "student";
-
-    if (foundModule.is_locked && role === "student") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "This module is locked",
-      });
-    }
-
     return {
       id: foundModule.id,
       module_index: foundModule.module_index,
       slug: foundModule.slug,
       title: foundModule.title,
       description: foundModule.description ?? null,
-      locked: foundModule.is_locked ?? false,
+      locked: false,
     };
   });
 
