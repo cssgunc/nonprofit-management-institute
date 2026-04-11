@@ -3,6 +3,7 @@ import type { AppProps } from "next/app";
 import Header from "@/components/header";
 import { useRouter } from "next/router";
 import { api } from "@/utils/trpc/api";
+import { Toaster } from "sonner";
 
 function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -20,6 +21,7 @@ function App({ Component, pageProps }: AppProps) {
     <>
       {shouldShowHeader ? <Header /> : null}
       <Component {...pageProps} />
+      <Toaster position="bottom-right" />
     </>
   );
 }

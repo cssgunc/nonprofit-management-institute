@@ -22,6 +22,7 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [full_name, setFullName] = useState("");
   const [role, setRole] = useState<"admin" | "student">("student");
+  const [job_role, setJobRole] = useState("");
   const [organization, setOrganization] = useState("");
 
   // for handle new user
@@ -46,7 +47,7 @@ export default function SignUp() {
     }
 
     // Now tRPC should have access to the auth cookie
-    handleNewUser({ full_name, role, organization });
+    handleNewUser({ full_name, role, organization, job_role, email });
     apiUtils.invalidate();
   };
 
@@ -91,10 +92,18 @@ export default function SignUp() {
           />
 
           <input
-            placeholder="Enter your organization name"
+            placeholder="Enter your job role (optional)"
+            value={job_role}
+            onChange={(e) => setJobRole(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 
+                       text-black placeholder-black caret-black
+                       focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+          />
+
+          <input
+            placeholder="Enter your organization name (optional)"
             value={organization}
             onChange={(e) => setOrganization(e.target.value)}
-            required
             className="w-full px-4 py-3 rounded-lg border border-gray-300 
                        text-black placeholder-black caret-black
                        focus:ring-2 focus:ring-blue-500 focus:outline-none transition"

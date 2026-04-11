@@ -1,0 +1,111 @@
+import { useState } from "react";
+import { api } from "@/utils/trpc/api";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
+
+type CookieOptions = { maxAge?: number };
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    cookies: {
+      get(name: string) {
+        if (typeof window === "undefined") return "";
+        return (
+          document.cookie
+            .split("; ")
+            .find((row) => row.startsWith(name + "="))
+            ?.split("=")[1] || ""
+        );
+      },
+      set(name: string, value: string, options: CookieOptions) {
+        if (typeof window === "undefined") return;
+        const secure = window.location.protocol === "https:" ? "; secure" : "";
+        document.cookie = `${name}=${value}; path=/; max-age=${options.maxAge || 31536000}; samesite=lax${secure}`;
+      },
+      remove(name: string) {
+        if (typeof window === "undefined") return;
+        document.cookie = `${name}=; path=/; max-age=0`;
+      },
+    },
+  },
+);
+
+export default function CohortAccessPage() {
+  const [accessHash, setAccessHash] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const joinMutation = api.cohorts.joinCohort.useMutation({
+    onSuccess: (cohort) => {
+      router.push(`/cohorts/${cohort.slug}/dashboard`);
+    },
+    onError: (err) => {
+      setError(err.message);
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    const trimmed = accessHash.trim();
+    if (!trimmed) {
+      setError("Please enter an access code");
+      return;
+    }
+
+    const { data } = await supabase.auth.getUser();
+    const userId = data?.user?.id;
+    if (!userId) {
+      setError("User not authenticated");
+      return;
+    }
+
+    try {
+      await joinMutation.mutateAsync({
+        accessHash: trimmed,
+        userId,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to join cohort");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+        <h1 className="text-3xl font-bold text-black text-center mb-2">
+          Join Cohort
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4 text-black">
+          <input
+            type="text"
+            placeholder="Cohort access code"
+            value={accessHash}
+            onChange={(e) => setAccessHash(e.target.value)}
+            required
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+          />
+          <button
+            type="submit"
+            disabled={joinMutation.isPending}
+            className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+              joinMutation.isPending
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {joinMutation.isPending ? "Joining..." : "Join Cohort"}
+          </button>
+        </form>
+        {error && (
+          <div className="mt-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
+            {error}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

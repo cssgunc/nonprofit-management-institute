@@ -31,6 +31,8 @@ export const profiles = pgTable("profiles", {
   role: text("role", { enum: ["admin", "student"] }).notNull(),
   full_name: text("full_name").notNull(),
   is_active: boolean("is_active").notNull(),
+  email: text("email"),
+  jobRole: text("job_role"),
   organization: text("organization"),
   avatarUrl: text("avatar_url"),
 });
@@ -44,7 +46,7 @@ export const cohorts = pgTable("cohorts", {
 
 export const cohort_memberships = pgTable("cohort_memberships", {
   cohort_id: integer("cohort_id").references(() => cohorts.id),
-  profiles_id: uuid("profiles_id").references(() => profiles.id), // foreign key to auth.user.id (issue #1 isn't finished yet).
+  profiles_id: uuid("profiles_id").references(() => profiles.id),
 });
 
 export const modules = pgTable("modules", {
@@ -53,8 +55,21 @@ export const modules = pgTable("modules", {
   slug: varchar("slug").notNull().unique(),
   title: text("title").notNull(),
   description: text("description"),
-  is_locked: boolean("is_locked"),
 });
+
+export const cohort_modules = pgTable(
+  "cohort_modules",
+  {
+    cohort_id: integer("cohort_id")
+      .notNull()
+      .references(() => cohorts.id),
+    module_id: integer("module_id")
+      .notNull()
+      .references(() => modules.id),
+    is_active: boolean("is_active").notNull().default(true),
+  },
+  (t) => [primaryKey({ columns: [t.cohort_id, t.module_id] })],
+);
 
 export const resourceTypeEnum = pgEnum("resource_type", [
   "handout",
