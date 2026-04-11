@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/utils/cn";
+import { setDiscussionSidebarContext } from "@/utils/sidebarContext";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 
@@ -74,7 +75,10 @@ export default function SidebarDiscussions({
                   <Link
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    onClick={() => onSelect?.(item.id)}
+                    onClick={() => {
+                      setDiscussionSidebarContext("discussions");
+                      onSelect?.(item.id);
+                    }}
                     className={cn(
                       "relative block whitespace-nowrap px-4 py-2.5 text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
                       isActive ? "font-bold" : "font-normal hover:bg-zinc-100",

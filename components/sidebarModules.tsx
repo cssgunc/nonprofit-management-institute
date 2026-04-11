@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
+import { setDiscussionSidebarContext } from "@/utils/sidebarContext";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 
@@ -77,6 +78,7 @@ export default function SidebarModules({
 									href={item.href}
 									aria-current={isActive ? "page" : undefined}
 									onClick={() => {
+										setDiscussionSidebarContext("modules");
 										setActive(item.id);
 										onSelect?.(item.id);
 									}}
