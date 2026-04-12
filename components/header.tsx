@@ -3,13 +3,24 @@ import Logo from "@/assets/NCCNonProfit_LOGO.png";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import ProfileMenu from "@/components/profileMenu";
+import { api } from "@/utils/trpc/api";
 
 export default function Header() {
   const router = useRouter();
   const { cohort_slug } = router.query;
+  const profileQuery = api.profiles.me.useQuery(undefined, {
+    retry: false,
+  });
 
   const basePath = cohort_slug ? `/cohorts/${cohort_slug as string}` : "";
   const profileHref = cohort_slug ? `${basePath}/profile` : "/profile";
+  const displayName = profileQuery.data?.full_name?.trim() ?? "";
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 
   const navLinks = cohort_slug
     ? [
@@ -42,7 +53,11 @@ export default function Header() {
           ))}
         </nav>
 
-        <ProfileMenu profileHref={profileHref} className="ml-16" />
+        <ProfileMenu
+          profileHref={profileHref}
+          initials={initials || "?"}
+          className="ml-16"
+        />
       </div>
     </header>
   );
