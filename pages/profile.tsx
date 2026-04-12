@@ -54,6 +54,13 @@ export default function ProfilePage() {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 
+  const hasChanges = Boolean(
+    profileQuery.data &&
+    (fullName !== (profileQuery.data.full_name ?? "") ||
+      jobTitle !== (profileQuery.data.job_role ?? "") ||
+      organization !== (profileQuery.data.organization ?? "")),
+  );
+
   return (
     <div className="min-h-screen w-full bg-[#f5f5f5]">
       <div className="mx-auto max-w-[1500px] px-5 py-5 md:px-8">
@@ -84,11 +91,11 @@ export default function ProfilePage() {
                     </label>
                     <input
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      disabled
                       placeholder={
                         profileQuery.data?.email ?? "Rosedoe123@gmail.com"
                       }
-                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-3 text-xl text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full cursor-not-allowed rounded-[6px] border border-zinc-300 bg-zinc-100 px-4 py-3 text-xl text-zinc-500 placeholder:text-zinc-400 focus:outline-none"
                     />
                   </div>
 
@@ -111,26 +118,28 @@ export default function ProfilePage() {
                     <input
                       value={organization}
                       onChange={(e) => setOrganization(e.target.value)}
-                      placeholder={profileQuery.data?.organization ?? "Nonprofit"}
+                      placeholder={
+                        profileQuery.data?.organization ?? "Nonprofit"
+                      }
                       className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-3 text-xl text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                   </div>
                 </div>
 
                 <div className="mt-12 flex justify-center">
-              <Link
-                href="/changepassword"
-                className="inline-flex min-w-[220px] items-center justify-center rounded-full border border-zinc-500 px-8 py-3 text-xl font-medium text-black transition hover:bg-zinc-200"
-              >
-                Change Password
-              </Link>
+                  <Link
+                    href="/changepassword"
+                    className="inline-flex min-w-[220px] items-center justify-center rounded-full border border-zinc-500 px-8 py-3 text-xl font-medium text-black transition hover:bg-zinc-200"
+                  >
+                    Change Password
+                  </Link>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="px-6 py-8 lg:px-8">
-            <div className="mx-auto flex h-full max-w-[520px] flex-col">
+          <section className="px-6 py-8 lg:px-4 xl:px-2">
+            <div className="ml-auto flex h-full w-full max-w-[860px] flex-col">
               <div className="flex flex-1 items-center justify-center">
                 <div className="group relative flex h-[310px] w-[310px] items-center justify-center md:h-[380px] md:w-[380px]">
                   <Avatar className="h-[310px] w-[310px] rounded-full bg-[#d8e6f5] md:h-[380px] md:w-[380px]">
@@ -153,7 +162,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="mt-10 flex items-center justify-end gap-4 pr-0">
+              <div className="mt-10 flex w-full items-center justify-end gap-2 pr-0 lg:-mr-2 xl:-mr-4">
                 <button
                   type="button"
                   onClick={resetForm}
@@ -164,7 +173,11 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={updateProfile.isPending || profileQuery.isLoading}
+                  disabled={
+                    updateProfile.isPending ||
+                    profileQuery.isLoading ||
+                    !hasChanges
+                  }
                   className="inline-flex min-w-[160px] items-center justify-center rounded-full bg-[#d1d3de] px-8 py-3 text-xl font-medium text-white transition enabled:bg-[#0795b8] enabled:hover:bg-[#067f9d] disabled:cursor-not-allowed"
                 >
                   {updateProfile.isPending ? "Saving..." : "Save"}

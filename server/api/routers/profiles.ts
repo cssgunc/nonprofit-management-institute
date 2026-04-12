@@ -27,9 +27,16 @@ const ContactSchema = z.object({
   avatar_url: z.string().nullable(),
 });
 
-async function fetchProfile(userId: string) {
-  const [row] = await db.select().from(profiles).where(eq(profiles.id, userId));
-  if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+function toProfile(row: {
+  id: string;
+  role: "admin" | "student";
+  full_name: string;
+  is_active: boolean;
+  email: string | null;
+  jobRole: string | null;
+  organization: string | null;
+  avatarUrl: string | null;
+}) {
   return {
     id: row.id,
     role: row.role,
@@ -40,6 +47,12 @@ async function fetchProfile(userId: string) {
     organization: row.organization ?? null,
     avatar_url: row.avatarUrl ?? null,
   };
+}
+
+async function fetchProfile(userId: string) {
+  const [row] = await db.select().from(profiles).where(eq(profiles.id, userId));
+  if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+  return toProfile(row);
 }
 
 async function requireAdmin(userId: string) {
@@ -76,16 +89,7 @@ const updateMe = protectedProcedure
       .where(eq(profiles.id, ctx.subject.id))
       .returning();
     if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
-    return {
-      id: updated.id,
-      role: updated.role,
-      full_name: updated.full_name,
-      is_active: updated.is_active,
-      email: updated.email ?? null,
-      job_role: updated.jobRole ?? null,
-      organization: updated.organization ?? null,
-      avatar_url: updated.avatarUrl ?? null,
-    };
+    return toProfile(updated);
   });
 
 const getById = protectedProcedure
@@ -98,7 +102,7 @@ const getById = protectedProcedure
       .from(profiles)
       .where(eq(profiles.id, input.userId));
     if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-    return row;
+    return toProfile(row);
   });
 
 const list = protectedProcedure
@@ -111,7 +115,11 @@ const list = protectedProcedure
       input?.isActive !== undefined
         ? baseQuery.where(eq(profiles.is_active, input.isActive))
         : baseQuery;
-    return filtered.orderBy(asc(profiles.full_name), asc(profiles.id));
+    const rows = await filtered.orderBy(
+      asc(profiles.full_name),
+      asc(profiles.id),
+    );
+    return rows.map(toProfile);
   });
 
 const getContactsBySlug = protectedProcedure
