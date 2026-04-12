@@ -1,5 +1,6 @@
 import SidebarDiscussions from "@/components/sidebarDiscussions";
 import type { DiscussionNavItem } from "@/components/sidebarDiscussions";
+import CohortAccessGuard from "@/components/CohortAccessGuard";
 import { useRouter } from "next/router";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { api } from "@/utils/trpc/api";
@@ -47,19 +48,21 @@ export default function DiscussionPage() {
       ?.id ?? 0;
 
   return (
-    <div className="flex min-h-[calc(100vh-7rem)] w-full">
-      {mounted && (
-        <SidebarDiscussions
-          items={discussionItems}
-          activeId={activeDiscussionId}
-        />
-      )}
-      <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
-        <h1 className="text-3xl font-bold text-black">Discussion</h1>
-        <p className="text-black">
-          This is the discussion page for the cohort.
-        </p>
+    <CohortAccessGuard cohortSlug={cohortSlug}>
+      <div className="flex min-h-[calc(100vh-7rem)] w-full">
+        {mounted && (
+          <SidebarDiscussions
+            items={discussionItems}
+            activeId={activeDiscussionId}
+          />
+        )}
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
+          <h1 className="text-3xl font-bold text-black">Discussion</h1>
+          <p className="text-black">
+            This is the discussion page for the cohort.
+          </p>
+        </div>
       </div>
-    </div>
+    </CohortAccessGuard>
   );
 }

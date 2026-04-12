@@ -2,6 +2,7 @@ import SidebarModules from "@/components/sidebarModules";
 import type { SidebarNavItem } from "@/components/sidebarModules";
 import SidebarDiscussions from "@/components/sidebarDiscussions";
 import type { DiscussionNavItem } from "@/components/sidebarDiscussions";
+import CohortAccessGuard from "@/components/CohortAccessGuard";
 import { getDiscussionSidebarContext } from "@/utils/sidebarContext";
 import { api } from "@/utils/trpc/api";
 import { useRouter } from "next/router";
@@ -84,26 +85,28 @@ export default function ModuleDiscussions() {
     discussionItems.find((item) => item.moduleSlug === moduleSlug)?.id ?? 0;
 
   return (
-    <div className="flex min-h-[calc(100vh-7rem)] w-full">
-      {mounted &&
-        (sidebarContext === "discussions" ? (
-          <SidebarDiscussions
-            items={discussionItems}
-            activeId={activeDiscussionId}
-          />
-        ) : (
-          <SidebarModules items={sidebarItems} activeId={1} />
-        ))}
-      <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
-        <h1 className="text-3xl font-bold text-black">
-          {moduleQuery.data?.title ?? "Module Discussion"}
-        </h1>
-        <p className="text-black">
-          {moduleQuery.data
-            ? `This is the discussion page for ${moduleQuery.data.title}.`
-            : "This is the discussion page for this module."}
-        </p>
+    <CohortAccessGuard cohortSlug={cohortSlug}>
+      <div className="flex min-h-[calc(100vh-7rem)] w-full">
+        {mounted &&
+          (sidebarContext === "discussions" ? (
+            <SidebarDiscussions
+              items={discussionItems}
+              activeId={activeDiscussionId}
+            />
+          ) : (
+            <SidebarModules items={sidebarItems} activeId={1} />
+          ))}
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
+          <h1 className="text-3xl font-bold text-black">
+            {moduleQuery.data?.title ?? "Module Discussion"}
+          </h1>
+          <p className="text-black">
+            {moduleQuery.data
+              ? `This is the discussion page for ${moduleQuery.data.title}.`
+              : "This is the discussion page for this module."}
+          </p>
+        </div>
       </div>
-    </div>
+    </CohortAccessGuard>
   );
 }

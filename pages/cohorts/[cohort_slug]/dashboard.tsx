@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import CohortAccessGuard from "@/components/CohortAccessGuard";
 import ModuleGrid from "@/components/ModuleGrid";
 import { api } from "@/utils/trpc/api";
 import { toast } from "sonner";
@@ -25,24 +26,26 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen w-full bg-[#f5f5f5]">
-      <div className="mx-auto max-w-7xl px-6 py-8 md:px-10">
-        <ModuleGrid
-          cohortSlug={cohort_slug as string}
-          isAdmin={isAdmin}
-          onToggleStatus={
-            isAdmin
-              ? (slug, isActive) =>
-                  updateStatus.mutate({
-                    slug,
-                    cohortSlug: cohort_slug as string,
-                    isActive,
-                  })
-              : undefined
-          }
-          isToggling={updateStatus.isPending}
-        />
+    <CohortAccessGuard cohortSlug={cohort_slug as string}>
+      <div className="min-h-screen w-full bg-[#f5f5f5]">
+        <div className="mx-auto max-w-7xl px-6 py-8 md:px-10">
+          <ModuleGrid
+            cohortSlug={cohort_slug as string}
+            isAdmin={isAdmin}
+            onToggleStatus={
+              isAdmin
+                ? (slug, isActive) =>
+                    updateStatus.mutate({
+                      slug,
+                      cohortSlug: cohort_slug as string,
+                      isActive,
+                    })
+                : undefined
+            }
+            isToggling={updateStatus.isPending}
+          />
+        </div>
       </div>
-    </div>
+    </CohortAccessGuard>
   );
 }
