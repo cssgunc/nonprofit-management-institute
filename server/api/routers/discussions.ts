@@ -56,8 +56,6 @@ function collectSubtreeIds(rootId: number, allPosts: PostRow[]): number[] {
 }
 
 export const discussionsRouter = createTRPCRouter({
-
-  // Returns only top-level posts for a module slug, sorted createdAt DESC
   listThreadsByModuleSlug: publicProcedure
     .input(z.object({ moduleSlug: z.string() }))
     .query(async ({ input }) => {
@@ -73,13 +71,12 @@ export const discussionsRouter = createTRPCRouter({
         .where(
           and(
             eq(discussions_post.module_id, module.id),
-            isNull(discussions_post.parent_post_id),  // top-level threads only
+            isNull(discussions_post.parent_post_id),
           )
         )
         .orderBy(desc(discussions_post.created_at));
     }),
 
-  // Returns immediate children only (not recursive), sorted createdAt ASC
   listRepliesByParentPostId: publicProcedure
     .input(z.object({ parentPostId: z.number().int() }))
     .query(async ({ input }) => {
@@ -93,8 +90,6 @@ export const discussionsRouter = createTRPCRouter({
         .orderBy(asc(discussions_post.created_at));
     }),
 
-  // Returns the top-level post as root with all replies recursively nested,
-  // replies sorted createdAt ASC at each level
   getThread: publicProcedure
     .input(z.object({ postId: z.number().int() }))
     .query(async ({ input }) => {
@@ -106,7 +101,6 @@ export const discussionsRouter = createTRPCRouter({
         });
       }
 
-      // Fetch all posts in the module, then filter to just this thread's subtree
       const allModulePosts = await db
         .select()
         .from(discussions_post)
@@ -130,7 +124,6 @@ export const discussionsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (!input.parent_post_id) {
-        // New thread
         if (!input.module_id) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -148,7 +141,6 @@ export const discussionsRouter = createTRPCRouter({
           is_deleted: false,
         });
       } else {
-        // Reply — inherit module/cohort from parent, validate if caller supplied module_id
         const parent = await fetchPost(input.parent_post_id);
         if (parent.is_deleted) {
           throw new TRPCError({
