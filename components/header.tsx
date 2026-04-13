@@ -2,7 +2,7 @@ import Link from "next/link";
 import Logo from "@/assets/NCCNonProfit_LOGO.png";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import ProfileMenu from "@/components/profileMenu";
+import ProfileMenu from "@/components/ProfileMenu";
 import { api } from "@/utils/trpc/api";
 
 export default function Header() {
@@ -13,7 +13,9 @@ export default function Header() {
   });
 
   const basePath = cohort_slug ? `/cohorts/${cohort_slug as string}` : "";
-  const profileHref = cohort_slug ? `${basePath}/profile` : "/profile";
+  const isAdmin = profileQuery.data?.role === "admin";
+  const profileHref =
+    cohort_slug && !isAdmin ? `${basePath}/profile` : "/profile";
   const displayName = profileQuery.data?.full_name?.trim() ?? "";
   const initials = displayName
     .split(/\s+/)
