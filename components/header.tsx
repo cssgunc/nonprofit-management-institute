@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Logo from "@/assets/NCCNonProfit_LOGO.png";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import ProfileMenu from "@/components/ProfileMenu";
@@ -36,7 +35,14 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-white shadow-sm">
       <div className="mx-auto flex h-[7rem] items-center px-12">
         <Link href="/" className="flex-shrink-0">
-          <Image src={Logo} alt="NPMI/NCCN Logo" className="h-20 w-auto" />
+          <Image
+            src="/assets/NCCNonProfit_LOGO.png"
+            alt="NPMI/NCCN Logo"
+            width={200}
+            height={80}
+            priority
+            className="h-20 w-auto"
+          />
         </Link>
 
         <nav className="ml-auto flex items-center gap-12">

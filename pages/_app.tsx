@@ -13,6 +13,7 @@ function App({ Component, pageProps }: AppProps) {
     "/signup",
     "/resetpassword",
     "/changepassword",
+    "/cohort-access",
   ]);
 
   const shouldShowHeader = !routesWithoutHeader.has(router.pathname);
