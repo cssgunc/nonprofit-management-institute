@@ -1,5 +1,5 @@
 import z from "zod";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
 import { cohort_memberships, cohorts, profiles } from "@/server/db/schema";
@@ -59,6 +59,32 @@ async function requireAdmin(userId: string) {
   const profile = await fetchProfile(userId);
   if (profile.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
   return profile;
+}
+
+async function requireCohortAccess(userId: string, cohortId: number) {
+  const profile = await fetchProfile(userId);
+
+  if (profile.role === "admin") {
+    return;
+  }
+
+  const [membership] = await db
+    .select({ cohort_id: cohort_memberships.cohort_id })
+    .from(cohort_memberships)
+    .where(
+      and(
+        eq(cohort_memberships.profiles_id, userId),
+        eq(cohort_memberships.cohort_id, cohortId),
+      ),
+    )
+    .limit(1);
+
+  if (!membership) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You do not have access to this cohort",
+    });
+  }
 }
 
 const me = protectedProcedure.output(ProfileSchema).query(async ({ ctx }) => {
@@ -125,7 +151,22 @@ const list = protectedProcedure
 const getContactsBySlug = protectedProcedure
   .input(z.object({ cohort_slug: z.string().min(1) }))
   .output(z.array(ContactSchema))
-  .query(async ({ input }) => {
+  .query(async ({ ctx, input }) => {
+    const [cohort] = await db
+      .select({ id: cohorts.id })
+      .from(cohorts)
+      .where(eq(cohorts.slug, input.cohort_slug))
+      .limit(1);
+
+    if (!cohort) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Cohort "${input.cohort_slug}" not found`,
+      });
+    }
+
+    await requireCohortAccess(ctx.subject.id, cohort.id);
+
     const rows = await db
       .select({
         id: profiles.id,

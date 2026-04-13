@@ -3,7 +3,13 @@ import { TRPCError } from "@trpc/server";
 import { eq, asc, and } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { db } from "@/server/db";
-import { modules, profiles, cohorts, cohort_modules } from "@/server/db/schema";
+import {
+  modules,
+  profiles,
+  cohorts,
+  cohort_modules,
+  cohort_memberships,
+} from "@/server/db/schema";
 
 const ModuleSummary = z.object({
   id: z.number(),
@@ -51,6 +57,35 @@ async function getRole(userId: string) {
   return profile?.role ?? "student";
 }
 
+/** Ensure the caller can access the given cohort. Admins are allowed globally. */
+async function requireCohortAccess(userId: string, cohortId: number) {
+  const role = await getRole(userId);
+
+  if (role === "admin") {
+    return role;
+  }
+
+  const [membership] = await db
+    .select({ cohort_id: cohort_memberships.cohort_id })
+    .from(cohort_memberships)
+    .where(
+      and(
+        eq(cohort_memberships.profiles_id, userId),
+        eq(cohort_memberships.cohort_id, cohortId),
+      ),
+    )
+    .limit(1);
+
+  if (!membership) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You do not have access to this cohort",
+    });
+  }
+
+  return role;
+}
+
 /**
  * List all modules for a cohort, ordered by module_index.
  * Callers receive active status so the UI can show locked modules differently.
@@ -60,7 +95,7 @@ const list = protectedProcedure
   .output(z.array(ModuleSummary))
   .query(async ({ ctx, input }) => {
     const cohort = await resolveCohort(input.cohortSlug);
-    await getRole(ctx.subject.id);
+    await requireCohortAccess(ctx.subject.id, cohort.id);
 
     const rows = await db
       .select({
@@ -102,6 +137,7 @@ const bySlug = protectedProcedure
   .output(ModuleDetail)
   .query(async ({ ctx, input }) => {
     const cohort = await resolveCohort(input.cohortSlug);
+    const role = await requireCohortAccess(ctx.subject.id, cohort.id);
 
     const [foundModule] = await db
       .select({
@@ -129,8 +165,6 @@ const bySlug = protectedProcedure
         message: `Module with slug "${input.slug}" not found in this cohort`,
       });
     }
-
-    const role = await getRole(ctx.subject.id);
 
     if (!foundModule.is_active && role !== "admin") {
       throw new TRPCError({
@@ -167,7 +201,8 @@ const updateModuleStatus = protectedProcedure
   )
   .output(UpdateModuleStatusOutput)
   .mutation(async ({ ctx, input }) => {
-    const role = await getRole(ctx.subject.id);
+    const cohort = await resolveCohort(input.cohortSlug);
+    const role = await requireCohortAccess(ctx.subject.id, cohort.id);
 
     if (role !== "admin") {
       throw new TRPCError({
@@ -175,8 +210,6 @@ const updateModuleStatus = protectedProcedure
         message: "Only admins can update module status",
       });
     }
-
-    const cohort = await resolveCohort(input.cohortSlug);
 
     const [mod] = await db
       .select({ id: modules.id })
