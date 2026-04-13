@@ -11,6 +11,10 @@ const ProfileSchema = z.object({
   role: z.enum(["admin", "student"]),
   full_name: z.string(),
   is_active: z.boolean(),
+  email: z.string().nullable(),
+  job_role: z.string().nullable(),
+  organization: z.string().nullable(),
+  avatar_url: z.string().nullable(),
 });
 
 const ContactSchema = z.object({
@@ -23,10 +27,32 @@ const ContactSchema = z.object({
   avatar_url: z.string().nullable(),
 });
 
+function toProfile(row: {
+  id: string;
+  role: "admin" | "student";
+  full_name: string;
+  is_active: boolean;
+  email: string | null;
+  jobRole: string | null;
+  organization: string | null;
+  avatarUrl: string | null;
+}) {
+  return {
+    id: row.id,
+    role: row.role,
+    full_name: row.full_name,
+    is_active: row.is_active,
+    email: row.email ?? null,
+    job_role: row.jobRole ?? null,
+    organization: row.organization ?? null,
+    avatar_url: row.avatarUrl ?? null,
+  };
+}
+
 async function fetchProfile(userId: string) {
   const [row] = await db.select().from(profiles).where(eq(profiles.id, userId));
   if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-  return row;
+  return toProfile(row);
 }
 
 async function requireAdmin(userId: string) {
@@ -70,17 +96,26 @@ const updateMe = protectedProcedure
     z.object({
       full_name: z.string().optional(),
       is_active: z.boolean().optional(),
+      email: z.string().email().optional(),
+      job_role: z.string().optional(),
+      organization: z.string().optional(),
     }),
   )
   .output(ProfileSchema)
   .mutation(async ({ ctx, input }) => {
     const [updated] = await db
       .update(profiles)
-      .set(input)
+      .set({
+        full_name: input.full_name,
+        is_active: input.is_active,
+        email: input.email,
+        jobRole: input.job_role,
+        organization: input.organization,
+      })
       .where(eq(profiles.id, ctx.subject.id))
       .returning();
     if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
-    return updated;
+    return toProfile(updated);
   });
 
 const getById = protectedProcedure
@@ -93,7 +128,7 @@ const getById = protectedProcedure
       .from(profiles)
       .where(eq(profiles.id, input.userId));
     if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-    return row;
+    return toProfile(row);
   });
 
 const list = protectedProcedure
@@ -106,7 +141,11 @@ const list = protectedProcedure
       input?.isActive !== undefined
         ? baseQuery.where(eq(profiles.is_active, input.isActive))
         : baseQuery;
-    return filtered.orderBy(asc(profiles.full_name), asc(profiles.id));
+    const rows = await filtered.orderBy(
+      asc(profiles.full_name),
+      asc(profiles.id),
+    );
+    return rows.map(toProfile);
   });
 
 const getContactsBySlug = protectedProcedure
