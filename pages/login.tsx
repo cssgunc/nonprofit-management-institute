@@ -152,7 +152,7 @@ export default function Login() {
               />
               <div className="text-right mt-1 lg:mt-1.5">
                 <Link
-                  href="/forgot-password"
+                  href="/resetpassword"
                   className="text-[10px] lg:text-xs text-gray-500 hover:text-gray-700 transition"
                 >
                   Forgot Password?
