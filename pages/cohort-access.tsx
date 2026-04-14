@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "@/utils/trpc/api";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
+import Image from "next/image";
 
 type CookieOptions = { maxAge?: number };
 
@@ -74,37 +75,119 @@ export default function CohortAccessPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-black text-center mb-2">
-          Join Cohort
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-4 text-black">
-          <input
-            type="text"
-            placeholder="Cohort access code"
-            value={accessHash}
-            onChange={(e) => setAccessHash(e.target.value)}
-            required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-          />
-          <button
-            type="submit"
-            disabled={joinMutation.isPending}
-            className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-              joinMutation.isPending
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
+    <div className="h-screen w-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-[#2884A4] via-[#7D328C] to-[#A27A4A] p-6 lg:p-10 box-border">
+      <div className="w-full h-full max-h-[850px] max-w-7xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+        <div className="w-full md:w-1/2 p-6 lg:p-10 flex flex-col items-center justify-between bg-white relative">
+          <h2
+            className="text-[#5B2983] text-2xl lg:text-4xl font-bold tracking-wide text-center pt-2 lg:pt-4"
+            style={{ fontFamily: "'Lato', sans-serif" }}
           >
-            {joinMutation.isPending ? "Joining..." : "Join Cohort"}
-          </button>
-        </form>
-        {error && (
-          <div className="mt-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
-            {error}
+            Nonprofit Management Institute Participant Dashboard
+          </h2>
+
+          <div className="flex-grow flex items-center justify-center w-full my-4">
+            <Image
+              src="/assets/NCCNonProfit_LOGO.png"
+              alt="Center for Nonprofits Logo"
+              width={320}
+              height={150}
+              priority
+              className="w-[60%] lg:w-[70%] max-w-[280px] object-contain"
+            />
           </div>
-        )}
+
+          <p className="text-xs lg:text-sm italic text-black text-center max-w-[250px] pb-2 lg:pb-4">
+            “To educate, connect, and advocate for nonprofits across the state.”
+          </p>
+        </div>
+
+        <div className="w-full md:w-1/2 p-6 lg:p-10 bg-[#BEE3EE] flex flex-col justify-center relative">
+          <button
+            onClick={() => router.back()}
+            className="absolute top-6 left-6 lg:top-8 lg:left-8 flex items-center text-black font-medium text-sm hover:opacity-70 transition"
+          >
+            <svg
+              className="w-4 h-4 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Back
+          </button>
+
+          <h1 className="text-xl lg:text-3xl font-bold text-black text-center mb-8 lg:mb-12">
+            Cohort
+          </h1>
+
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4 lg:space-y-5 w-full max-w-sm mx-auto"
+          >
+            <div>
+              <label className="flex items-center text-black text-xs lg:text-sm mb-1">
+                Cohort Access Code
+                <span className="relative ml-1 text-[#3192B3] group cursor-help">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-800 text-white text-[10px] lg:text-xs text-center rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none">
+                    Enter the cohort access code you received via email
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                </span>
+              </label>
+
+              <input
+                type="text"
+                value={accessHash}
+                onChange={(e) => setAccessHash(e.target.value)}
+                required
+                className="w-full px-3 py-1.5 lg:px-4 lg:py-2 text-xs lg:text-sm rounded-sm border border-[#74B1C6] bg-[#DBF0F6] text-black 
+                           focus:ring-2 focus:ring-[#3192B3] focus:outline-none transition"
+              />
+            </div>
+
+            <div className="flex justify-center pt-4 lg:pt-6">
+              <button
+                type="submit"
+                disabled={joinMutation.isPending}
+                className={`px-10 py-2 lg:px-12 lg:py-2.5 text-sm lg:text-base rounded-full font-medium text-white transition ${
+                  joinMutation.isPending
+                    ? "bg-[#28819D] cursor-not-allowed opacity-80"
+                    : "bg-[#3192B3] hover:bg-[#257A95]"
+                }`}
+              >
+                {joinMutation.isPending ? "Entering..." : "Enter"}
+              </button>
+            </div>
+          </form>
+
+          {error && (
+            <div className="mt-4 lg:mt-5 p-2 lg:p-3 text-xs lg:text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg max-w-sm mx-auto w-full">
+              {error}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
