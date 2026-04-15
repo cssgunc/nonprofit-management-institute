@@ -1,15 +1,35 @@
 import Link from "next/link";
-import Logo from "@/assets/NCCNonProfit_LOGO.png";
 import Image from "next/image";
-
 import { useRouter } from "next/router";
+import ProfileMenu from "@/components/ProfileMenu";
+import { api } from "@/utils/trpc/api";
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 
 export default function Header() {
   const router = useRouter();
   const { cohort_slug } = router.query;
+  const supabase = createSupabaseComponentClient();
+  const profileQuery = api.profiles.me.useQuery(undefined, {
+    retry: false,
+  });
 
-  // Build cohort navigation links when a cohort slug is available
   const basePath = cohort_slug ? `/cohorts/${cohort_slug as string}` : "";
+  const isAdmin = profileQuery.data?.role === "admin";
+  const profileHref =
+    cohort_slug && !isAdmin ? `${basePath}/profile` : "/profile";
+  const displayName = profileQuery.data?.full_name?.trim() ?? "";
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+  const avatarPublicUrl = profileQuery.data?.avatar_url
+    ? supabase.storage
+        .from("avatars")
+        .getPublicUrl(profileQuery.data.avatar_url).data.publicUrl
+    : undefined;
 
   const navLinks = cohort_slug
     ? [
@@ -22,12 +42,17 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-white shadow-sm">
       <div className="mx-auto flex h-[7rem] items-center px-12">
-        {/* Left - Logo */}
         <Link href="/" className="flex-shrink-0">
-          <Image src={Logo} alt="NPMI/NCCN Logo" className="h-20 w-auto" />
+          <Image
+            src="/assets/NCCNonProfit_LOGO.png"
+            alt="NPMI/NCCN Logo"
+            width={200}
+            height={80}
+            priority
+            className="h-20 w-auto"
+          />
         </Link>
 
-        {/* Middle / Right – Navigation links */}
         <nav className="ml-auto flex items-center gap-12">
           {navLinks.map((link) => (
             <Link
@@ -44,12 +69,12 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Far Right – User avatar placeholder */}
-        <Link
-          href="/profile"
-          className="ml-16 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
-          aria-label="User profile"
-        ></Link>
+        <ProfileMenu
+          profileHref={profileHref}
+          initials={initials || "?"}
+          avatarUrl={avatarPublicUrl}
+          className="ml-16"
+        />
       </div>
     </header>
   );

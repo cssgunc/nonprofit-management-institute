@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 
 const supabase = createClient(
@@ -10,14 +10,6 @@ const supabase = createClient(
 export default function SignOut() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push("/login");
-      }
-    });
-  }, []);
 
   const handleLogout = async () => {
     setLoading(true);
