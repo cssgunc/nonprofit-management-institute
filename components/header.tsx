@@ -3,10 +3,12 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import ProfileMenu from "@/components/ProfileMenu";
 import { api } from "@/utils/trpc/api";
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 
 export default function Header() {
   const router = useRouter();
   const { cohort_slug } = router.query;
+  const supabase = createSupabaseComponentClient();
   const profileQuery = api.profiles.me.useQuery(undefined, {
     retry: false,
   });
@@ -22,6 +24,12 @@ export default function Header() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+
+  const avatarPublicUrl = profileQuery.data?.avatar_url
+    ? supabase.storage
+        .from("avatars")
+        .getPublicUrl(profileQuery.data.avatar_url).data.publicUrl
+    : undefined;
 
   const navLinks = cohort_slug
     ? [
@@ -64,6 +72,7 @@ export default function Header() {
         <ProfileMenu
           profileHref={profileHref}
           initials={initials || "?"}
+          avatarUrl={avatarPublicUrl}
           className="ml-16"
         />
       </div>
