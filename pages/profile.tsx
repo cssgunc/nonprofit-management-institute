@@ -1,11 +1,51 @@
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
+import { uploadAvatarFileToSupabase } from "@/utils/supabase/clients/storage";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/avatar";
 import { api } from "@/utils/trpc/api";
+import { Subject } from "@/server/models/auth";
 
 export default function ProfilePage() {
   const profileQuery = api.profiles.me.useQuery();
+
+  const apiUtils = api.useUtils();
+  const supabase = createSupabaseComponentClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const updateAvatarMutation = api.profiles.updateProfilePicture.useMutation({
+    onSuccess: async () => {
+      toast.success("Profile picture updated!");
+      await apiUtils.profiles.me.invalidate();
+    },
+    onError: () => toast.error("Failed to update profile picture."),
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profileQuery.data) return;
+
+    toast.loading("Uploading image...", { id: "avatar-upload" });
+
+    uploadAvatarFileToSupabase(
+      supabase,
+      { id: profileQuery.data.id } as Subject,
+      file,
+      (avatar_url) => {
+        updateAvatarMutation.mutate({ avatar_url });
+        toast.dismiss("avatar-upload");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      },
+      (error) => {
+        console.error("Avatar upload failed:", error);
+        toast.dismiss("avatar-upload");
+        toast.error("Upload rejected by Supabase. Check RLS policies.");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      },
+    );
+  };
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");
@@ -60,6 +100,12 @@ export default function ProfilePage() {
       jobTitle !== (profileQuery.data.job_role ?? "") ||
       organization !== (profileQuery.data.organization ?? "")),
   );
+
+  const avatarPublicUrl = profileQuery.data?.avatar_url
+    ? supabase.storage
+        .from("avatars")
+        .getPublicUrl(profileQuery.data.avatar_url).data.publicUrl
+    : undefined;
 
   return (
     <div className="min-h-screen w-full bg-[#f5f5f5]">
@@ -144,7 +190,7 @@ export default function ProfilePage() {
                 <div className="group relative flex h-[310px] w-[310px] items-center justify-center md:h-[380px] md:w-[380px]">
                   <Avatar className="h-[310px] w-[310px] rounded-full bg-[#d8e6f5] md:h-[380px] md:w-[380px]">
                     <AvatarImage
-                      src={profileQuery.data?.avatar_url ?? undefined}
+                      src={avatarPublicUrl}
                       className="h-full w-full object-cover"
                     />
                     <AvatarFallback className="h-full w-full bg-[#d8e6f5] text-7xl font-semibold text-zinc-700 md:text-8xl">
@@ -152,9 +198,21 @@ export default function ProfilePage() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="pointer-events-none absolute inset-0 rounded-full bg-black/0 transition-colors duration-200 group-hover:bg-black/18" />
+                  <input
+                    className="hidden"
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
                   <button
                     type="button"
                     aria-label="Edit profile image"
+                    onClick={() => {
+                      if (fileInputRef && fileInputRef.current) {
+                        fileInputRef.current.click();
+                      }
+                    }}
                     className="absolute bottom-5 right-5 z-10 flex h-12 w-12 items-center justify-center rounded-full border border-zinc-600 bg-white text-2xl text-black shadow-sm transition hover:bg-zinc-100 md:bottom-6 md:right-6 md:h-14 md:w-14"
                   >
                     ✎
