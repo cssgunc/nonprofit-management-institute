@@ -1,5 +1,5 @@
 import z from "zod";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
 import { cohort_memberships, cohorts, profiles } from "@/server/db/schema";
@@ -11,6 +11,10 @@ const ProfileSchema = z.object({
   role: z.enum(["admin", "student"]),
   full_name: z.string(),
   is_active: z.boolean(),
+  email: z.string().nullable(),
+  job_role: z.string().nullable(),
+  organization: z.string().nullable(),
+  avatar_url: z.string().nullable(),
 });
 
 const ContactSchema = z.object({
@@ -23,16 +27,64 @@ const ContactSchema = z.object({
   avatar_url: z.string().nullable(),
 });
 
+function toProfile(row: {
+  id: string;
+  role: "admin" | "student";
+  full_name: string;
+  is_active: boolean;
+  email: string | null;
+  jobRole: string | null;
+  organization: string | null;
+  avatarUrl: string | null;
+}) {
+  return {
+    id: row.id,
+    role: row.role,
+    full_name: row.full_name,
+    is_active: row.is_active,
+    email: row.email ?? null,
+    job_role: row.jobRole ?? null,
+    organization: row.organization ?? null,
+    avatar_url: row.avatarUrl ?? null,
+  };
+}
+
 async function fetchProfile(userId: string) {
   const [row] = await db.select().from(profiles).where(eq(profiles.id, userId));
   if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-  return row;
+  return toProfile(row);
 }
 
 async function requireAdmin(userId: string) {
   const profile = await fetchProfile(userId);
   if (profile.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
   return profile;
+}
+
+async function requireCohortAccess(userId: string, cohortId: number) {
+  const profile = await fetchProfile(userId);
+
+  if (profile.role === "admin") {
+    return;
+  }
+
+  const [membership] = await db
+    .select({ cohort_id: cohort_memberships.cohort_id })
+    .from(cohort_memberships)
+    .where(
+      and(
+        eq(cohort_memberships.profiles_id, userId),
+        eq(cohort_memberships.cohort_id, cohortId),
+      ),
+    )
+    .limit(1);
+
+  if (!membership) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You do not have access to this cohort",
+    });
+  }
 }
 
 const me = protectedProcedure.output(ProfileSchema).query(async ({ ctx }) => {
@@ -44,17 +96,26 @@ const updateMe = protectedProcedure
     z.object({
       full_name: z.string().optional(),
       is_active: z.boolean().optional(),
+      email: z.string().email().optional(),
+      job_role: z.string().optional(),
+      organization: z.string().optional(),
     }),
   )
   .output(ProfileSchema)
   .mutation(async ({ ctx, input }) => {
     const [updated] = await db
       .update(profiles)
-      .set(input)
+      .set({
+        full_name: input.full_name,
+        is_active: input.is_active,
+        email: input.email,
+        jobRole: input.job_role,
+        organization: input.organization,
+      })
       .where(eq(profiles.id, ctx.subject.id))
       .returning();
     if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
-    return updated;
+    return toProfile(updated);
   });
 
 const getById = protectedProcedure
@@ -67,7 +128,7 @@ const getById = protectedProcedure
       .from(profiles)
       .where(eq(profiles.id, input.userId));
     if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-    return row;
+    return toProfile(row);
   });
 
 const list = protectedProcedure
@@ -80,13 +141,32 @@ const list = protectedProcedure
       input?.isActive !== undefined
         ? baseQuery.where(eq(profiles.is_active, input.isActive))
         : baseQuery;
-    return filtered.orderBy(asc(profiles.full_name), asc(profiles.id));
+    const rows = await filtered.orderBy(
+      asc(profiles.full_name),
+      asc(profiles.id),
+    );
+    return rows.map(toProfile);
   });
 
 const getContactsBySlug = protectedProcedure
   .input(z.object({ cohort_slug: z.string().min(1) }))
   .output(z.array(ContactSchema))
-  .query(async ({ input }) => {
+  .query(async ({ ctx, input }) => {
+    const [cohort] = await db
+      .select({ id: cohorts.id })
+      .from(cohorts)
+      .where(eq(cohorts.slug, input.cohort_slug))
+      .limit(1);
+
+    if (!cohort) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Cohort "${input.cohort_slug}" not found`,
+      });
+    }
+
+    await requireCohortAccess(ctx.subject.id, cohort.id);
+
     const rows = await db
       .select({
         id: profiles.id,
@@ -137,12 +217,20 @@ const handleNewUser = protectedProcedure //COMPLETED AND TESTED
           jobRole: job_role,
           is_active: true, // Added missing required field
           organization: organization,
-          job_role: job_role,
-          email: email,
         },
       ]);
     }
 
+    return;
+  });
+
+const updateProfilePicture = protectedProcedure
+  .input(z.object({ avatar_url: z.string().nullable() }))
+  .mutation(async ({ ctx, input }) => {
+    await db
+      .update(profiles)
+      .set({ avatarUrl: input.avatar_url })
+      .where(eq(profiles.id, ctx.subject.id));
     return;
   });
 
@@ -153,4 +241,5 @@ export const profilesApiRouter = createTRPCRouter({
   list,
   getContactsBySlug,
   handleNewUser,
+  updateProfilePicture,
 });
