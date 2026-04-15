@@ -70,6 +70,16 @@ export default function ProfilePage() {
     },
   });
 
+  const updateEmail = api.profiles.handleEmailUpdate.useMutation({
+    onSuccess: async () => {
+      toast.success("Email updated successfully!");
+      await profileQuery.refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update email.");
+    },
+  });
+
   const resetForm = () => {
     setFullName(profileQuery.data?.full_name ?? "");
     setEmail(profileQuery.data?.email ?? "");
@@ -78,9 +88,14 @@ export default function ProfilePage() {
   };
 
   const handleSave = () => {
+    const hasEmailChanged = email.trim() !== (profileQuery.data?.email ?? "");
+
+    if (hasEmailChanged) {
+      updateEmail.mutate({ email: email.trim() });
+    }
+
     updateProfile.mutate({
       full_name: fullName.trim() || profileQuery.data?.full_name || "",
-      email: email.trim() || undefined,
       job_role: jobTitle.trim() || undefined,
       organization: organization.trim() || undefined,
     });
@@ -97,6 +112,7 @@ export default function ProfilePage() {
   const hasChanges = Boolean(
     profileQuery.data &&
     (fullName !== (profileQuery.data.full_name ?? "") ||
+      email !== (profileQuery.data.email ?? "") ||
       jobTitle !== (profileQuery.data.job_role ?? "") ||
       organization !== (profileQuery.data.organization ?? "")),
   );
@@ -137,11 +153,11 @@ export default function ProfilePage() {
                     </label>
                     <input
                       value={email}
-                      disabled
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder={
                         profileQuery.data?.email ?? "Rosedoe123@gmail.com"
                       }
-                      className="w-full cursor-not-allowed rounded-[6px] border border-zinc-300 bg-zinc-100 px-4 py-3 text-xl text-zinc-500 placeholder:text-zinc-400 focus:outline-none"
+                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-3 text-xl text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                   </div>
 
@@ -233,12 +249,15 @@ export default function ProfilePage() {
                   onClick={handleSave}
                   disabled={
                     updateProfile.isPending ||
+                    updateEmail.isPending ||
                     profileQuery.isLoading ||
                     !hasChanges
                   }
                   className="inline-flex min-w-[160px] items-center justify-center rounded-full bg-[#d1d3de] px-8 py-3 text-xl font-medium text-white transition enabled:bg-[#0795b8] enabled:hover:bg-[#067f9d] disabled:cursor-not-allowed"
                 >
-                  {updateProfile.isPending ? "Saving..." : "Save"}
+                  {updateProfile.isPending || updateEmail.isPending
+                    ? "Saving..."
+                    : "Save"}
                 </button>
               </div>
             </div>
