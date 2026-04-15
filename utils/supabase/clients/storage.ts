@@ -10,7 +10,7 @@ export const uploadPostFileToSupabase = async (
   subject: Subject,
   file: File,
   onSuccess: (attachmentUrl: string) => void,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
 ) => {
   const currentTimestamp = Date.now().toLocaleString();
   const { data: fileData, error: uploadError } = await supabase.storage
@@ -23,7 +23,7 @@ export const uploadPostFileToSupabase = async (
       message: `Failed to upload file to Supabase: ${uploadError.message}`,
     });
     if (onError) onError(uploadError);
-  } else if (fileData) { 
+  } else if (fileData) {
     onSuccess(fileData.path);
   }
 };
@@ -33,7 +33,7 @@ export const uploadAvatarFileToSupabase = async (
   subject: Subject,
   file: File,
   onSuccess: (avatarUrl: string) => void,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
 ) => {
   const uniqueFileName = `${subject.id}_${Date.now()}`;
 

@@ -241,5 +241,5 @@ export const profilesApiRouter = createTRPCRouter({
   list,
   getContactsBySlug,
   handleNewUser,
-  updateProfilePicture
+  updateProfilePicture,
 });
