@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
-import { VideoOff, FileText } from "lucide-react";
+import { VideoOff, Lock, AlertCircle } from "lucide-react";
 import { api } from "@/utils/trpc/api";
-import Resource from "@/components/resource";
+import { TRPCClientError } from "@trpc/client";
 
 function parseYouTubeEmbedUrl(url: string): string | null {
   try {
@@ -39,25 +39,26 @@ function parseYouTubeEmbedUrl(url: string): string | null {
 
 export default function ModulePage() {
   const router = useRouter();
-  const { modules_slug } = router.query;
+  const { cohort_slug, modules_slug } = router.query;
   const slug = modules_slug as string;
+  const cohortSlug = cohort_slug as string;
 
-  const { data: module, isLoading: moduleLoading } =
-    api.modules.bySlug.useQuery({ slug }, { enabled: !!slug });
+  const {
+    data: module,
+    isLoading: moduleLoading,
+    error: moduleError,
+  } = api.modules.bySlug.useQuery(
+    { slug, cohortSlug },
+    { enabled: !!slug && !!cohortSlug, retry: false },
+  );
 
   const { data: recordings, isLoading: recordingsLoading } =
     api.resources.listByModuleSlug.useQuery(
       { moduleSlug: slug, type: "recording" },
-      { enabled: !!slug },
+      { enabled: !!slug && !!cohortSlug, retry: false },
     );
 
-  const { data: handouts, isLoading: handoutsLoading } =
-    api.resources.listByModuleSlug.useQuery(
-      { moduleSlug: slug, type: "handout" },
-      { enabled: !!slug },
-    );
-
-  const isLoading = moduleLoading || recordingsLoading || handoutsLoading;
+  const isLoading = moduleLoading || recordingsLoading;
 
   const recording = recordings?.[0];
   const embedUrl = recording?.url ? parseYouTubeEmbedUrl(recording.url) : null;
@@ -70,10 +71,52 @@ export default function ModulePage() {
     );
   }
 
+  if (moduleError) {
+    const code =
+      moduleError instanceof TRPCClientError
+        ? moduleError.data?.code
+        : undefined;
+
+    if (code === "FORBIDDEN") {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3">
+          <Lock className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+          <p className="text-gray-600 font-medium">This module is locked.</p>
+          <p className="text-sm text-gray-400">
+            You do not have access to this module yet.
+          </p>
+        </div>
+      );
+    }
+
+    if (code === "NOT_FOUND") {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3">
+          <AlertCircle className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+          <p className="text-gray-600 font-medium">Module not found.</p>
+          <p className="text-sm text-gray-400">
+            This module does not exist or has been removed.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3">
+        <AlertCircle className="w-8 h-8 text-red-400" strokeWidth={1.5} />
+        <p className="text-gray-600 font-medium">Something went wrong.</p>
+        <p className="text-sm text-gray-400">
+          Failed to load this module. Please try again.
+        </p>
+      </div>
+    );
+  }
+
   if (!module) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-gray-500 text-sm">Module not found.</p>
+      <div className="flex h-full flex-col items-center justify-center gap-3">
+        <AlertCircle className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+        <p className="text-gray-600 font-medium">Module not found.</p>
       </div>
     );
   }
@@ -105,36 +148,13 @@ export default function ModulePage() {
 
       {/* Description */}
       {module.description && (
-        <div className="prose prose-gray max-w-none">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            Description
+          </h2>
           <p className="text-gray-700 leading-relaxed">{module.description}</p>
         </div>
       )}
-
-      {/* Handouts */}
-      <section>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Handouts</h2>
-        {handouts && handouts.length > 0 ? (
-          <div className="flex flex-wrap gap-6">
-            {handouts.map((handout) => (
-              <Resource
-                key={handout.id}
-                title={handout.title}
-                fileUrl={handout.url ?? ""}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-5 py-6">
-            <FileText
-              className="w-6 h-6 text-gray-400 shrink-0"
-              strokeWidth={1.5}
-            />
-            <p className="text-sm text-gray-400">
-              No handouts have been attached to this module yet.
-            </p>
-          </div>
-        )}
-      </section>
     </div>
   );
 }
