@@ -7,6 +7,7 @@ import {
   cohorts,
   discussions_post,
   modules,
+  profiles,
 } from "@/server/db/schema";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -53,9 +54,13 @@ async function requireCohortAccess(userId: string, cohortId: number) {
 }
 
 type PostRow = typeof discussions_post.$inferSelect;
-type PostNode = PostRow & { children: PostNode[] };
+type PostWithAuthor = PostRow & {
+  author_full_name: string | null;
+  author_avatar_url: string | null;
+};
+type PostNode = PostWithAuthor & { children: PostNode[] };
 
-function buildTree(postId: number, allPosts: PostRow[]): PostNode {
+function buildTree(postId: number, allPosts: PostWithAuthor[]): PostNode {
   const post = allPosts.find((p) => p.id === postId);
   if (!post) throw new TRPCError({ code: "NOT_FOUND" });
 
@@ -71,7 +76,10 @@ function buildTree(postId: number, allPosts: PostRow[]): PostNode {
   return { ...post, children };
 }
 
-function collectSubtreeIds(rootId: number, allPosts: PostRow[]): number[] {
+function collectSubtreeIds(
+  rootId: number,
+  allPosts: PostWithAuthor[],
+): number[] {
   const ids: number[] = [rootId];
   const queue = [rootId];
   while (queue.length) {
@@ -96,8 +104,21 @@ export const discussionsRouter = createTRPCRouter({
       if (!foundModule) throw new TRPCError({ code: "NOT_FOUND" });
 
       return db
-        .select()
+        .select({
+          id: discussions_post.id,
+          module_id: discussions_post.module_id,
+          cohort_id: discussions_post.cohort_id,
+          author_id: discussions_post.author_id,
+          parent_post_id: discussions_post.parent_post_id,
+          body: discussions_post.body,
+          created_at: discussions_post.created_at,
+          edited_at: discussions_post.edited_at,
+          is_deleted: discussions_post.is_deleted,
+          author_full_name: profiles.full_name,
+          author_avatar_url: profiles.avatarUrl,
+        })
         .from(discussions_post)
+        .leftJoin(profiles, eq(profiles.id, discussions_post.author_id))
         .where(
           and(
             eq(discussions_post.module_id, foundModule.id),
@@ -114,8 +135,21 @@ export const discussionsRouter = createTRPCRouter({
       await fetchPost(input.parentPostId);
 
       return db
-        .select()
+        .select({
+          id: discussions_post.id,
+          module_id: discussions_post.module_id,
+          cohort_id: discussions_post.cohort_id,
+          author_id: discussions_post.author_id,
+          parent_post_id: discussions_post.parent_post_id,
+          body: discussions_post.body,
+          created_at: discussions_post.created_at,
+          edited_at: discussions_post.edited_at,
+          is_deleted: discussions_post.is_deleted,
+          author_full_name: profiles.full_name,
+          author_avatar_url: profiles.avatarUrl,
+        })
         .from(discussions_post)
+        .leftJoin(profiles, eq(profiles.id, discussions_post.author_id))
         .where(eq(discussions_post.parent_post_id, input.parentPostId))
         .orderBy(asc(discussions_post.created_at));
     }),
@@ -132,8 +166,21 @@ export const discussionsRouter = createTRPCRouter({
       }
 
       const allModulePosts = await db
-        .select()
+        .select({
+          id: discussions_post.id,
+          module_id: discussions_post.module_id,
+          cohort_id: discussions_post.cohort_id,
+          author_id: discussions_post.author_id,
+          parent_post_id: discussions_post.parent_post_id,
+          body: discussions_post.body,
+          created_at: discussions_post.created_at,
+          edited_at: discussions_post.edited_at,
+          is_deleted: discussions_post.is_deleted,
+          author_full_name: profiles.full_name,
+          author_avatar_url: profiles.avatarUrl,
+        })
         .from(discussions_post)
+        .leftJoin(profiles, eq(profiles.id, discussions_post.author_id))
         .where(eq(discussions_post.module_id, root.module_id!))
         .orderBy(asc(discussions_post.created_at));
 
@@ -306,7 +353,7 @@ export const discussionsRouter = createTRPCRouter({
 
       await db
         .update(discussions_post)
-        .set({ is_deleted: true, body: "Deleted" })
+        .set({ is_deleted: true, body: "[This post has been deleted.]" })
         .where(eq(discussions_post.id, input.post_id));
     }),
 });

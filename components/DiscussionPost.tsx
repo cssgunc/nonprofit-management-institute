@@ -13,6 +13,7 @@ export type Post = {
   author: Author;
   content: string;
   createdAt: string | number | Date;
+  isDeleted?: boolean;
   replyCount?: number;
   replies?: Post[];
 };
@@ -20,6 +21,7 @@ export type Post = {
 export type DiscussionPostProps = {
   post: Post;
   isReply?: boolean;
+  canManage?: boolean;
   onReply?: (post: Post) => void;
   onEdit?: (id: string | number, newContent: string) => void;
   onDelete?: (id: string | number) => void;
@@ -116,6 +118,7 @@ function Avatar({
 function ReplyPost({
   post,
   isLast = false,
+  canManage = false,
   onReply,
   onEdit,
   onDelete,
@@ -123,6 +126,7 @@ function ReplyPost({
 }: DiscussionPostProps & { isLast?: boolean }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(post.content);
+  const isDeleted = post.isDeleted === true;
 
   const handleSaveEdit = () => {
     onEdit?.(post.id, editText);
@@ -174,7 +178,11 @@ function ReplyPost({
             </div>
 
             {/* Content */}
-            {editing ? (
+            {isDeleted ? (
+              <p className="mt-1 text-sm italic text-zinc-500 leading-relaxed">
+                [This post has been deleted.]
+              </p>
+            ) : editing ? (
               <div className="mt-2 space-y-2">
                 <textarea
                   className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
@@ -211,31 +219,39 @@ function ReplyPost({
 
             {/* Actions: edit/delete on hover (left), Reply right-aligned */}
             <div className="flex items-center justify-between mt-2">
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {canManage && !isDeleted ? (
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    aria-label="Edit"
+                    className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete?.(post.id)}
+                    aria-label="Delete"
+                    className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div />
+              )}
+              {onReply && !isDeleted ? (
                 <button
                   type="button"
-                  onClick={() => setEditing(true)}
-                  aria-label="Edit"
-                  className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
+                  onClick={() => onReply(post)}
+                  className="text-sm text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
                 >
-                  <Edit2 className="h-3.5 w-3.5" />
+                  Reply
                 </button>
-                <button
-                  type="button"
-                  onClick={() => onDelete?.(post.id)}
-                  aria-label="Delete"
-                  className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => onReply?.(post)}
-                className="text-sm text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
-              >
-                Reply
-              </button>
+              ) : (
+                <div />
+              )}
             </div>
           </div>
         </div>
@@ -251,6 +267,7 @@ function ReplyPost({
 
 function TopLevelPost({
   post,
+  canManage = false,
   onReply,
   onEdit,
   onDelete,
@@ -259,6 +276,7 @@ function TopLevelPost({
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(post.content);
   const [menuOpen, setMenuOpen] = useState(false);
+  const isDeleted = post.isDeleted === true;
 
   const handleSaveEdit = () => {
     onEdit?.(post.id, editText);
@@ -298,54 +316,59 @@ function TopLevelPost({
             </div>
 
             {/* ⋯ dropdown menu */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((o) => !o)}
-                aria-label="More options"
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
-              >
-                <MoreHorizontal className="h-5 w-5" />
-              </button>
-              {menuOpen && (
-                <>
-                  {/* backdrop to close on outside click */}
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setMenuOpen(false)}
-                  />
-                  <div className="absolute right-0 top-9 z-20 w-32 rounded-lg border border-zinc-100 bg-white shadow-lg py-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditing(true);
-                        setMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" /> Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onDelete?.(post.id);
-                        setMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            {canManage && !isDeleted && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((o) => !o)}
+                  aria-label="More options"
+                  className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </button>
+                {menuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 top-9 z-20 w-32 rounded-lg border border-zinc-100 bg-white shadow-lg py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditing(true);
+                          setMenuOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" /> Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onDelete?.(post.id);
+                          setMenuOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="mt-3 ml-1">
-        {editing ? (
+        {isDeleted ? (
+          <p className="text-sm italic text-zinc-500 leading-relaxed">
+            [This post has been deleted.]
+          </p>
+        ) : editing ? (
           <div className="space-y-2">
             <textarea
               className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
@@ -382,18 +405,20 @@ function TopLevelPost({
       </div>
 
       {/* Reply count pill */}
-      <button
-        type="button"
-        onClick={() => onReply?.(post)}
-        title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
-        className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-700"
-      >
-        <MessageCircle className="h-3.5 w-3.5 flex-shrink-0 fill-current" />
-        <span className="text-xs font-semibold">{replyCount}</span>
-        <span className="text-xs font-normal">
-          {replyCount === 1 ? "reply" : "replies"}
-        </span>
-      </button>
+      {!isDeleted && (
+        <button
+          type="button"
+          onClick={() => onReply?.(post)}
+          title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+        >
+          <MessageCircle className="h-3.5 w-3.5 flex-shrink-0 fill-current" />
+          <span className="text-xs font-semibold">{replyCount}</span>
+          <span className="text-xs font-normal">
+            {replyCount === 1 ? "reply" : "replies"}
+          </span>
+        </button>
+      )}
 
       {/* Nested replies */}
       {children && (
@@ -408,6 +433,7 @@ function TopLevelPost({
 export default function DiscussionPost({
   post,
   isReply = false,
+  canManage = false,
   onReply,
   onEdit,
   onDelete,
@@ -417,6 +443,7 @@ export default function DiscussionPost({
     return (
       <ReplyPost
         post={post}
+        canManage={canManage}
         onReply={onReply}
         onEdit={onEdit}
         onDelete={onDelete}
@@ -429,6 +456,7 @@ export default function DiscussionPost({
   return (
     <TopLevelPost
       post={post}
+      canManage={canManage}
       onReply={onReply}
       onEdit={onEdit}
       onDelete={onDelete}
