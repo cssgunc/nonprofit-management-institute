@@ -62,9 +62,9 @@ function buildTree(postId: number, allPosts: PostRow[]): PostNode {
   const children = allPosts
     .filter((p) => p.parent_post_id === postId)
     .sort((a, b) => {
-        const aTime = a.created_at?.getTime() ?? 0;
-        const bTime = b.created_at?.getTime() ?? 0;
-        return aTime - bTime;
+      const aTime = a.created_at?.getTime() ?? 0;
+      const bTime = b.created_at?.getTime() ?? 0;
+      return aTime - bTime;
     })
     .map((child) => buildTree(child.id, allPosts));
 
@@ -89,20 +89,20 @@ export const discussionsRouter = createTRPCRouter({
   listThreadsByModuleSlug: publicProcedure
     .input(z.object({ moduleSlug: z.string() }))
     .query(async ({ input }) => {
-      const module = await db.query.modules.findFirst({
+      const foundModule = await db.query.modules.findFirst({
         where: (modules, { eq }) => eq(modules.slug, input.moduleSlug),
         columns: { id: true },
       });
-      if (!module) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!foundModule) throw new TRPCError({ code: "NOT_FOUND" });
 
       return db
         .select()
         .from(discussions_post)
         .where(
           and(
-            eq(discussions_post.module_id, module.id),
+            eq(discussions_post.module_id, foundModule.id),
             isNull(discussions_post.parent_post_id),
-          )
+          ),
         )
         .orderBy(desc(discussions_post.created_at));
     }),
@@ -150,7 +150,7 @@ export const discussionsRouter = createTRPCRouter({
         cohort_id: z.number().int().optional(),
         parent_post_id: z.number().int().nullable().optional(),
         body: z.string().min(1).max(10000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       if (input.parent_post_id == null) {
@@ -270,7 +270,7 @@ export const discussionsRouter = createTRPCRouter({
       z.object({
         post_id: z.number().int(),
         body: z.string().min(1).max(10000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const post = await fetchPost(input.post_id);
