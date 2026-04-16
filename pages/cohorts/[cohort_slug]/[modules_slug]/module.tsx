@@ -2,6 +2,9 @@ import { useRouter } from "next/router";
 import { VideoOff, Lock, AlertCircle } from "lucide-react";
 import { api } from "@/utils/trpc/api";
 import { TRPCClientError } from "@trpc/client";
+import SidebarModules from "@/components/sidebarModules";
+import type { SidebarNavItem } from "@/components/sidebarModules";
+import CohortAccessGuard from "@/components/CohortAccessGuard";
 
 function parseYouTubeEmbedUrl(url: string): string | null {
   try {
@@ -42,6 +45,26 @@ export default function ModulePage() {
   const { cohort_slug, modules_slug } = router.query;
   const slug = modules_slug as string;
   const cohortSlug = cohort_slug as string;
+  const baseModulePath =
+    cohortSlug && slug ? `/cohorts/${cohortSlug}/${slug}` : "/cohorts";
+
+  const sidebarItems: SidebarNavItem[] = [
+    {
+      id: 0,
+      title: "Recording",
+      href: `${baseModulePath}/module`,
+    },
+    {
+      id: 1,
+      title: "Discussions",
+      href: `${baseModulePath}/discussions`,
+    },
+    {
+      id: 2,
+      title: "Materials",
+      href: `${baseModulePath}/materials`,
+    },
+  ];
 
   const {
     data: module,
@@ -65,9 +88,14 @@ export default function ModulePage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-gray-400 text-sm">Loading...</p>
-      </div>
+      <CohortAccessGuard cohortSlug={cohortSlug}>
+        <div className="flex min-h-[calc(100vh-7rem)] w-full">
+          <SidebarModules items={sidebarItems} activeId={0} />
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 items-center justify-center bg-zinc-50">
+            <p className="text-gray-400 text-sm">Loading...</p>
+          </div>
+        </div>
+      </CohortAccessGuard>
     );
   }
 
@@ -79,82 +107,116 @@ export default function ModulePage() {
 
     if (code === "FORBIDDEN") {
       return (
-        <div className="flex h-full flex-col items-center justify-center gap-3">
-          <Lock className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
-          <p className="text-gray-600 font-medium">This module is locked.</p>
-          <p className="text-sm text-gray-400">
-            You do not have access to this module yet.
-          </p>
-        </div>
+        <CohortAccessGuard cohortSlug={cohortSlug}>
+          <div className="flex min-h-[calc(100vh-7rem)] w-full">
+            <SidebarModules items={sidebarItems} activeId={0} />
+            <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+              <Lock className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+              <p className="text-gray-600 font-medium">
+                This module is locked.
+              </p>
+              <p className="text-sm text-gray-400">
+                You do not have access to this module yet.
+              </p>
+            </div>
+          </div>
+        </CohortAccessGuard>
       );
     }
 
     if (code === "NOT_FOUND") {
       return (
-        <div className="flex h-full flex-col items-center justify-center gap-3">
-          <AlertCircle className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
-          <p className="text-gray-600 font-medium">Module not found.</p>
-          <p className="text-sm text-gray-400">
-            This module does not exist or has been removed.
-          </p>
-        </div>
+        <CohortAccessGuard cohortSlug={cohortSlug}>
+          <div className="flex min-h-[calc(100vh-7rem)] w-full">
+            <SidebarModules items={sidebarItems} activeId={0} />
+            <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+              <AlertCircle
+                className="w-8 h-8 text-gray-400"
+                strokeWidth={1.5}
+              />
+              <p className="text-gray-600 font-medium">Module not found.</p>
+              <p className="text-sm text-gray-400">
+                This module does not exist or has been removed.
+              </p>
+            </div>
+          </div>
+        </CohortAccessGuard>
       );
     }
 
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3">
-        <AlertCircle className="w-8 h-8 text-red-400" strokeWidth={1.5} />
-        <p className="text-gray-600 font-medium">Something went wrong.</p>
-        <p className="text-sm text-gray-400">
-          Failed to load this module. Please try again.
-        </p>
-      </div>
+      <CohortAccessGuard cohortSlug={cohortSlug}>
+        <div className="flex min-h-[calc(100vh-7rem)] w-full">
+          <SidebarModules items={sidebarItems} activeId={0} />
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+            <AlertCircle className="w-8 h-8 text-red-400" strokeWidth={1.5} />
+            <p className="text-gray-600 font-medium">Something went wrong.</p>
+            <p className="text-sm text-gray-400">
+              Failed to load this module. Please try again.
+            </p>
+          </div>
+        </div>
+      </CohortAccessGuard>
     );
   }
 
   if (!module) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3">
-        <AlertCircle className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
-        <p className="text-gray-600 font-medium">Module not found.</p>
-      </div>
+      <CohortAccessGuard cohortSlug={cohortSlug}>
+        <div className="flex min-h-[calc(100vh-7rem)] w-full">
+          <SidebarModules items={sidebarItems} activeId={0} />
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+            <AlertCircle className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+            <p className="text-gray-600 font-medium">Module not found.</p>
+          </div>
+        </div>
+      </CohortAccessGuard>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8 p-8 max-w-4xl w-full">
-      {/* Title */}
-      <h1 className="text-3xl font-bold text-gray-900">{module.title}</h1>
+    <CohortAccessGuard cohortSlug={cohortSlug}>
+      <div className="flex min-h-[calc(100vh-7rem)] w-full">
+        <SidebarModules items={sidebarItems} activeId={0} />
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 justify-center bg-zinc-50">
+          <div className="flex w-full max-w-4xl flex-col gap-8 p-8">
+            <h1 className="text-3xl font-bold text-gray-900">{module.title}</h1>
 
-      {/* Video Player */}
-      {embedUrl ? (
-        <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
-          <iframe
-            src={embedUrl}
-            title={module.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            className="w-full h-full"
-          />
-        </div>
-      ) : (
-        <div className="w-full aspect-video rounded-lg bg-gray-100 border border-gray-200 flex flex-col items-center justify-center gap-3">
-          <VideoOff className="w-10 h-10 text-gray-400" strokeWidth={1.5} />
-          <p className="text-sm text-gray-400">
-            No video has been published for this module yet.
-          </p>
-        </div>
-      )}
+            {embedUrl ? (
+              <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
+                <iframe
+                  src={embedUrl}
+                  title={module.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+            ) : (
+              <div className="w-full aspect-video rounded-lg bg-gray-100 border border-gray-200 flex flex-col items-center justify-center gap-3">
+                <VideoOff
+                  className="w-10 h-10 text-gray-400"
+                  strokeWidth={1.5}
+                />
+                <p className="text-sm text-gray-400">
+                  No video has been published for this module yet.
+                </p>
+              </div>
+            )}
 
-      {/* Description */}
-      {module.description && (
-        <div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Description
-          </h2>
-          <p className="text-gray-700 leading-relaxed">{module.description}</p>
+            {module.description && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                  Description
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  {module.description}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </CohortAccessGuard>
   );
 }
