@@ -1,7 +1,13 @@
 import z from "zod";
 import { eq, isNull, asc, desc, and } from "drizzle-orm";
 import { db } from "@/server/db";
-import { discussions_post } from "@/server/db/schema";
+import {
+  cohort_memberships,
+  cohort_modules,
+  cohorts,
+  discussions_post,
+  modules,
+} from "@/server/db/schema";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
@@ -20,6 +26,30 @@ async function checkAdmin(user_id: string): Promise<boolean> {
     columns: { role: true },
   });
   return result?.role === "admin";
+}
+
+async function requireCohortAccess(userId: string, cohortId: number) {
+  if (await checkAdmin(userId)) {
+    return;
+  }
+
+  const [membership] = await db
+    .select({ cohort_id: cohort_memberships.cohort_id })
+    .from(cohort_memberships)
+    .where(
+      and(
+        eq(cohort_memberships.profiles_id, userId),
+        eq(cohort_memberships.cohort_id, cohortId),
+      ),
+    )
+    .limit(1);
+
+  if (!membership) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You do not have access to this cohort",
+    });
+  }
 }
 
 type PostRow = typeof discussions_post.$inferSelect;
@@ -123,13 +153,66 @@ export const discussionsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!input.parent_post_id) {
+      if (input.parent_post_id == null) {
         if (!input.module_id) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "module_id is required when creating a thread",
           });
         }
+        if (!input.cohort_id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "cohort_id is required when creating a thread",
+          });
+        }
+
+        const [module] = await db
+          .select({ id: modules.id })
+          .from(modules)
+          .where(eq(modules.id, input.module_id))
+          .limit(1);
+        if (!module) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Module not found",
+          });
+        }
+
+        const [cohort] = await db
+          .select({ id: cohorts.id })
+          .from(cohorts)
+          .where(eq(cohorts.id, input.cohort_id))
+          .limit(1);
+        if (!cohort) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Cohort not found",
+          });
+        }
+
+        const [cohortModule] = await db
+          .select({
+            cohort_id: cohort_modules.cohort_id,
+            module_id: cohort_modules.module_id,
+          })
+          .from(cohort_modules)
+          .where(
+            and(
+              eq(cohort_modules.cohort_id, input.cohort_id),
+              eq(cohort_modules.module_id, input.module_id),
+            ),
+          )
+          .limit(1);
+        if (!cohortModule) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "module_id is not available in the specified cohort",
+          });
+        }
+
+        await requireCohortAccess(ctx.subject.id, input.cohort_id);
+
         await db.insert(discussions_post).values({
           module_id: input.module_id,
           cohort_id: input.cohort_id,
@@ -154,6 +237,21 @@ export const discussionsRouter = createTRPCRouter({
             message: "module_id does not match the parent post's module",
           });
         }
+        if (input.cohort_id && input.cohort_id !== parent.cohort_id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "cohort_id does not match the parent post's cohort",
+          });
+        }
+        if (parent.cohort_id == null) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Cannot reply to a post without a cohort",
+          });
+        }
+
+        await requireCohortAccess(ctx.subject.id, parent.cohort_id);
+
         await db.insert(discussions_post).values({
           module_id: parent.module_id,
           cohort_id: parent.cohort_id,
