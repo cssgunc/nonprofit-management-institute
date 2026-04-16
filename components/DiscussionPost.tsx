@@ -58,7 +58,7 @@ function initials(name: string): string {
 function countAllReplies(replies: Post[]): number {
   return replies.reduce(
     (acc, r) => acc + 1 + countAllReplies(r.replies ?? []),
-    0
+    0,
   );
 }
 
@@ -88,8 +88,8 @@ function Avatar({
     size === "lg"
       ? "h-12 w-12 text-sm"
       : size === "sm"
-      ? "h-7 w-7 text-[10px]"
-      : "h-10 w-10 text-xs";
+        ? "h-7 w-7 text-[10px]"
+        : "h-10 w-10 text-xs";
 
   if (avatarUrl) {
     return (
@@ -140,7 +140,10 @@ function ReplyPost({
         />
         {/* bottom vertical continuation (if not last reply) */}
         {!isLast ? (
-          <div className="border-l border-zinc-200 flex-1" style={{ marginLeft: 0 }} />
+          <div
+            className="border-l border-zinc-200 flex-1"
+            style={{ marginLeft: 0 }}
+          />
         ) : (
           <div className="flex-1" />
         )}
@@ -158,13 +161,17 @@ function ReplyPost({
 
           <div className="flex-1 min-w-0">
             {/* Name + date stacked */}
-            <span className="text-sm font-semibold text-zinc-900">{post.author.name}</span>
+            <span className="text-sm font-semibold text-zinc-900">
+              {post.author.name}
+            </span>
             {post.author.badge && (
               <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
                 {post.author.badge}
               </span>
             )}
-            <div className="text-xs text-zinc-400">{relativeTime(post.createdAt)}</div>
+            <div className="text-xs text-zinc-400">
+              {relativeTime(post.createdAt)}
+            </div>
 
             {/* Content */}
             {editing ? (
@@ -186,7 +193,10 @@ function ReplyPost({
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setEditing(false); setEditText(post.content); }}
+                    onClick={() => {
+                      setEditing(false);
+                      setEditText(post.content);
+                    }}
                     className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
                   >
                     Cancel
@@ -277,7 +287,9 @@ function TopLevelPost({
                   {post.author.name}
                 </span>
                 {post.author.badge && (
-                  <span className="text-sm text-zinc-500">{post.author.badge}</span>
+                  <span className="text-sm text-zinc-500">
+                    {post.author.badge}
+                  </span>
                 )}
               </div>
               <time className="text-xs text-zinc-400">
@@ -305,14 +317,20 @@ function TopLevelPost({
                   <div className="absolute right-0 top-9 z-20 w-32 rounded-lg border border-zinc-100 bg-white shadow-lg py-1">
                     <button
                       type="button"
-                      onClick={() => { setEditing(true); setMenuOpen(false); }}
+                      onClick={() => {
+                        setEditing(true);
+                        setMenuOpen(false);
+                      }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50"
                     >
                       <Edit2 className="h-3.5 w-3.5" /> Edit
                     </button>
                     <button
                       type="button"
-                      onClick={() => { onDelete?.(post.id); setMenuOpen(false); }}
+                      onClick={() => {
+                        onDelete?.(post.id);
+                        setMenuOpen(false);
+                      }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" /> Delete
@@ -346,7 +364,10 @@ function TopLevelPost({
               </button>
               <button
                 type="button"
-                onClick={() => { setEditing(false); setEditText(post.content); }}
+                onClick={() => {
+                  setEditing(false);
+                  setEditText(post.content);
+                }}
                 className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
               >
                 Cancel
