@@ -31,16 +31,16 @@ export default function ModuleCard({
   const href = cohortSlug ? `/cohorts/${cohortSlug}/${slug}/module` : null;
   const isInactive = isActive !== true;
   const isLockedForViewer = isInactive && !isAdmin;
-  const cardClassName = `block h-[260px] w-full max-w-[470px] overflow-hidden rounded-lg transition-transform hover:scale-[1.02] ${className} ${
+  const cardClassName = `block h-[240px] w-full max-w-[500px] overflow-hidden rounded-[1.15rem] border border-[rgba(209,220,228,0.92)] bg-white shadow-[0_14px_28px_rgba(31,41,55,0.08)] transition-transform duration-300 hover:scale-[1.04] hover:shadow-[0_20px_40px_rgba(31,41,55,0.14)] ${className} ${
     isInactive ? "opacity-45" : ""
   } ${isLockedForViewer ? "cursor-not-allowed" : ""}`;
   const image = (
     <Image
       src={imageSrc}
       alt={title}
-      width={470}
-      height={260}
-      className={`h-full w-full object-cover transition-transform ${
+      width={500}
+      height={240}
+      className={`h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03] ${
         isInactive ? "grayscale brightness-90 contrast-90" : ""
       } ${imageClassName}`}
       priority

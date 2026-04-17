@@ -266,6 +266,7 @@ export default function DiscussionPage() {
       title: module.title,
       href: `${baseCohortPath}/${module.slug}/discussions`,
       moduleSlug: module.slug,
+      isLocked: !module.is_active,
     })) satisfies DiscussionNavItem[]),
   ];
 
@@ -287,11 +288,15 @@ export default function DiscussionPage() {
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="flex min-h-[calc(100vh-7rem)] w-full">
+      <div className="flex min-h-[calc(100vh-7rem)] w-full items-stretch">
         {mounted && (
-          <SidebarDiscussions items={discussionItems} activeId={0} />
+          <SidebarDiscussions
+            items={discussionItems}
+            activeId={0}
+            canAccessLocked={isAdmin}
+          />
         )}
-        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col bg-zinc-50">
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col">
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-black">

@@ -10,7 +10,7 @@ import {
   profiles,
 } from "@/server/db/schema";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 async function fetchPost(post_id: number) {
   const [row] = await db
@@ -70,6 +70,41 @@ async function requireCohortAccess(userId: string, cohortId: number) {
   }
 }
 
+async function requireModuleDiscussionAccess(
+  userId: string,
+  cohortId: number,
+  moduleId: number,
+) {
+  const isAdmin = await checkAdmin(userId);
+
+  await requireCohortAccess(userId, cohortId);
+
+  const [cohortModule] = await db
+    .select({ is_active: cohort_modules.is_active })
+    .from(cohort_modules)
+    .where(
+      and(
+        eq(cohort_modules.cohort_id, cohortId),
+        eq(cohort_modules.module_id, moduleId),
+      ),
+    )
+    .limit(1);
+
+  if (!cohortModule) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Module is not available in this cohort",
+    });
+  }
+
+  if (!cohortModule.is_active && !isAdmin) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "This module is not available",
+    });
+  }
+}
+
 type PostRow = typeof discussions_post.$inferSelect;
 type PostWithAuthor = PostRow & {
   author_full_name: string | null;
@@ -112,10 +147,11 @@ function collectSubtreeIds(
 }
 
 export const discussionsRouter = createTRPCRouter({
-  listGeneralThreads: publicProcedure
+  listGeneralThreads: protectedProcedure
     .input(z.object({ cohortSlug: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const cohort = await resolveCohortBySlug(input.cohortSlug);
+      await requireCohortAccess(ctx.subject.id, cohort.id);
 
       return db
         .select({
@@ -144,15 +180,21 @@ export const discussionsRouter = createTRPCRouter({
         .orderBy(desc(discussions_post.created_at));
     }),
 
-  listThreadsByModuleSlug: publicProcedure
+  listThreadsByModuleSlug: protectedProcedure
     .input(z.object({ moduleSlug: z.string(), cohortSlug: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const cohort = await resolveCohortBySlug(input.cohortSlug);
       const foundModule = await db.query.modules.findFirst({
         where: (modules, { eq }) => eq(modules.slug, input.moduleSlug),
         columns: { id: true },
       });
       if (!foundModule) throw new TRPCError({ code: "NOT_FOUND" });
+
+      await requireModuleDiscussionAccess(
+        ctx.subject.id,
+        cohort.id,
+        foundModule.id,
+      );
 
       return db
         .select({
@@ -181,14 +223,24 @@ export const discussionsRouter = createTRPCRouter({
         .orderBy(desc(discussions_post.created_at));
     }),
 
-  listRepliesByParentPostId: publicProcedure
+  listRepliesByParentPostId: protectedProcedure
     .input(z.object({ parentPostId: z.number().int(), cohortSlug: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const cohort = await resolveCohortBySlug(input.cohortSlug);
       const parent = await fetchPost(input.parentPostId);
 
       if (parent.cohort_id !== cohort.id) {
         throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      if (parent.module_id !== null) {
+        await requireModuleDiscussionAccess(
+          ctx.subject.id,
+          cohort.id,
+          parent.module_id,
+        );
+      } else {
+        await requireCohortAccess(ctx.subject.id, cohort.id);
       }
 
       return db
@@ -217,9 +269,9 @@ export const discussionsRouter = createTRPCRouter({
         .orderBy(asc(discussions_post.created_at));
     }),
 
-  getThread: publicProcedure
+  getThread: protectedProcedure
     .input(z.object({ postId: z.number().int(), cohortSlug: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const cohort = await resolveCohortBySlug(input.cohortSlug);
       const root = await fetchPost(input.postId);
 
@@ -232,6 +284,16 @@ export const discussionsRouter = createTRPCRouter({
           code: "BAD_REQUEST",
           message: "postId must be a top-level post",
         });
+      }
+
+      if (root.module_id !== null) {
+        await requireModuleDiscussionAccess(
+          ctx.subject.id,
+          cohort.id,
+          root.module_id,
+        );
+      } else {
+        await requireCohortAccess(ctx.subject.id, cohort.id);
       }
 
       const allModulePosts = await db

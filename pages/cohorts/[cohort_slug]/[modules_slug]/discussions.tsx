@@ -9,6 +9,9 @@ import CohortAccessGuard from "@/components/CohortAccessGuard";
 import { getDiscussionSidebarContext } from "@/utils/sidebarContext";
 import { api, type RouterOutputs } from "@/utils/trpc/api";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
+import { TRPCClientError } from "@trpc/client";
+import { AlertCircle, Lock } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useLayoutEffect, useState } from "react";
 
@@ -261,7 +264,11 @@ export default function ModuleDiscussions() {
   });
   const threadsQuery = api.discussions.listThreadsByModuleSlug.useQuery(
     { moduleSlug, cohortSlug },
-    { enabled: !!moduleSlug && !!cohortSlug, retry: false },
+    {
+      enabled:
+        !!moduleSlug && !!cohortSlug && moduleQuery.status === "success",
+      retry: false,
+    },
   );
   const updatePostMutation = api.discussions.updatePost.useMutation({
     onSuccess: async () => {
@@ -317,6 +324,7 @@ export default function ModuleDiscussions() {
       title: module.title,
       href: `${baseCohortPath}/${module.slug}/discussions`,
       moduleSlug: module.slug,
+      isLocked: !module.is_active,
     })) satisfies DiscussionNavItem[]),
   ];
 
@@ -339,19 +347,25 @@ export default function ModuleDiscussions() {
     deletePostMutation.mutate({ post_id: id });
   };
 
+  const moduleErrorCode =
+    moduleQuery.error instanceof TRPCClientError
+      ? moduleQuery.error.data?.code
+      : undefined;
+
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="flex min-h-[calc(100vh-7rem)] w-full">
+      <div className="flex min-h-[calc(100vh-7rem)] w-full items-stretch">
         {mounted &&
           (sidebarContext === "discussions" ? (
             <SidebarDiscussions
               items={discussionItems}
               activeId={activeDiscussionId}
+              canAccessLocked={isAdmin}
             />
           ) : (
             <SidebarModules items={sidebarItems} activeId={1} />
           ))}
-        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col bg-zinc-50">
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col">
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-black">
@@ -359,7 +373,41 @@ export default function ModuleDiscussions() {
               </h1>
             </div>
 
-            {threadsQuery.isLoading ? (
+            {moduleQuery.isLoading ? (
+              <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
+                Loading module...
+              </div>
+            ) : moduleErrorCode === "FORBIDDEN" ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
+                <Lock className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                <p className="font-medium text-gray-600">
+                  This module is locked.
+                </p>
+                <p className="text-sm text-gray-400">
+                  You do not have access to this module yet.
+                </p>
+                <Link
+                  href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+                  className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
+            ) : moduleErrorCode === "NOT_FOUND" || !moduleQuery.data ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
+                <AlertCircle
+                  className="h-8 w-8 text-gray-400"
+                  strokeWidth={1.5}
+                />
+                <p className="font-medium text-gray-600">Module not found.</p>
+                <Link
+                  href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+                  className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
+            ) : threadsQuery.isLoading ? (
               <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
                 Loading discussions...
               </div>

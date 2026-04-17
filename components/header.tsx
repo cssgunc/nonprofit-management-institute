@@ -34,6 +34,32 @@ export default function Header() {
       ]
     : [];
 
+  const currentPath = router.asPath.split("?")[0] ?? "";
+  const discussionModulePattern = new RegExp(
+    `^${basePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/[^/]+/discussions$`,
+  );
+  const dashboardModulePattern = new RegExp(
+    `^${basePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/[^/]+/(module|materials)$`,
+  );
+
+  const isNavLinkActive = (href: string, label: string) => {
+    if (currentPath === href) return true;
+
+    if (label === "Discussion") {
+      return discussionModulePattern.test(currentPath);
+    }
+
+    if (label === "Dashboard") {
+      return dashboardModulePattern.test(currentPath);
+    }
+
+    if (label === "Cohort") {
+      return currentPath.startsWith(`${basePath}/contact`);
+    }
+
+    return false;
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-300 bg-white shadow-sm">
       <div className="mx-auto flex h-[7rem] items-center px-4 md:px-8 xl:px-12">
@@ -53,7 +79,7 @@ export default function Header() {
               key={link.href}
               href={link.href}
               className={`text-xl font-medium transition-colors hover:text-gray-900 ${
-                router.asPath === link.href
+                isNavLinkActive(link.href, link.label)
                   ? "text-gray-900 underline underline-offset-4"
                   : "text-gray-500"
               }`}
@@ -87,7 +113,7 @@ export default function Header() {
                       <Link
                         href={link.href}
                         className={`block cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-gray-100 focus:bg-gray-100 ${
-                          router.asPath === link.href
+                          isNavLinkActive(link.href, link.label)
                             ? "font-medium text-gray-900"
                             : "text-gray-700"
                         }`}
