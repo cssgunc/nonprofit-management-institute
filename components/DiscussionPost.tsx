@@ -174,8 +174,8 @@ function ReplyPost({
             <span className="text-sm font-semibold text-zinc-900">
               {post.author.name}
             </span>
-            {post.author.badge && (
-              post.author.badge === "Admin" ? (
+            {post.author.badge &&
+              (post.author.badge === "Admin" ? (
                 <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
                   <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                   <span>Admin</span>
@@ -184,8 +184,7 @@ function ReplyPost({
                 <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
                   {post.author.badge}
                 </span>
-              )
-            )}
+              ))}
             <div className="text-xs text-zinc-400">
               {relativeTime(post.createdAt)}
             </div>
@@ -317,8 +316,8 @@ function TopLevelPost({
                 <span className="text-base font-semibold text-zinc-900">
                   {post.author.name}
                 </span>
-                {post.author.badge && (
-                  post.author.badge === "Admin" ? (
+                {post.author.badge &&
+                  (post.author.badge === "Admin" ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
                       <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                       <span>Admin</span>
@@ -327,8 +326,7 @@ function TopLevelPost({
                     <span className="text-sm text-zinc-500">
                       {post.author.badge}
                     </span>
-                  )
-                )}
+                  ))}
               </div>
               <time className="text-xs text-zinc-400">
                 {relativeTime(post.createdAt)}

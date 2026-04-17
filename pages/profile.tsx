@@ -97,9 +97,9 @@ export default function ProfilePage() {
 
   const hasChanges = Boolean(
     profileQuery.data &&
-      (fullName !== (profileQuery.data.full_name ?? "") ||
-        jobTitle !== (profileQuery.data.job_role ?? "") ||
-        organization !== (profileQuery.data.organization ?? "")),
+    (fullName !== (profileQuery.data.full_name ?? "") ||
+      jobTitle !== (profileQuery.data.job_role ?? "") ||
+      organization !== (profileQuery.data.organization ?? "")),
   );
 
   const avatarPublicUrl = profileQuery.data?.avatar_url

@@ -317,7 +317,8 @@ export default function DiscussionPage() {
               </div>
             ) : threads.length === 0 ? (
               <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center text-zinc-500">
-                No general discussion threads have been posted for this cohort yet.
+                No general discussion threads have been posted for this cohort
+                yet.
               </div>
             ) : (
               <div className="space-y-5">

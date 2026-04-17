@@ -265,8 +265,7 @@ export default function ModuleDiscussions() {
   const threadsQuery = api.discussions.listThreadsByModuleSlug.useQuery(
     { moduleSlug, cohortSlug },
     {
-      enabled:
-        !!moduleSlug && !!cohortSlug && moduleQuery.status === "success",
+      enabled: !!moduleSlug && !!cohortSlug && moduleQuery.status === "success",
       retry: false,
     },
   );
