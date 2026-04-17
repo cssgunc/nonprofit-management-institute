@@ -31,7 +31,7 @@ export default function SidebarDiscussions({
   return (
     <aside
       className={cn(
-        "flex h-[calc(100vh-7rem)] min-h-0 flex-col overflow-hidden border-r border-zinc-200 bg-white font-sans transition-[width] duration-200 ease-out",
+        "flex min-h-[calc(100vh-7rem)] self-stretch flex-col overflow-hidden border-r border-zinc-200 bg-white font-sans transition-[width] duration-200 ease-out",
         isOpen ? "w-[220px]" : "w-14",
         className,
       )}

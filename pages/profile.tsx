@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/avatar";
 import { api } from "@/utils/trpc/api";
+import { Subject } from "@/server/models/auth";
 
 export default function ProfilePage() {
   const profileQuery = api.profiles.me.useQuery();
@@ -60,6 +61,103 @@ export default function ProfilePage() {
       jobTitle !== (profileQuery.data.job_role ?? "") ||
       organization !== (profileQuery.data.organization ?? "")),
   );
+
+  const apiUtils = api.useUtils();
+  const supabase = createSupabaseComponentClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const updateAvatarMutation = api.profiles.updateProfilePicture.useMutation({
+    onSuccess: async () => {
+      toast.success("Profile picture updated!");
+      await apiUtils.profiles.me.invalidate();
+    },
+    onError: () => toast.error("Failed to update profile picture."),
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profileQuery.data) return;
+
+    toast.loading("Uploading image...", { id: "avatar-upload" });
+
+    uploadAvatarFileToSupabase(
+      supabase,
+      { id: profileQuery.data.id } as Subject,
+      file,
+      (avatar_url) => {
+        updateAvatarMutation.mutate({ avatar_url });
+        toast.dismiss("avatar-upload");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      },
+      (error) => {
+        console.error("Avatar upload failed:", error);
+        toast.dismiss("avatar-upload");
+        toast.error("Upload rejected by Supabase. Check RLS policies.");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      },
+    );
+  };
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [organization, setOrganization] = useState("");
+
+  useEffect(() => {
+    if (!profileQuery.data) return;
+
+    setFullName(profileQuery.data.full_name ?? "");
+    setEmail(profileQuery.data.email ?? "");
+    setJobTitle(profileQuery.data.job_role ?? "");
+    setOrganization(profileQuery.data.organization ?? "");
+  }, [profileQuery.data]);
+
+  const updateProfile = api.profiles.updateMe.useMutation({
+    onSuccess: async () => {
+      toast.success("Profile updated successfully.");
+      await profileQuery.refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update profile.");
+    },
+  });
+
+  const resetForm = () => {
+    setFullName(profileQuery.data?.full_name ?? "");
+    setEmail(profileQuery.data?.email ?? "");
+    setJobTitle(profileQuery.data?.job_role ?? "");
+    setOrganization(profileQuery.data?.organization ?? "");
+  };
+
+  const handleSave = () => {
+    updateProfile.mutate({
+      full_name: fullName.trim() || profileQuery.data?.full_name || "",
+      email: email.trim() || undefined,
+      job_role: jobTitle.trim() || undefined,
+      organization: organization.trim() || undefined,
+    });
+  };
+
+  const displayName = fullName.trim() || profileQuery.data?.full_name || "";
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+  const hasChanges = Boolean(
+    profileQuery.data &&
+    (fullName !== (profileQuery.data.full_name ?? "") ||
+      jobTitle !== (profileQuery.data.job_role ?? "") ||
+      organization !== (profileQuery.data.organization ?? "")),
+  );
+
+  const avatarPublicUrl = profileQuery.data?.avatar_url
+    ? supabase.storage
+        .from("avatars")
+        .getPublicUrl(profileQuery.data.avatar_url).data.publicUrl
+    : undefined;
 
   return (
     <div className="min-h-screen w-full bg-[#f5f5f5]">

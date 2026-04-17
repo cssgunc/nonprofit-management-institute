@@ -224,6 +224,16 @@ const handleNewUser = protectedProcedure //COMPLETED AND TESTED
     return;
   });
 
+const updateProfilePicture = protectedProcedure
+  .input(z.object({ avatar_url: z.string().nullable() }))
+  .mutation(async ({ ctx, input }) => {
+    await db
+      .update(profiles)
+      .set({ avatarUrl: input.avatar_url })
+      .where(eq(profiles.id, ctx.subject.id));
+    return;
+  });
+
 export const profilesApiRouter = createTRPCRouter({
   me,
   updateMe,
@@ -231,4 +241,5 @@ export const profilesApiRouter = createTRPCRouter({
   list,
   getContactsBySlug,
   handleNewUser,
+  updateProfilePicture,
 });

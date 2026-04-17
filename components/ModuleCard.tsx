@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import Image, { type StaticImageData } from "next/image";
+import Image from "next/image";
 
 type ModuleCardProps = {
   title: string;
@@ -10,7 +10,7 @@ type ModuleCardProps = {
   isAdmin?: boolean;
   onToggleStatus?: (slug: string, isActive: boolean) => void;
   isToggling?: boolean;
-  imageSrc: StaticImageData;
+  imageSrc: string;
   imageClassName?: string;
   className?: string;
 };
@@ -36,10 +36,11 @@ export default function ModuleCard({
     <Image
       src={imageSrc}
       alt={title}
+      width={470}
+      height={260}
       className={`h-full w-full object-cover transition-transform ${
         isInactive ? "saturate-0" : ""
       } ${imageClassName}`}
-      placeholder="blur"
       priority
     />
   );
