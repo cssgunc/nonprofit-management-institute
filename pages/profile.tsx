@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/avatar";
 import { api } from "@/utils/trpc/api";
 import { Subject } from "@/server/models/auth";
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
+import { uploadAvatarFileToSupabase } from "@/utils/supabase/clients/storage";
 
 export default function ProfilePage() {
   const profileQuery = api.profiles.me.useQuery();
+  const apiUtils = api.useUtils();
+  const supabase = createSupabaseComponentClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");
@@ -31,6 +37,16 @@ export default function ProfilePage() {
     },
   });
 
+  const updateAvatarMutation = api.profiles.updateProfilePicture.useMutation({
+    onSuccess: async () => {
+      toast.success("Profile picture updated!");
+      await apiUtils.profiles.me.invalidate();
+    },
+    onError: () => {
+      toast.error("Failed to update profile picture.");
+    },
+  });
+
   const resetForm = () => {
     setFullName(profileQuery.data?.full_name ?? "");
     setEmail(profileQuery.data?.email ?? "");
@@ -46,33 +62,6 @@ export default function ProfilePage() {
       organization: organization.trim() || undefined,
     });
   };
-
-  const displayName = fullName.trim() || profileQuery.data?.full_name || "";
-  const initials = displayName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-
-  const hasChanges = Boolean(
-    profileQuery.data &&
-    (fullName !== (profileQuery.data.full_name ?? "") ||
-      jobTitle !== (profileQuery.data.job_role ?? "") ||
-      organization !== (profileQuery.data.organization ?? "")),
-  );
-
-  const apiUtils = api.useUtils();
-  const supabase = createSupabaseComponentClient();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const updateAvatarMutation = api.profiles.updateProfilePicture.useMutation({
-    onSuccess: async () => {
-      toast.success("Profile picture updated!");
-      await apiUtils.profiles.me.invalidate();
-    },
-    onError: () => toast.error("Failed to update profile picture."),
-  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,46 +87,6 @@ export default function ProfilePage() {
     );
   };
 
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-  const [organization, setOrganization] = useState("");
-
-  useEffect(() => {
-    if (!profileQuery.data) return;
-
-    setFullName(profileQuery.data.full_name ?? "");
-    setEmail(profileQuery.data.email ?? "");
-    setJobTitle(profileQuery.data.job_role ?? "");
-    setOrganization(profileQuery.data.organization ?? "");
-  }, [profileQuery.data]);
-
-  const updateProfile = api.profiles.updateMe.useMutation({
-    onSuccess: async () => {
-      toast.success("Profile updated successfully.");
-      await profileQuery.refetch();
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to update profile.");
-    },
-  });
-
-  const resetForm = () => {
-    setFullName(profileQuery.data?.full_name ?? "");
-    setEmail(profileQuery.data?.email ?? "");
-    setJobTitle(profileQuery.data?.job_role ?? "");
-    setOrganization(profileQuery.data?.organization ?? "");
-  };
-
-  const handleSave = () => {
-    updateProfile.mutate({
-      full_name: fullName.trim() || profileQuery.data?.full_name || "",
-      email: email.trim() || undefined,
-      job_role: jobTitle.trim() || undefined,
-      organization: organization.trim() || undefined,
-    });
-  };
-
   const displayName = fullName.trim() || profileQuery.data?.full_name || "";
   const initials = displayName
     .split(/\s+/)
@@ -148,9 +97,9 @@ export default function ProfilePage() {
 
   const hasChanges = Boolean(
     profileQuery.data &&
-    (fullName !== (profileQuery.data.full_name ?? "") ||
-      jobTitle !== (profileQuery.data.job_role ?? "") ||
-      organization !== (profileQuery.data.organization ?? "")),
+      (fullName !== (profileQuery.data.full_name ?? "") ||
+        jobTitle !== (profileQuery.data.job_role ?? "") ||
+        organization !== (profileQuery.data.organization ?? "")),
   );
 
   const avatarPublicUrl = profileQuery.data?.avatar_url
@@ -160,9 +109,9 @@ export default function ProfilePage() {
     : undefined;
 
   return (
-    <div className="min-h-screen w-full bg-[#f5f5f5]">
+    <div className="w-full bg-[#f5f5f5]">
       <div className="mx-auto max-w-[1360px] px-4 py-4 md:px-6">
-        <div className="grid min-h-[calc(100vh-9rem)] grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
           <section className="border-b border-gray-300 px-4 py-4 lg:border-b-0 lg:border-r lg:px-5 lg:py-3">
             <h1 className="text-3xl font-semibold text-black md:text-4xl">
               Profile
@@ -242,7 +191,7 @@ export default function ProfilePage() {
                 <div className="group relative flex h-[240px] w-[240px] items-center justify-center md:h-[300px] md:w-[300px] lg:absolute lg:left-[56%] lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2">
                   <Avatar className="h-[240px] w-[240px] rounded-full bg-[#d8e6f5] md:h-[300px] md:w-[300px]">
                     <AvatarImage
-                      src={profileQuery.data?.avatar_url ?? undefined}
+                      src={avatarPublicUrl}
                       className="h-full w-full object-cover"
                     />
                     <AvatarFallback className="h-full w-full bg-[#d8e6f5] text-6xl font-semibold text-zinc-700 md:text-7xl">
@@ -253,10 +202,18 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     aria-label="Edit profile image"
+                    onClick={() => fileInputRef.current?.click()}
                     className="absolute bottom-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-zinc-600 bg-white text-xl text-black shadow-sm transition hover:bg-zinc-100 md:bottom-5 md:right-5 md:h-12 md:w-12"
                   >
                     ✎
                   </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                 </div>
               </div>
 

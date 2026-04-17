@@ -1,6 +1,5 @@
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import Logo from "@/assets/NCCNonProfit_LOGO.png";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import ProfileMenu from "@/components/ProfileMenu";
@@ -40,8 +39,10 @@ export default function Header() {
       <div className="mx-auto flex h-[7rem] items-center px-4 md:px-8 xl:px-12">
         <Link href={logoHref} className="flex-shrink-0">
           <Image
-            src={Logo}
+            src="/assets/NCCNonProfit_LOGO.png"
             alt="NPMI/NCCN Logo"
+            width={200}
+            height={80}
             className="h-14 w-auto md:h-20"
           />
         </Link>
