@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { Edit2, Trash2, MoreHorizontal, MessageCircle } from "lucide-react";
+import {
+  Edit2,
+  Trash2,
+  MoreHorizontal,
+  MessageCircle,
+  Star,
+} from "lucide-react";
 
 export type Author = {
   name: string;
@@ -169,9 +175,16 @@ function ReplyPost({
               {post.author.name}
             </span>
             {post.author.badge && (
-              <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
-                {post.author.badge}
-              </span>
+              post.author.badge === "Admin" ? (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                  <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                  <span>Admin</span>
+                </span>
+              ) : (
+                <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
+                  {post.author.badge}
+                </span>
+              )
             )}
             <div className="text-xs text-zinc-400">
               {relativeTime(post.createdAt)}
@@ -305,9 +318,16 @@ function TopLevelPost({
                   {post.author.name}
                 </span>
                 {post.author.badge && (
-                  <span className="text-sm text-zinc-500">
-                    {post.author.badge}
-                  </span>
+                  post.author.badge === "Admin" ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                      <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                      <span>Admin</span>
+                    </span>
+                  ) : (
+                    <span className="text-sm text-zinc-500">
+                      {post.author.badge}
+                    </span>
+                  )
                 )}
               </div>
               <time className="text-xs text-zinc-400">

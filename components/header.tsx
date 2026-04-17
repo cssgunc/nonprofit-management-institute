@@ -35,7 +35,7 @@ export default function Header() {
     ? [
         { label: "Dashboard", href: `${basePath}/dashboard` },
         { label: "Discussion", href: `${basePath}/discussion` },
-        { label: "Contact", href: `${basePath}/contact` },
+        { label: "Cohort", href: `${basePath}/contact` },
       ]
     : [];
 

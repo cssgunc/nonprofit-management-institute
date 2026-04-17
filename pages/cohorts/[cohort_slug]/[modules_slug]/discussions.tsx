@@ -34,6 +34,7 @@ function getAuthorProfile(
   authorId: string | null,
   fullName: string | null,
   avatarPath: string | null,
+  authorRole: "admin" | "student" | null,
   resolveAvatarUrl: (avatarPath: string | null) => string | null,
   currentUserId?: string,
 ) {
@@ -51,7 +52,12 @@ function getAuthorProfile(
   return {
     name: fullName?.trim() || `Member ${authorId.slice(0, 6)}`,
     avatarUrl,
-    badge: authorId === currentUserId ? "You" : undefined,
+    badge:
+      authorRole === "admin"
+        ? "Admin"
+        : authorId === currentUserId
+          ? "You"
+          : undefined,
     colorIndex:
       authorId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % 6,
   };
@@ -67,6 +73,7 @@ function mapThreadNodeToDiscussionPost(
     node.author_id,
     node.author_full_name,
     node.author_avatar_url,
+    node.author_role,
     resolveAvatarUrl,
     currentUserId,
   );
@@ -76,7 +83,7 @@ function mapThreadNodeToDiscussionPost(
     author,
     content: node.body ?? "",
     createdAt: node.created_at ?? new Date(0),
-    isDeleted: node.is_deleted,
+    isDeleted: node.is_deleted ?? false,
     canManage: isAdmin || node.author_id === currentUserId,
     replies: node.children.map((child) =>
       mapThreadNodeToDiscussionPost(
@@ -99,6 +106,7 @@ function ThreadPreview({
   resolveAvatarUrl,
   onEdit,
   onDelete,
+  cohortSlug,
 }: {
   thread: ThreadListItem;
   postId: number;
@@ -109,10 +117,11 @@ function ThreadPreview({
   resolveAvatarUrl: (avatarPath: string | null) => string | null;
   onEdit: (id: string | number, newContent: string) => void;
   onDelete: (id: string | number) => void;
+  cohortSlug: string;
 }) {
   const threadQuery = api.discussions.getThread.useQuery(
-    { postId },
-    { retry: false },
+    { postId, cohortSlug },
+    { retry: false, enabled: !!cohortSlug },
   );
 
   const topLevelPost: DiscussionUiPost = {
@@ -121,12 +130,13 @@ function ThreadPreview({
       thread.author_id,
       thread.author_full_name,
       thread.author_avatar_url,
+      thread.author_role,
       resolveAvatarUrl,
       currentUserId,
     ),
     content: thread.body ?? "",
     createdAt: thread.created_at ?? new Date(0),
-    isDeleted: thread.is_deleted,
+    isDeleted: thread.is_deleted ?? false,
     replyCount: threadQuery.data ? countReplies(threadQuery.data) : 0,
     replies: [],
   };
@@ -250,17 +260,19 @@ export default function ModuleDiscussions() {
     retry: false,
   });
   const threadsQuery = api.discussions.listThreadsByModuleSlug.useQuery(
-    { moduleSlug },
-    { enabled: !!moduleSlug, retry: false },
+    { moduleSlug, cohortSlug },
+    { enabled: !!moduleSlug && !!cohortSlug, retry: false },
   );
   const updatePostMutation = api.discussions.updatePost.useMutation({
     onSuccess: async () => {
       await apiUtils.discussions.listThreadsByModuleSlug.invalidate({
         moduleSlug,
+        cohortSlug,
       });
       if (expandedThreadId !== null) {
         await apiUtils.discussions.getThread.invalidate({
           postId: expandedThreadId,
+          cohortSlug,
         });
       }
     },
@@ -269,10 +281,12 @@ export default function ModuleDiscussions() {
     onSuccess: async () => {
       await apiUtils.discussions.listThreadsByModuleSlug.invalidate({
         moduleSlug,
+        cohortSlug,
       });
       if (expandedThreadId !== null) {
         await apiUtils.discussions.getThread.invalidate({
           postId: expandedThreadId,
+          cohortSlug,
         });
       }
     },
@@ -343,10 +357,6 @@ export default function ModuleDiscussions() {
               <h1 className="text-3xl font-bold text-black">
                 {moduleQuery.data?.title ?? "Module Discussion"}
               </h1>
-              <p className="text-sm text-zinc-600">
-                Review the current discussion layout with live thread data from
-                the discussions router.
-              </p>
             </div>
 
             {threadsQuery.isLoading ? (
@@ -374,6 +384,7 @@ export default function ModuleDiscussions() {
                     resolveAvatarUrl={resolveAvatarUrl}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    cohortSlug={cohortSlug}
                     onToggleReplies={() =>
                       setExpandedThreadId((current) =>
                         current === thread.id ? null : thread.id,

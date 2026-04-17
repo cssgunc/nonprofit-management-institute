@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
 
 type ModuleCardProps = {
   title: string;
@@ -29,9 +30,10 @@ export default function ModuleCard({
 }: ModuleCardProps) {
   const href = cohortSlug ? `/cohorts/${cohortSlug}/${slug}/module` : null;
   const isInactive = isActive !== true;
+  const isLockedForViewer = isInactive && !isAdmin;
   const cardClassName = `block h-[260px] w-full max-w-[470px] overflow-hidden rounded-lg transition-transform hover:scale-[1.02] ${className} ${
-    isInactive ? "opacity-70" : ""
-  }`;
+    isInactive ? "opacity-45" : ""
+  } ${isLockedForViewer ? "cursor-not-allowed" : ""}`;
   const image = (
     <Image
       src={imageSrc}
@@ -39,7 +41,7 @@ export default function ModuleCard({
       width={470}
       height={260}
       className={`h-full w-full object-cover transition-transform ${
-        isInactive ? "saturate-0" : ""
+        isInactive ? "grayscale brightness-90 contrast-90" : ""
       } ${imageClassName}`}
       priority
     />
@@ -85,6 +87,11 @@ export default function ModuleCard({
           href={href}
           aria-label={`Open ${title} module`}
           className={cardClassName}
+          onClick={(e) => {
+            if (!isLockedForViewer) return;
+            e.preventDefault();
+            toast.error("This module is locked.");
+          }}
         >
           {image}
         </Link>
