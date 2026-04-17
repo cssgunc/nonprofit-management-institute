@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import { VideoOff, Lock, AlertCircle } from "lucide-react";
+import Link from "next/link";
 import { api } from "@/utils/trpc/api";
 import { TRPCClientError } from "@trpc/client";
 import SidebarModules from "@/components/sidebarModules";
@@ -91,7 +92,7 @@ export default function ModulePage() {
       <CohortAccessGuard cohortSlug={cohortSlug}>
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={0} />
-          <div className="flex min-h-[calc(100vh-7rem)] flex-1 items-center justify-center bg-zinc-50">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 items-center justify-center">
             <p className="text-gray-400 text-sm">Loading...</p>
           </div>
         </div>
@@ -110,7 +111,7 @@ export default function ModulePage() {
         <CohortAccessGuard cohortSlug={cohortSlug}>
           <div className="flex min-h-[calc(100vh-7rem)] w-full">
             <SidebarModules items={sidebarItems} activeId={0} />
-            <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+            <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
               <Lock className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
               <p className="text-gray-600 font-medium">
                 This module is locked.
@@ -118,6 +119,12 @@ export default function ModulePage() {
               <p className="text-sm text-gray-400">
                 You do not have access to this module yet.
               </p>
+              <Link
+                href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+                className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+              >
+                Back to Dashboard
+              </Link>
             </div>
           </div>
         </CohortAccessGuard>
@@ -129,7 +136,7 @@ export default function ModulePage() {
         <CohortAccessGuard cohortSlug={cohortSlug}>
           <div className="flex min-h-[calc(100vh-7rem)] w-full">
             <SidebarModules items={sidebarItems} activeId={0} />
-            <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+            <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
               <AlertCircle
                 className="w-8 h-8 text-gray-400"
                 strokeWidth={1.5}
@@ -138,6 +145,12 @@ export default function ModulePage() {
               <p className="text-sm text-gray-400">
                 This module does not exist or has been removed.
               </p>
+              <Link
+                href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+                className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+              >
+                Back to Dashboard
+              </Link>
             </div>
           </div>
         </CohortAccessGuard>
@@ -148,12 +161,18 @@ export default function ModulePage() {
       <CohortAccessGuard cohortSlug={cohortSlug}>
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={0} />
-          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
             <AlertCircle className="w-8 h-8 text-red-400" strokeWidth={1.5} />
             <p className="text-gray-600 font-medium">Something went wrong.</p>
             <p className="text-sm text-gray-400">
               Failed to load this module. Please try again.
             </p>
+            <Link
+              href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+              className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+            >
+              Back to Dashboard
+            </Link>
           </div>
         </div>
       </CohortAccessGuard>
@@ -165,9 +184,15 @@ export default function ModulePage() {
       <CohortAccessGuard cohortSlug={cohortSlug}>
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={0} />
-          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
             <AlertCircle className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
             <p className="text-gray-600 font-medium">Module not found.</p>
+            <Link
+              href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+              className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+            >
+              Back to Dashboard
+            </Link>
           </div>
         </div>
       </CohortAccessGuard>

@@ -9,6 +9,9 @@ import CohortAccessGuard from "@/components/CohortAccessGuard";
 import { getDiscussionSidebarContext } from "@/utils/sidebarContext";
 import { api, type RouterOutputs } from "@/utils/trpc/api";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
+import { TRPCClientError } from "@trpc/client";
+import { AlertCircle, Lock } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useLayoutEffect, useState } from "react";
 
@@ -34,6 +37,7 @@ function getAuthorProfile(
   authorId: string | null,
   fullName: string | null,
   avatarPath: string | null,
+  authorRole: "admin" | "student" | null,
   resolveAvatarUrl: (avatarPath: string | null) => string | null,
   currentUserId?: string,
 ) {
@@ -51,7 +55,12 @@ function getAuthorProfile(
   return {
     name: fullName?.trim() || `Member ${authorId.slice(0, 6)}`,
     avatarUrl,
-    badge: authorId === currentUserId ? "You" : undefined,
+    badge:
+      authorRole === "admin"
+        ? "Admin"
+        : authorId === currentUserId
+          ? "You"
+          : undefined,
     colorIndex:
       authorId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % 6,
   };
@@ -67,6 +76,7 @@ function mapThreadNodeToDiscussionPost(
     node.author_id,
     node.author_full_name,
     node.author_avatar_url,
+    node.author_role,
     resolveAvatarUrl,
     currentUserId,
   );
@@ -76,7 +86,7 @@ function mapThreadNodeToDiscussionPost(
     author,
     content: node.body ?? "",
     createdAt: node.created_at ?? new Date(0),
-    isDeleted: node.is_deleted,
+    isDeleted: node.is_deleted ?? false,
     canManage: isAdmin || node.author_id === currentUserId,
     replies: node.children.map((child) =>
       mapThreadNodeToDiscussionPost(
@@ -99,6 +109,7 @@ function ThreadPreview({
   resolveAvatarUrl,
   onEdit,
   onDelete,
+  cohortSlug,
 }: {
   thread: ThreadListItem;
   postId: number;
@@ -109,10 +120,11 @@ function ThreadPreview({
   resolveAvatarUrl: (avatarPath: string | null) => string | null;
   onEdit: (id: string | number, newContent: string) => void;
   onDelete: (id: string | number) => void;
+  cohortSlug: string;
 }) {
   const threadQuery = api.discussions.getThread.useQuery(
-    { postId },
-    { retry: false },
+    { postId, cohortSlug },
+    { retry: false, enabled: !!cohortSlug },
   );
 
   const topLevelPost: DiscussionUiPost = {
@@ -121,12 +133,13 @@ function ThreadPreview({
       thread.author_id,
       thread.author_full_name,
       thread.author_avatar_url,
+      thread.author_role,
       resolveAvatarUrl,
       currentUserId,
     ),
     content: thread.body ?? "",
     createdAt: thread.created_at ?? new Date(0),
-    isDeleted: thread.is_deleted,
+    isDeleted: thread.is_deleted ?? false,
     replyCount: threadQuery.data ? countReplies(threadQuery.data) : 0,
     replies: [],
   };
@@ -250,17 +263,22 @@ export default function ModuleDiscussions() {
     retry: false,
   });
   const threadsQuery = api.discussions.listThreadsByModuleSlug.useQuery(
-    { moduleSlug },
-    { enabled: !!moduleSlug, retry: false },
+    { moduleSlug, cohortSlug },
+    {
+      enabled: !!moduleSlug && !!cohortSlug && moduleQuery.status === "success",
+      retry: false,
+    },
   );
   const updatePostMutation = api.discussions.updatePost.useMutation({
     onSuccess: async () => {
       await apiUtils.discussions.listThreadsByModuleSlug.invalidate({
         moduleSlug,
+        cohortSlug,
       });
       if (expandedThreadId !== null) {
         await apiUtils.discussions.getThread.invalidate({
           postId: expandedThreadId,
+          cohortSlug,
         });
       }
     },
@@ -269,10 +287,12 @@ export default function ModuleDiscussions() {
     onSuccess: async () => {
       await apiUtils.discussions.listThreadsByModuleSlug.invalidate({
         moduleSlug,
+        cohortSlug,
       });
       if (expandedThreadId !== null) {
         await apiUtils.discussions.getThread.invalidate({
           postId: expandedThreadId,
+          cohortSlug,
         });
       }
     },
@@ -303,6 +323,7 @@ export default function ModuleDiscussions() {
       title: module.title,
       href: `${baseCohortPath}/${module.slug}/discussions`,
       moduleSlug: module.slug,
+      isLocked: !module.is_active,
     })) satisfies DiscussionNavItem[]),
   ];
 
@@ -325,31 +346,67 @@ export default function ModuleDiscussions() {
     deletePostMutation.mutate({ post_id: id });
   };
 
+  const moduleErrorCode =
+    moduleQuery.error instanceof TRPCClientError
+      ? moduleQuery.error.data?.code
+      : undefined;
+
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="flex min-h-[calc(100vh-7rem)] w-full">
+      <div className="flex min-h-[calc(100vh-7rem)] w-full items-stretch">
         {mounted &&
           (sidebarContext === "discussions" ? (
             <SidebarDiscussions
               items={discussionItems}
               activeId={activeDiscussionId}
+              canAccessLocked={isAdmin}
             />
           ) : (
             <SidebarModules items={sidebarItems} activeId={1} />
           ))}
-        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col bg-zinc-50">
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col">
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-black">
                 {moduleQuery.data?.title ?? "Module Discussion"}
               </h1>
-              <p className="text-sm text-zinc-600">
-                Review the current discussion layout with live thread data from
-                the discussions router.
-              </p>
             </div>
 
-            {threadsQuery.isLoading ? (
+            {moduleQuery.isLoading ? (
+              <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
+                Loading module...
+              </div>
+            ) : moduleErrorCode === "FORBIDDEN" ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
+                <Lock className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                <p className="font-medium text-gray-600">
+                  This module is locked.
+                </p>
+                <p className="text-sm text-gray-400">
+                  You do not have access to this module yet.
+                </p>
+                <Link
+                  href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+                  className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
+            ) : moduleErrorCode === "NOT_FOUND" || !moduleQuery.data ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
+                <AlertCircle
+                  className="h-8 w-8 text-gray-400"
+                  strokeWidth={1.5}
+                />
+                <p className="font-medium text-gray-600">Module not found.</p>
+                <Link
+                  href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+                  className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
+            ) : threadsQuery.isLoading ? (
               <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
                 Loading discussions...
               </div>
@@ -374,6 +431,7 @@ export default function ModuleDiscussions() {
                     resolveAvatarUrl={resolveAvatarUrl}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    cohortSlug={cohortSlug}
                     onToggleReplies={() =>
                       setExpandedThreadId((current) =>
                         current === thread.id ? null : thread.id,

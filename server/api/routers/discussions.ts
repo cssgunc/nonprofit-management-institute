@@ -10,7 +10,7 @@ import {
   profiles,
 } from "@/server/db/schema";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 async function fetchPost(post_id: number) {
   const [row] = await db
@@ -19,6 +19,23 @@ async function fetchPost(post_id: number) {
     .where(eq(discussions_post.id, post_id));
   if (!row) throw new TRPCError({ code: "NOT_FOUND" });
   return row;
+}
+
+async function resolveCohortBySlug(cohortSlug: string) {
+  const [cohort] = await db
+    .select({ id: cohorts.id, slug: cohorts.slug })
+    .from(cohorts)
+    .where(eq(cohorts.slug, cohortSlug))
+    .limit(1);
+
+  if (!cohort) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Cohort "${cohortSlug}" not found`,
+    });
+  }
+
+  return cohort;
 }
 
 async function checkAdmin(user_id: string): Promise<boolean> {
@@ -53,10 +70,46 @@ async function requireCohortAccess(userId: string, cohortId: number) {
   }
 }
 
+async function requireModuleDiscussionAccess(
+  userId: string,
+  cohortId: number,
+  moduleId: number,
+) {
+  const isAdmin = await checkAdmin(userId);
+
+  await requireCohortAccess(userId, cohortId);
+
+  const [cohortModule] = await db
+    .select({ is_active: cohort_modules.is_active })
+    .from(cohort_modules)
+    .where(
+      and(
+        eq(cohort_modules.cohort_id, cohortId),
+        eq(cohort_modules.module_id, moduleId),
+      ),
+    )
+    .limit(1);
+
+  if (!cohortModule) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Module is not available in this cohort",
+    });
+  }
+
+  if (!cohortModule.is_active && !isAdmin) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "This module is not available",
+    });
+  }
+}
+
 type PostRow = typeof discussions_post.$inferSelect;
 type PostWithAuthor = PostRow & {
   author_full_name: string | null;
   author_avatar_url: string | null;
+  author_role: "admin" | "student" | null;
 };
 type PostNode = PostWithAuthor & { children: PostNode[] };
 
@@ -94,14 +147,11 @@ function collectSubtreeIds(
 }
 
 export const discussionsRouter = createTRPCRouter({
-  listThreadsByModuleSlug: publicProcedure
-    .input(z.object({ moduleSlug: z.string() }))
-    .query(async ({ input }) => {
-      const foundModule = await db.query.modules.findFirst({
-        where: (modules, { eq }) => eq(modules.slug, input.moduleSlug),
-        columns: { id: true },
-      });
-      if (!foundModule) throw new TRPCError({ code: "NOT_FOUND" });
+  listGeneralThreads: protectedProcedure
+    .input(z.object({ cohortSlug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const cohort = await resolveCohortBySlug(input.cohortSlug);
+      await requireCohortAccess(ctx.subject.id, cohort.id);
 
       return db
         .select({
@@ -116,23 +166,35 @@ export const discussionsRouter = createTRPCRouter({
           is_deleted: discussions_post.is_deleted,
           author_full_name: profiles.full_name,
           author_avatar_url: profiles.avatarUrl,
+          author_role: profiles.role,
         })
         .from(discussions_post)
         .leftJoin(profiles, eq(profiles.id, discussions_post.author_id))
         .where(
           and(
-            eq(discussions_post.module_id, foundModule.id),
+            isNull(discussions_post.module_id),
+            eq(discussions_post.cohort_id, cohort.id),
             isNull(discussions_post.parent_post_id),
           ),
         )
         .orderBy(desc(discussions_post.created_at));
     }),
 
-  listRepliesByParentPostId: publicProcedure
-    .input(z.object({ parentPostId: z.number().int() }))
-    .query(async ({ input }) => {
-      // Ensure the parent exists
-      await fetchPost(input.parentPostId);
+  listThreadsByModuleSlug: protectedProcedure
+    .input(z.object({ moduleSlug: z.string(), cohortSlug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const cohort = await resolveCohortBySlug(input.cohortSlug);
+      const foundModule = await db.query.modules.findFirst({
+        where: (modules, { eq }) => eq(modules.slug, input.moduleSlug),
+        columns: { id: true },
+      });
+      if (!foundModule) throw new TRPCError({ code: "NOT_FOUND" });
+
+      await requireModuleDiscussionAccess(
+        ctx.subject.id,
+        cohort.id,
+        foundModule.id,
+      );
 
       return db
         .select({
@@ -147,22 +209,91 @@ export const discussionsRouter = createTRPCRouter({
           is_deleted: discussions_post.is_deleted,
           author_full_name: profiles.full_name,
           author_avatar_url: profiles.avatarUrl,
+          author_role: profiles.role,
         })
         .from(discussions_post)
         .leftJoin(profiles, eq(profiles.id, discussions_post.author_id))
-        .where(eq(discussions_post.parent_post_id, input.parentPostId))
+        .where(
+          and(
+            eq(discussions_post.module_id, foundModule.id),
+            eq(discussions_post.cohort_id, cohort.id),
+            isNull(discussions_post.parent_post_id),
+          ),
+        )
+        .orderBy(desc(discussions_post.created_at));
+    }),
+
+  listRepliesByParentPostId: protectedProcedure
+    .input(z.object({ parentPostId: z.number().int(), cohortSlug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const cohort = await resolveCohortBySlug(input.cohortSlug);
+      const parent = await fetchPost(input.parentPostId);
+
+      if (parent.cohort_id !== cohort.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      if (parent.module_id !== null) {
+        await requireModuleDiscussionAccess(
+          ctx.subject.id,
+          cohort.id,
+          parent.module_id,
+        );
+      } else {
+        await requireCohortAccess(ctx.subject.id, cohort.id);
+      }
+
+      return db
+        .select({
+          id: discussions_post.id,
+          module_id: discussions_post.module_id,
+          cohort_id: discussions_post.cohort_id,
+          author_id: discussions_post.author_id,
+          parent_post_id: discussions_post.parent_post_id,
+          body: discussions_post.body,
+          created_at: discussions_post.created_at,
+          edited_at: discussions_post.edited_at,
+          is_deleted: discussions_post.is_deleted,
+          author_full_name: profiles.full_name,
+          author_avatar_url: profiles.avatarUrl,
+          author_role: profiles.role,
+        })
+        .from(discussions_post)
+        .leftJoin(profiles, eq(profiles.id, discussions_post.author_id))
+        .where(
+          and(
+            eq(discussions_post.parent_post_id, input.parentPostId),
+            eq(discussions_post.cohort_id, cohort.id),
+          ),
+        )
         .orderBy(asc(discussions_post.created_at));
     }),
 
-  getThread: publicProcedure
-    .input(z.object({ postId: z.number().int() }))
-    .query(async ({ input }) => {
+  getThread: protectedProcedure
+    .input(z.object({ postId: z.number().int(), cohortSlug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const cohort = await resolveCohortBySlug(input.cohortSlug);
       const root = await fetchPost(input.postId);
+
+      if (root.cohort_id !== cohort.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
       if (root.parent_post_id !== null) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "postId must be a top-level post",
         });
+      }
+
+      if (root.module_id !== null) {
+        await requireModuleDiscussionAccess(
+          ctx.subject.id,
+          cohort.id,
+          root.module_id,
+        );
+      } else {
+        await requireCohortAccess(ctx.subject.id, cohort.id);
       }
 
       const allModulePosts = await db
@@ -178,10 +309,21 @@ export const discussionsRouter = createTRPCRouter({
           is_deleted: discussions_post.is_deleted,
           author_full_name: profiles.full_name,
           author_avatar_url: profiles.avatarUrl,
+          author_role: profiles.role,
         })
         .from(discussions_post)
         .leftJoin(profiles, eq(profiles.id, discussions_post.author_id))
-        .where(eq(discussions_post.module_id, root.module_id!))
+        .where(
+          root.module_id === null
+            ? and(
+                isNull(discussions_post.module_id),
+                eq(discussions_post.cohort_id, cohort.id),
+              )
+            : and(
+                eq(discussions_post.module_id, root.module_id),
+                eq(discussions_post.cohort_id, cohort.id),
+              ),
+        )
         .orderBy(asc(discussions_post.created_at));
 
       const subtreeIds = new Set(collectSubtreeIds(root.id, allModulePosts));

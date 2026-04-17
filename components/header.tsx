@@ -1,6 +1,5 @@
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import Logo from "@/assets/NCCNonProfit_LOGO.png";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import ProfileMenu from "@/components/ProfileMenu";
@@ -31,17 +30,45 @@ export default function Header() {
     ? [
         { label: "Dashboard", href: `${basePath}/dashboard` },
         { label: "Discussion", href: `${basePath}/discussion` },
-        { label: "Contact", href: `${basePath}/contact` },
+        { label: "Cohort", href: `${basePath}/contact` },
       ]
     : [];
+
+  const currentPath = router.asPath.split("?")[0] ?? "";
+  const discussionModulePattern = new RegExp(
+    `^${basePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/[^/]+/discussions$`,
+  );
+  const dashboardModulePattern = new RegExp(
+    `^${basePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/[^/]+/(module|materials)$`,
+  );
+
+  const isNavLinkActive = (href: string, label: string) => {
+    if (currentPath === href) return true;
+
+    if (label === "Discussion") {
+      return discussionModulePattern.test(currentPath);
+    }
+
+    if (label === "Dashboard") {
+      return dashboardModulePattern.test(currentPath);
+    }
+
+    if (label === "Cohort") {
+      return currentPath.startsWith(`${basePath}/contact`);
+    }
+
+    return false;
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-300 bg-white shadow-sm">
       <div className="mx-auto flex h-[7rem] items-center px-4 md:px-8 xl:px-12">
         <Link href={logoHref} className="flex-shrink-0">
           <Image
-            src={Logo}
+            src="/assets/NCCNonProfit_LOGO.png"
             alt="NPMI/NCCN Logo"
+            width={200}
+            height={80}
             className="h-14 w-auto md:h-20"
           />
         </Link>
@@ -52,7 +79,7 @@ export default function Header() {
               key={link.href}
               href={link.href}
               className={`text-xl font-medium transition-colors hover:text-gray-900 ${
-                router.asPath === link.href
+                isNavLinkActive(link.href, link.label)
                   ? "text-gray-900 underline underline-offset-4"
                   : "text-gray-500"
               }`}
@@ -86,7 +113,7 @@ export default function Header() {
                       <Link
                         href={link.href}
                         className={`block cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-gray-100 focus:bg-gray-100 ${
-                          router.asPath === link.href
+                          isNavLinkActive(link.href, link.label)
                             ? "font-medium text-gray-900"
                             : "text-gray-700"
                         }`}
