@@ -63,30 +63,30 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen w-full bg-[#f5f5f5]">
-      <div className="mx-auto max-w-[1500px] px-5 py-5 md:px-8">
-        <div className="grid min-h-[calc(100vh-10rem)] grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="border-b border-zinc-500 px-4 py-4 lg:border-b-0 lg:border-r lg:px-5 lg:py-2">
-            <h1 className="text-4xl font-semibold text-black md:text-5xl">
+      <div className="mx-auto max-w-[1360px] px-4 py-4 md:px-6">
+        <div className="grid min-h-[calc(100vh-9rem)] grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
+          <section className="border-b border-gray-300 px-4 py-4 lg:border-b-0 lg:border-r lg:px-5 lg:py-3">
+            <h1 className="text-3xl font-semibold text-black md:text-4xl">
               Profile
             </h1>
 
-            <div className="mt-8 flex justify-center">
-              <div className="w-full max-w-[620px]">
-                <div className="space-y-4">
+            <div className="mt-5 flex justify-center">
+              <div className="w-full max-w-[560px]">
+                <div className="space-y-3">
                   <div>
-                    <label className="mb-2 block text-xl font-medium text-black">
+                    <label className="mb-1.5 block text-lg font-medium text-black">
                       Full Name
                     </label>
                     <input
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder={profileQuery.data?.full_name ?? "Rose Doe"}
-                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-3 text-xl text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xl font-medium text-black">
+                    <label className="mb-1.5 block text-lg font-medium text-black">
                       Email
                     </label>
                     <input
@@ -95,24 +95,24 @@ export default function ProfilePage() {
                       placeholder={
                         profileQuery.data?.email ?? "Rosedoe123@gmail.com"
                       }
-                      className="w-full cursor-not-allowed rounded-[6px] border border-zinc-300 bg-zinc-100 px-4 py-3 text-xl text-zinc-500 placeholder:text-zinc-400 focus:outline-none"
+                      className="w-full cursor-not-allowed rounded-[6px] border border-zinc-300 bg-zinc-100 px-4 py-2.5 text-lg text-zinc-500 placeholder:text-zinc-400 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xl font-medium text-black">
+                    <label className="mb-1.5 block text-lg font-medium text-black">
                       Job Title
                     </label>
                     <input
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
                       placeholder={profileQuery.data?.job_role ?? "Manager"}
-                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-3 text-xl text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xl font-medium text-black">
+                    <label className="mb-1.5 block text-lg font-medium text-black">
                       Organization
                     </label>
                     <input
@@ -121,15 +121,15 @@ export default function ProfilePage() {
                       placeholder={
                         profileQuery.data?.organization ?? "Nonprofit"
                       }
-                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-3 text-xl text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                   </div>
                 </div>
 
-                <div className="mt-12 flex justify-center">
+                <div className="mt-8 flex justify-center">
                   <Link
                     href="/changepassword"
-                    className="inline-flex min-w-[220px] items-center justify-center rounded-full border border-zinc-500 px-8 py-3 text-xl font-medium text-black transition hover:bg-zinc-200"
+                    className="inline-flex min-w-[210px] items-center justify-center rounded-full border border-zinc-500 px-7 py-2.5 text-lg font-medium text-black transition hover:bg-zinc-200"
                   >
                     Change Password
                   </Link>
@@ -138,16 +138,16 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          <section className="px-6 py-8 lg:px-4 xl:px-2">
-            <div className="ml-auto flex h-full w-full max-w-[860px] flex-col">
-              <div className="flex flex-1 items-center justify-center">
-                <div className="group relative flex h-[310px] w-[310px] items-center justify-center md:h-[380px] md:w-[380px]">
-                  <Avatar className="h-[310px] w-[310px] rounded-full bg-[#d8e6f5] md:h-[380px] md:w-[380px]">
+          <section className="px-5 py-6 lg:px-4 xl:px-2">
+            <div className="flex h-full w-full flex-col">
+              <div className="relative flex min-h-[260px] items-center justify-center lg:flex-1">
+                <div className="group relative flex h-[240px] w-[240px] items-center justify-center md:h-[300px] md:w-[300px] lg:absolute lg:left-[56%] lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2">
+                  <Avatar className="h-[240px] w-[240px] rounded-full bg-[#d8e6f5] md:h-[300px] md:w-[300px]">
                     <AvatarImage
                       src={profileQuery.data?.avatar_url ?? undefined}
                       className="h-full w-full object-cover"
                     />
-                    <AvatarFallback className="h-full w-full bg-[#d8e6f5] text-7xl font-semibold text-zinc-700 md:text-8xl">
+                    <AvatarFallback className="h-full w-full bg-[#d8e6f5] text-6xl font-semibold text-zinc-700 md:text-7xl">
                       {initials || "U"}
                     </AvatarFallback>
                   </Avatar>
@@ -155,18 +155,18 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     aria-label="Edit profile image"
-                    className="absolute bottom-5 right-5 z-10 flex h-12 w-12 items-center justify-center rounded-full border border-zinc-600 bg-white text-2xl text-black shadow-sm transition hover:bg-zinc-100 md:bottom-6 md:right-6 md:h-14 md:w-14"
+                    className="absolute bottom-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-zinc-600 bg-white text-xl text-black shadow-sm transition hover:bg-zinc-100 md:bottom-5 md:right-5 md:h-12 md:w-12"
                   >
                     ✎
                   </button>
                 </div>
               </div>
 
-              <div className="mt-10 flex w-full items-center justify-end gap-2 pr-0 lg:-mr-2 xl:-mr-4">
+              <div className="mt-6 flex w-full items-center justify-end gap-2 pr-0 lg:-mr-2 xl:-mr-4">
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="inline-flex min-w-[160px] items-center justify-center text-xl font-medium text-black transition hover:opacity-70"
+                  className="inline-flex min-w-[140px] items-center justify-center text-lg font-medium text-black transition hover:opacity-70"
                 >
                   Cancel
                 </button>
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                     profileQuery.isLoading ||
                     !hasChanges
                   }
-                  className="inline-flex min-w-[160px] items-center justify-center rounded-full bg-[#d1d3de] px-8 py-3 text-xl font-medium text-white transition enabled:bg-[#0795b8] enabled:hover:bg-[#067f9d] disabled:cursor-not-allowed"
+                  className="inline-flex min-w-[140px] items-center justify-center rounded-full bg-[#d1d3de] px-7 py-2.5 text-lg font-medium text-white transition enabled:bg-[#0795b8] enabled:hover:bg-[#067f9d] disabled:cursor-not-allowed"
                 >
                   {updateProfile.isPending ? "Saving..." : "Save"}
                 </button>
