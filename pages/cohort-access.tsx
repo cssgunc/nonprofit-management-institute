@@ -35,6 +35,7 @@ const supabase = createBrowserClient(
 
 export default function CohortAccessPage() {
   const [accessHash, setAccessHash] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
 
@@ -50,6 +51,11 @@ export default function CohortAccessPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!agreedToTerms) {
+      setError("Error: You must agree to the Terms and Conditions to proceed.");
+      return;
+    }
 
     const trimmed = accessHash.trim();
     if (!trimmed) {
@@ -167,7 +173,33 @@ export default function CohortAccessPage() {
               />
             </div>
 
-            <div className="flex justify-center pt-4 lg:pt-6">
+            <div className="rounded-lg border border-[#74B1C6] bg-white/60 px-3 py-3 lg:px-4 lg:py-4">
+              <label className="flex items-start gap-3 text-xs lg:text-sm text-black cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setAgreedToTerms(checked);
+                    if (checked) {
+                      setError("");
+                    }
+                  }}
+                  className="mt-0.5 h-4 w-4 rounded border-[#74B1C6] text-[#3192B3] focus:ring-[#3192B3]"
+                />
+                <span className="leading-snug">
+                  <span className="font-medium text-black">
+                    I agree to the Terms and Conditions
+                  </span>{" "}
+                  <span className="text-black/80">
+                    [Lorem ipsum dolor sit amet]
+                  </span>
+                  <span className="ml-1 font-bold text-red-600">*</span>
+                </span>
+              </label>
+            </div>
+
+            <div className="flex justify-center pt-2 lg:pt-4">
               <button
                 type="submit"
                 disabled={joinMutation.isPending}
@@ -183,7 +215,7 @@ export default function CohortAccessPage() {
           </form>
 
           {error && (
-            <div className="mt-4 lg:mt-5 p-2 lg:p-3 text-xs lg:text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg max-w-sm mx-auto w-full">
+            <div className="mt-4 lg:mt-5 p-3 lg:p-4 text-xs lg:text-sm text-red-700 bg-red-50 border border-red-300 rounded-lg max-w-sm mx-auto w-full font-medium shadow-sm">
               {error}
             </div>
           )}
