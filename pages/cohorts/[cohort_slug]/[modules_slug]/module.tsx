@@ -203,22 +203,28 @@ export default function ModulePage() {
     <CohortAccessGuard cohortSlug={cohortSlug}>
       <div className="flex min-h-[calc(100vh-7rem)] w-full">
         <SidebarModules items={sidebarItems} activeId={0} />
-        <div className="flex min-h-[calc(100vh-7rem)] flex-1 justify-center bg-zinc-50">
-          <div className="flex w-full max-w-4xl flex-col gap-8 p-8">
-            <h1 className="text-3xl font-bold text-gray-900">{module.title}</h1>
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 justify-center bg-[linear-gradient(180deg,#f8f4ee_0%,#f4f0e9_100%)]">
+          <div className="motion-fade flex w-full max-w-5xl flex-col gap-8 px-8 py-10">
+            <div className="motion-rise">
+              <h1 className="text-3xl font-bold text-gray-900">
+                {module.title}
+              </h1>
+            </div>
 
             {embedUrl ? (
-              <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
-                <iframe
-                  src={embedUrl}
-                  title={module.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="w-full h-full"
-                />
+              <div className="motion-rise motion-delay-1 overflow-hidden rounded-[1.4rem] border border-[rgba(40,132,164,0.12)] bg-[rgba(255,255,255,0.76)] p-4 shadow-[0_18px_34px_rgba(61,52,45,0.08)]">
+                <div className="w-full aspect-video overflow-hidden rounded-[1rem] bg-black shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <iframe
+                    src={embedUrl}
+                    title={module.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
               </div>
             ) : (
-              <div className="w-full aspect-video rounded-lg bg-gray-100 border border-gray-200 flex flex-col items-center justify-center gap-3">
+              <div className="motion-rise motion-delay-1 flex w-full aspect-video flex-col items-center justify-center gap-3 rounded-[1.4rem] border border-[rgba(40,132,164,0.12)] bg-[rgba(255,255,255,0.76)] p-6 text-center shadow-[0_18px_34px_rgba(61,52,45,0.08)]">
                 <VideoOff
                   className="w-10 h-10 text-gray-400"
                   strokeWidth={1.5}
@@ -230,11 +236,11 @@ export default function ModulePage() {
             )}
 
             {module.description && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              <div className="motion-rise motion-delay-2 max-w-3xl">
+                <h2 className="mb-2 text-xl font-semibold text-gray-800">
                   Description
                 </h2>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="leading-relaxed text-gray-700">
                   {module.description}
                 </p>
               </div>

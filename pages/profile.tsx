@@ -109,10 +109,10 @@ export default function ProfilePage() {
     : undefined;
 
   return (
-    <div className="w-full bg-[#f5f5f5]">
+    <div className="w-full bg-[linear-gradient(180deg,#f8f4ee_0%,#f3efe8_100%)]">
       <div className="mx-auto max-w-[1360px] px-4 py-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="border-b border-gray-300 px-4 py-4 lg:border-b-0 lg:border-r lg:px-5 lg:py-3">
+          <section className="border-b border-[var(--line-soft)] px-4 py-4 lg:border-b-0 lg:border-r lg:px-5 lg:py-3">
             <h1 className="text-3xl font-semibold text-black md:text-4xl">
               Profile
             </h1>
@@ -128,7 +128,7 @@ export default function ProfilePage() {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder={profileQuery.data?.full_name ?? "Rose Doe"}
-                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full rounded-[6px] border border-[rgba(40,132,164,0.14)] bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[rgba(40,132,164,0.28)]"
                     />
                   </div>
 
@@ -154,7 +154,7 @@ export default function ProfilePage() {
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
                       placeholder={profileQuery.data?.job_role ?? "Manager"}
-                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full rounded-[6px] border border-[rgba(40,132,164,0.14)] bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[rgba(40,132,164,0.28)]"
                     />
                   </div>
 
@@ -168,7 +168,7 @@ export default function ProfilePage() {
                       placeholder={
                         profileQuery.data?.organization ?? "Nonprofit"
                       }
-                      className="w-full rounded-[6px] border border-zinc-300 bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full rounded-[6px] border border-[rgba(40,132,164,0.14)] bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[rgba(40,132,164,0.28)]"
                     />
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                 <div className="mt-8 flex justify-center">
                   <Link
                     href="/changepassword"
-                    className="inline-flex min-w-[210px] items-center justify-center rounded-full border border-zinc-500 px-7 py-2.5 text-lg font-medium text-black transition hover:bg-zinc-200"
+                    className="inline-flex min-w-[210px] items-center justify-center rounded-full border border-[rgba(40,132,164,0.28)] bg-[rgba(255,255,255,0.74)] px-7 py-2.5 text-lg font-medium text-[#224a5c] transition hover:bg-[rgba(40,132,164,0.08)]"
                   >
                     Change Password
                   </Link>
@@ -233,7 +233,7 @@ export default function ProfilePage() {
                     profileQuery.isLoading ||
                     !hasChanges
                   }
-                  className="inline-flex min-w-[140px] items-center justify-center rounded-full bg-[#d1d3de] px-7 py-2.5 text-lg font-medium text-white transition enabled:bg-[#0795b8] enabled:hover:bg-[#067f9d] disabled:cursor-not-allowed"
+                  className="inline-flex min-w-[140px] items-center justify-center rounded-full bg-[#d1d3de] px-7 py-2.5 text-lg font-medium text-white transition enabled:bg-[var(--brand-teal)] enabled:hover:bg-[#216f89] disabled:cursor-not-allowed"
                 >
                   {updateProfile.isPending ? "Saving..." : "Save"}
                 </button>

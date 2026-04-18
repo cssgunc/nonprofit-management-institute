@@ -19,9 +19,11 @@ export default function Contact() {
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="min-h-screen bg-zinc-50 px-6 py-10">
+      <div className="min-h-screen bg-[linear-gradient(180deg,#f8f4ee_0%,#f5f1eb_100%)] px-6 py-10">
         <div className="mx-auto w-full max-w-[1162px]">
-          <h1 className="text-4xl font-bold text-zinc-900">Cohort Members</h1>
+          <h1 className="mb-8 text-4xl font-bold text-zinc-900">
+            Cohort Members
+          </h1>
 
           {isLoading && (
             <p className="mt-8 text-zinc-600">Loading contacts...</p>
@@ -41,7 +43,7 @@ export default function Contact() {
 
           {!!members?.length && (
             <div className="mt-8 flex flex-col gap-4">
-              <div className="hidden grid-cols-[minmax(0,2fr)_2fr_2fr_2fr] gap-6 px-4 text-[20px] font-bold text-zinc-900 md:grid">
+              <div className="hidden grid-cols-[minmax(0,2fr)_2fr_2fr_2fr] gap-6 rounded-xl border border-[rgba(40,132,164,0.08)] bg-[rgba(255,251,247,0.86)] px-4 py-3 text-[20px] font-bold text-zinc-900 md:grid">
                 <h2>Name</h2>
                 <h2>Contact</h2>
                 <h2>Organization</h2>

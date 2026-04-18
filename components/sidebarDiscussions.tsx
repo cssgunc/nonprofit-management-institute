@@ -35,7 +35,7 @@ export default function SidebarDiscussions({
   return (
     <aside
       className={cn(
-        "flex min-h-[calc(100vh-7rem)] shrink-0 self-stretch flex-col overflow-hidden border-r border-zinc-200 bg-white font-sans transition-[width] duration-200 ease-out",
+        "flex min-h-[calc(100vh-7rem)] shrink-0 self-stretch flex-col overflow-hidden border-r border-[var(--line-soft)] bg-[linear-gradient(180deg,#f8f4ee_0%,#fcfaf7_100%)] font-sans transition-[width] duration-200 ease-out",
         isOpen ? "w-[220px]" : "w-14",
         className,
       )}
@@ -85,10 +85,10 @@ export default function SidebarDiscussions({
                     className={cn(
                       "relative flex items-center justify-between gap-2 whitespace-nowrap px-4 py-2.5 text-[15px] tracking-[0.01em] transition-colors",
                       isActive && !isDisabled
-                        ? "font-bold text-zinc-900"
+                        ? "rounded-r-xl bg-[rgba(125,50,140,0.08)] font-bold text-[#5f2d69]"
                         : isDisabled
                           ? "cursor-not-allowed text-zinc-400"
-                          : "font-normal text-zinc-900 hover:bg-zinc-100",
+                          : "font-normal text-zinc-900 hover:bg-[rgba(125,50,140,0.05)]",
                     )}
                   >
                     <span className="truncate">{item.title}</span>
@@ -96,7 +96,7 @@ export default function SidebarDiscussions({
                       <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
                     )}
                     {isActive && !isDisabled && (
-                      <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-zinc-900" />
+                      <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-[var(--brand-plum)]" />
                     )}
                   </Link>
                 </li>

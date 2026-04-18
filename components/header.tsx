@@ -3,11 +3,13 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import ProfileMenu from "@/components/ProfileMenu";
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 import { api } from "@/utils/trpc/api";
 import { Menu } from "lucide-react";
 
 export default function Header() {
   const router = useRouter();
+  const supabase = createSupabaseComponentClient();
   const { cohort_slug } = router.query;
   const profileQuery = api.profiles.me.useQuery(undefined, {
     retry: false,
@@ -25,6 +27,11 @@ export default function Header() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+  const avatarUrl = profileQuery.data?.avatar_url
+    ? supabase.storage
+        .from("avatars")
+        .getPublicUrl(profileQuery.data.avatar_url).data.publicUrl
+    : undefined;
 
   const navLinks = cohort_slug
     ? [
@@ -61,9 +68,9 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-300 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--line-soft)] bg-[rgba(252,250,247,0.92)] shadow-[0_8px_28px_rgba(61,52,45,0.06)] backdrop-blur-md">
       <div className="mx-auto flex h-[7rem] items-center px-4 md:px-8 xl:px-12">
-        <Link href={logoHref} className="flex-shrink-0">
+        <Link href={logoHref} className="motion-fade hover-bob flex-shrink-0">
           <Image
             src="/assets/NCCNonProfit_LOGO.png"
             alt="NPMI/NCCN Logo"
@@ -73,15 +80,15 @@ export default function Header() {
           />
         </Link>
 
-        <nav className="ml-auto hidden items-center gap-8 lg:flex xl:gap-12">
+        <nav className="motion-fade motion-delay-1 ml-auto hidden items-center gap-8 lg:flex xl:gap-12">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-xl font-medium transition-colors hover:text-gray-900 ${
+              className={`text-xl font-medium transition-colors hover:text-[var(--brand-teal)] ${
                 isNavLinkActive(link.href, link.label)
-                  ? "text-gray-900 underline underline-offset-4"
-                  : "text-gray-500"
+                  ? "text-[#1f2b34] underline decoration-[var(--brand-teal)] underline-offset-4"
+                  : "text-[#6b6a68]"
               }`}
             >
               {link.label}
@@ -90,13 +97,13 @@ export default function Header() {
         </nav>
 
         {navLinks.length > 0 && (
-          <div className="ml-auto lg:hidden">
+          <div className="motion-fade motion-delay-1 ml-auto lg:hidden">
             <DropdownMenu.Root modal={false}>
               <DropdownMenu.Trigger asChild>
                 <button
                   type="button"
                   aria-label="Open navigation menu"
-                  className="rounded-lg p-2 text-gray-700 transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                  className="rounded-lg p-2 text-[#5b5c5f] transition hover:bg-[rgba(40,132,164,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-teal)] focus-visible:ring-offset-2"
                 >
                   <Menu className="h-7 w-7" />
                 </button>
@@ -106,16 +113,16 @@ export default function Header() {
                 <DropdownMenu.Content
                   sideOffset={10}
                   align="end"
-                  className="z-50 min-w-[190px] rounded-md border border-gray-200 bg-white p-1 shadow-lg"
+                  className="z-50 min-w-[190px] rounded-md border border-[var(--line-soft)] bg-[rgba(252,250,247,0.98)] p-1 shadow-lg"
                 >
                   {navLinks.map((link) => (
                     <DropdownMenu.Item key={link.href} asChild>
                       <Link
                         href={link.href}
-                        className={`block cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-gray-100 focus:bg-gray-100 ${
+                        className={`block cursor-pointer rounded-sm px-3 py-2 text-sm outline-none hover:bg-[rgba(40,132,164,0.08)] focus:bg-[rgba(40,132,164,0.08)] ${
                           isNavLinkActive(link.href, link.label)
-                            ? "font-medium text-gray-900"
-                            : "text-gray-700"
+                            ? "font-medium text-[#1f2b34]"
+                            : "text-[#5d5d62]"
                         }`}
                       >
                         {link.label}
@@ -131,7 +138,8 @@ export default function Header() {
         <ProfileMenu
           profileHref={profileHref}
           initials={initials || "?"}
-          className="ml-3 lg:ml-16"
+          avatarUrl={avatarUrl}
+          className="motion-fade motion-delay-2 ml-3 lg:ml-16"
         />
       </div>
     </header>

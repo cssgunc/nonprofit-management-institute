@@ -67,7 +67,7 @@ export default function SidebarModules({
   return (
     <aside
       className={cn(
-        "flex min-h-[calc(100vh-7rem)] self-stretch flex-col overflow-hidden border-r border-zinc-200 bg-white font-sans transition-[width] duration-200 ease-out",
+        "flex min-h-[calc(100vh-7rem)] self-stretch flex-col overflow-hidden border-r border-[var(--line-soft)] bg-[linear-gradient(180deg,#f8f4ee_0%,#fcfaf7_100%)] font-sans transition-[width] duration-200 ease-out",
         isOpen ? "w-[220px]" : "w-14",
         className,
       )}
@@ -93,8 +93,8 @@ export default function SidebarModules({
         <div className="min-h-0 flex-1 overflow-y-auto">
           {moduleQuery.data && moduleCardImage && (
             <div className="px-4 pb-4 pt-2">
-              <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-                <div className="relative aspect-[1.3/1] w-full bg-zinc-50">
+              <div className="overflow-hidden rounded-xl border border-[rgba(40,132,164,0.16)] bg-white shadow-[0_10px_24px_rgba(61,52,45,0.08)]">
+                <div className="relative aspect-[1.3/1] w-full bg-[var(--surface-soft)]">
                   <Image
                     src={moduleCardImage.imageSrc}
                     alt={moduleQuery.data.title}
@@ -125,8 +125,10 @@ export default function SidebarModules({
                       onSelect?.(item.id);
                     }}
                     className={cn(
-                      "relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
-                      isActive ? "font-bold" : "font-normal hover:bg-zinc-100",
+                      "relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] transition-colors",
+                      isActive
+                        ? "rounded-r-xl bg-[rgba(40,132,164,0.09)] font-bold text-[#23485a]"
+                        : "font-normal text-zinc-900 hover:bg-[rgba(40,132,164,0.05)]",
                     )}
                   >
                     {renderItemLabel
@@ -134,7 +136,7 @@ export default function SidebarModules({
                       : item.title}
 
                     {isActive && (
-                      <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-zinc-900" />
+                      <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-[var(--brand-teal)]" />
                     )}
                   </Link>
                 </li>

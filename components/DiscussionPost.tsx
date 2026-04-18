@@ -140,7 +140,7 @@ function ReplyPost({
   };
 
   return (
-    <div className="flex">
+    <div className="motion-rise flex">
       {/* L-shaped connector line */}
       <div className="flex flex-col flex-shrink-0" style={{ width: 40 }}>
         {/* top vertical segment, down to the elbow */}
@@ -299,7 +299,7 @@ function TopLevelPost({
     post.replyCount ?? (post.replies ? countAllReplies(post.replies) : 0);
 
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-5">
+    <article className="motion-rise rounded-xl border border-zinc-200 bg-white p-5">
       {/* Header row */}
       <div className="flex items-start gap-3">
         <Avatar

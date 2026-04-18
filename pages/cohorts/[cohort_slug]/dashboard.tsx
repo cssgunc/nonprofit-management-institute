@@ -28,9 +28,9 @@ export default function DashboardPage() {
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="relative min-h-[calc(100vh-7rem)] w-full">
-        <div className="relative mx-auto max-w-[1360px] px-5 py-5 md:px-8 lg:px-10 lg:py-6">
-          <div className="relative">
+      <div className="relative min-h-[calc(100vh-7rem)] w-full bg-[radial-gradient(circle_at_top_left,rgba(40,132,164,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(125,50,140,0.1),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(162,122,74,0.1),transparent_22%)]">
+        <div className="motion-fade mx-auto max-w-[1360px] px-5 py-6 md:px-8 lg:px-10 lg:py-7">
+          <div className="motion-rise relative">
             <ModuleGrid
               cohortSlug={cohortSlug}
               className="pt-0 lg:grid-cols-3"
