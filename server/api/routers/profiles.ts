@@ -184,7 +184,7 @@ const getContactsBySlug = protectedProcedure
       )
       .innerJoin(profiles, eq(profiles.id, cohort_memberships.profiles_id))
       .where(eq(cohorts.slug, input.cohort_slug))
-      .orderBy(asc(profiles.full_name), asc(profiles.id));
+      .orderBy(asc(profiles.role), asc(profiles.full_name), asc(profiles.id));
 
     return rows;
   });

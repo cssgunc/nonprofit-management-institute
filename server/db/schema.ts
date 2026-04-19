@@ -101,4 +101,5 @@ export const discussions_post = pgTable("discussion_posts", {
   body: text("body"),
   created_at: timestamp("created_at"),
   edited_at: timestamp("edited_at"),
+  is_deleted: boolean("is_deleted").$default(() => false),
 });
