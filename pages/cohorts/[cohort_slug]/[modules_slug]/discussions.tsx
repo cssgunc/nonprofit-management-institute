@@ -366,12 +366,14 @@ export default function ModuleDiscussions() {
           ))}
         <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col">
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-            <div className="motion-rise space-y-2">
+            <div className="overflow-hidden rounded-[1.75rem] border border-[rgba(125,50,140,0.08)] bg-[rgba(255,252,248,0.8)] shadow-[0_20px_54px_rgba(61,52,45,0.06)]">
+              <div className="motion-rise border-b border-[rgba(125,50,140,0.08)] px-6 py-5">
               <h1 className="text-3xl font-bold text-black">
                 {moduleQuery.data?.title ?? "Module Discussion"}
               </h1>
-            </div>
+              </div>
 
+              <div className="px-5 py-5 md:px-6">
             {moduleQuery.isLoading ? (
               <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
                 Loading module...
@@ -441,6 +443,8 @@ export default function ModuleDiscussions() {
                 ))}
               </div>
             )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
