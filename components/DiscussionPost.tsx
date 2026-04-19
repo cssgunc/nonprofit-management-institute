@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Edit2,
   Trash2,
@@ -124,7 +124,33 @@ function Avatar({
   );
 }
 
-// Nested Layout of Replies
+function useOptimisticLike(
+  post: Post,
+  _isLikePending?: (id: string | number) => boolean,
+) {
+  const [optimistic, setOptimistic] = useState<{ liked: boolean; count: number } | null>(null);
+
+  const prevLiked = useRef(post.hasLiked);
+  const prevCount = useRef(post.likeCount);
+  useEffect(() => {
+    if (post.hasLiked !== prevLiked.current || post.likeCount !== prevCount.current) {
+      prevLiked.current = post.hasLiked;
+      prevCount.current = post.likeCount;
+      setOptimistic(null);
+    }
+  });
+
+  const displayLiked = optimistic?.liked ?? (post.hasLiked ?? false);
+  const displayCount = optimistic?.count ?? (post.likeCount ?? 0);
+
+  const handleLikeClick = (e: React.MouseEvent, onToggleLike?: (p: Post) => void) => {
+    e.stopPropagation();
+    setOptimistic({ liked: !displayLiked, count: displayLiked ? displayCount - 1 : displayCount + 1 });
+    onToggleLike?.(post);
+  };
+
+  return { displayLiked, displayCount, handleLikeClick };
+}
 
 function ReplyPost({
   post,
@@ -140,6 +166,7 @@ function ReplyPost({
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(post.content);
   const isDeleted = post.isDeleted === true;
+  const { displayLiked, displayCount, handleLikeClick } = useOptimisticLike(post, isLikePending);
 
   const handleSaveEdit = () => {
     onEdit?.(post.id, editText);
@@ -265,24 +292,23 @@ function ReplyPost({
                   {onToggleLike && (
                     <button
                       type="button"
-                      onClick={() => onToggleLike(post)}
-                      disabled={isLikePending?.(post.id) === true}
+                      onClick={(e) => handleLikeClick(e, onToggleLike)}
                       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                        post.hasLiked
+                        displayLiked
                           ? "border-red-200 bg-red-50 text-red-700"
                           : "border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800"
                       }`}
                     >
                       <Heart
-                        className={`h-3.5 w-3.5 ${post.hasLiked ? "fill-current" : ""}`}
+                        className={`h-3.5 w-3.5 ${displayLiked ? "fill-current" : ""}`}
                       />
-                      <span>{post.likeCount ?? 0}</span>
+                      <span>{displayCount}</span>
                     </button>
                   )}
                   {onReply && (
                     <button
                       type="button"
-                      onClick={() => onReply(post)}
+                      onClick={(e) => { e.stopPropagation(); onReply(post); }}
                       className="text-sm text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
                     >
                       Reply
@@ -319,6 +345,7 @@ function TopLevelPost({
   const [editText, setEditText] = useState(post.content);
   const [menuOpen, setMenuOpen] = useState(false);
   const isDeleted = post.isDeleted === true;
+  const { displayLiked, displayCount, handleLikeClick } = useOptimisticLike(post, isLikePending);
 
   const handleSaveEdit = () => {
     onEdit?.(post.id, editText);
@@ -458,26 +485,25 @@ function TopLevelPost({
           {onToggleLike && (
             <button
               type="button"
-              onClick={() => onToggleLike(post)}
-              disabled={isLikePending?.(post.id) === true}
+              onClick={(e) => handleLikeClick(e, onToggleLike)}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${
-                post.hasLiked
+                displayLiked
                   ? "border-red-200 bg-red-50 text-red-700"
                   : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:text-zinc-800"
               }`}
             >
               <Heart
-                className={`h-3.5 w-3.5 flex-shrink-0 ${post.hasLiked ? "fill-current" : ""}`}
+                className={`h-3.5 w-3.5 flex-shrink-0 ${displayLiked ? "fill-current" : ""}`}
               />
-              <span className="font-semibold">{post.likeCount ?? 0}</span>
+              <span className="font-semibold">{displayCount}</span>
               <span className="font-normal">
-                {(post.likeCount ?? 0) === 1 ? "like" : "likes"}
+                {displayCount === 1 ? "like" : "likes"}
               </span>
             </button>
           )}
           <button
             type="button"
-            onClick={() => onReply?.(post)}
+            onClick={(e) => { e.stopPropagation(); onReply?.(post); }}
             title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
             className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-700"
           >

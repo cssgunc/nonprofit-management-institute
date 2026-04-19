@@ -13,7 +13,7 @@ import { TRPCClientError } from "@trpc/client";
 import { AlertCircle, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -265,6 +265,14 @@ export default function ModuleDiscussions() {
     "modules" | "discussions"
   >("modules");
   const [expandedThreadId, setExpandedThreadId] = useState<number | null>(null);
+  const likeDesiredByPostRef = useRef(new Map<number, boolean>());
+  const likeInFlightByPostRef = useRef(new Set<number>());
+  const [likePendingVersion, setLikePendingVersion] = useState(0);
+  const expandedThreadIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    expandedThreadIdRef.current = expandedThreadId;
+  }, [expandedThreadId]);
 
   const cohortSlug =
     typeof router.query.cohort_slug === "string"
@@ -338,148 +346,8 @@ export default function ModuleDiscussions() {
       }
     },
   });
-  const likePostMutation = api.discussions.likePost.useMutation({
-    onMutate: async ({ post_id }) => {
-      await apiUtils.discussions.listThreadsByModuleSlug.cancel({
-        moduleSlug,
-        cohortSlug,
-      });
-
-      const previousThreads =
-        apiUtils.discussions.listThreadsByModuleSlug.getData({
-          moduleSlug,
-          cohortSlug,
-        });
-      const previousExpandedThread =
-        expandedThreadId !== null
-          ? apiUtils.discussions.getThread.getData({
-              postId: expandedThreadId,
-              cohortSlug,
-            })
-          : undefined;
-
-      apiUtils.discussions.listThreadsByModuleSlug.setData(
-        { moduleSlug, cohortSlug },
-        (old) =>
-          old?.map((thread) => {
-            if (thread.id !== post_id) return thread;
-            if (thread.viewer_has_liked) return thread;
-            return {
-              ...thread,
-              viewer_has_liked: true,
-              like_count: (thread.like_count ?? 0) + 1,
-            };
-          }),
-      );
-
-      if (expandedThreadId !== null) {
-        apiUtils.discussions.getThread.setData(
-          { postId: expandedThreadId, cohortSlug },
-          (old) => (old ? patchThreadLikeState(old, post_id, true) : old),
-        );
-      }
-
-      return { previousThreads, previousExpandedThread };
-    },
-    onError: (_error, _input, context) => {
-      if (context?.previousThreads) {
-        apiUtils.discussions.listThreadsByModuleSlug.setData(
-          { moduleSlug, cohortSlug },
-          context.previousThreads,
-        );
-      }
-
-      if (expandedThreadId !== null && context?.previousExpandedThread) {
-        apiUtils.discussions.getThread.setData(
-          { postId: expandedThreadId, cohortSlug },
-          context.previousExpandedThread,
-        );
-      }
-    },
-    onSettled: async () => {
-      await apiUtils.discussions.listThreadsByModuleSlug.invalidate({
-        moduleSlug,
-        cohortSlug,
-      });
-      if (expandedThreadId !== null) {
-        await apiUtils.discussions.getThread.invalidate({
-          postId: expandedThreadId,
-          cohortSlug,
-        });
-      }
-    },
-  });
-  const unlikePostMutation = api.discussions.unlikePost.useMutation({
-    onMutate: async ({ post_id }) => {
-      await apiUtils.discussions.listThreadsByModuleSlug.cancel({
-        moduleSlug,
-        cohortSlug,
-      });
-
-      const previousThreads =
-        apiUtils.discussions.listThreadsByModuleSlug.getData({
-          moduleSlug,
-          cohortSlug,
-        });
-      const previousExpandedThread =
-        expandedThreadId !== null
-          ? apiUtils.discussions.getThread.getData({
-              postId: expandedThreadId,
-              cohortSlug,
-            })
-          : undefined;
-
-      apiUtils.discussions.listThreadsByModuleSlug.setData(
-        { moduleSlug, cohortSlug },
-        (old) =>
-          old?.map((thread) => {
-            if (thread.id !== post_id) return thread;
-            if (!thread.viewer_has_liked) return thread;
-            return {
-              ...thread,
-              viewer_has_liked: false,
-              like_count: Math.max(0, (thread.like_count ?? 0) - 1),
-            };
-          }),
-      );
-
-      if (expandedThreadId !== null) {
-        apiUtils.discussions.getThread.setData(
-          { postId: expandedThreadId, cohortSlug },
-          (old) => (old ? patchThreadLikeState(old, post_id, false) : old),
-        );
-      }
-
-      return { previousThreads, previousExpandedThread };
-    },
-    onError: (_error, _input, context) => {
-      if (context?.previousThreads) {
-        apiUtils.discussions.listThreadsByModuleSlug.setData(
-          { moduleSlug, cohortSlug },
-          context.previousThreads,
-        );
-      }
-
-      if (expandedThreadId !== null && context?.previousExpandedThread) {
-        apiUtils.discussions.getThread.setData(
-          { postId: expandedThreadId, cohortSlug },
-          context.previousExpandedThread,
-        );
-      }
-    },
-    onSettled: async () => {
-      await apiUtils.discussions.listThreadsByModuleSlug.invalidate({
-        moduleSlug,
-        cohortSlug,
-      });
-      if (expandedThreadId !== null) {
-        await apiUtils.discussions.getThread.invalidate({
-          postId: expandedThreadId,
-          cohortSlug,
-        });
-      }
-    },
-  });
+  const likePostMutation = api.discussions.likePost.useMutation();
+  const unlikePostMutation = api.discussions.unlikePost.useMutation();
 
   const sidebarItems: SidebarNavItem[] = [
     {
@@ -528,19 +396,100 @@ export default function ModuleDiscussions() {
     if (typeof id !== "number") return;
     deletePostMutation.mutate({ post_id: id });
   };
-  const isLikePending = (postId: string | number) =>
-    (likePostMutation.isPending && likePostMutation.variables?.post_id === postId) ||
-    (unlikePostMutation.isPending &&
-      unlikePostMutation.variables?.post_id === postId);
-  const handleToggleLike = (post: DiscussionUiPost) => {
-    if (typeof post.id !== "number") return;
+  const applyLikeOptimistic = (postId: number, nextLiked: boolean) => {
+    apiUtils.discussions.listThreadsByModuleSlug.setData(
+      { moduleSlug, cohortSlug },
+      (old) =>
+        old?.map((thread) => {
+          if (thread.id !== postId) return thread;
+          const currentLiked = thread.viewer_has_liked ?? false;
+          if (currentLiked === nextLiked) return thread;
+          return {
+            ...thread,
+            viewer_has_liked: nextLiked,
+            like_count: Math.max(
+              0,
+              (thread.like_count ?? 0) + (nextLiked ? 1 : -1),
+            ),
+          };
+        }),
+    );
 
-    if (post.hasLiked) {
-      unlikePostMutation.mutate({ post_id: post.id });
+    const expandedId = expandedThreadIdRef.current;
+    if (expandedId !== null) {
+      apiUtils.discussions.getThread.setData(
+        { postId: expandedId, cohortSlug },
+        (old) => (old ? patchThreadLikeState(old, postId, nextLiked) : old),
+      );
+    }
+  };
+
+  const refreshLikeCaches = async () => {
+    await apiUtils.discussions.listThreadsByModuleSlug.invalidate({
+      moduleSlug,
+      cohortSlug,
+    });
+    const expandedId = expandedThreadIdRef.current;
+    if (expandedId !== null) {
+      await apiUtils.discussions.getThread.invalidate({
+        postId: expandedId,
+        cohortSlug,
+      });
+    }
+  };
+
+  const flushLikeIntent = async (postId: number) => {
+    if (likeInFlightByPostRef.current.has(postId)) {
       return;
     }
 
-    likePostMutation.mutate({ post_id: post.id });
+    const desired = likeDesiredByPostRef.current.get(postId);
+    if (desired === undefined) {
+      return;
+    }
+
+    likeInFlightByPostRef.current.add(postId);
+    setLikePendingVersion((v) => v + 1);
+
+    try {
+      if (desired) {
+        await likePostMutation.mutateAsync({ post_id: postId });
+      } else {
+        await unlikePostMutation.mutateAsync({ post_id: postId });
+      }
+    } catch {
+      await refreshLikeCaches();
+    } finally {
+      likeInFlightByPostRef.current.delete(postId);
+      setLikePendingVersion((v) => v + 1);
+
+      const latestDesired = likeDesiredByPostRef.current.get(postId);
+      if (latestDesired === desired) {
+        likeDesiredByPostRef.current.delete(postId);
+        await refreshLikeCaches();
+      } else {
+        void flushLikeIntent(postId);
+      }
+    }
+  };
+
+  const isLikePending = (postId: string | number) => {
+    if (typeof postId !== "number") return false;
+    return likeInFlightByPostRef.current.has(postId);
+  };
+
+  void likePendingVersion;
+
+  const handleToggleLike = (post: DiscussionUiPost) => {
+    if (typeof post.id !== "number") return;
+
+    const currentDesired = likeDesiredByPostRef.current.get(post.id);
+    const effectiveLiked = currentDesired ?? (post.hasLiked ?? false);
+    const nextLiked = !effectiveLiked;
+
+    likeDesiredByPostRef.current.set(post.id, nextLiked);
+    applyLikeOptimistic(post.id, nextLiked);
+    void flushLikeIntent(post.id);
   };
 
   const moduleErrorCode =
