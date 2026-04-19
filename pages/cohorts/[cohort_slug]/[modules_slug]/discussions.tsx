@@ -164,9 +164,9 @@ function ThreadPreview({
 }) {
   const threadQuery = api.discussions.getThread.useQuery(
     { postId, cohortSlug },
-    { 
-      retry: false, 
-      enabled: !!cohortSlug && !isLikePending(postId)
+    {
+      retry: false,
+      enabled: !!cohortSlug && !isLikePending(postId),
     },
   );
 

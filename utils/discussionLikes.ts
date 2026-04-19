@@ -109,13 +109,14 @@ export function useDiscussionLikeQueue({
     return likeInFlightByPostRef.current.has(postId);
   };
 
-  const getDesiredLike = (postId: number) => likeDesiredByPostRef.current.get(postId);
+  const getDesiredLike = (postId: number) =>
+    likeDesiredByPostRef.current.get(postId);
 
   const handleToggleLike = (post: LikeTogglePost) => {
     if (typeof post.id !== "number") return;
 
     const currentDesired = likeDesiredByPostRef.current.get(post.id);
-    const effectiveLiked = currentDesired ?? (post.hasLiked ?? false);
+    const effectiveLiked = currentDesired ?? post.hasLiked ?? false;
     const nextLiked = !effectiveLiked;
 
     likeDesiredByPostRef.current.set(post.id, nextLiked);

@@ -154,9 +154,7 @@ async function enrichPostsWithLikes(
     likeCounts.map((row) => [row.post_id, Number(row.like_count)]),
   );
 
-  const viewerLikedSet = new Set<number>(
-    viewerLikes.map((row) => row.post_id),
-  );
+  const viewerLikedSet = new Set<number>(viewerLikes.map((row) => row.post_id));
 
   return posts.map((post) => ({
     ...post,
@@ -384,10 +382,10 @@ export const discussionsRouter = createTRPCRouter({
         )
         .orderBy(asc(discussions_post.created_at));
 
-        const allModulePosts = await enrichPostsWithLikes(
-          allModulePostsRaw,
-          ctx.subject.id,
-        );
+      const allModulePosts = await enrichPostsWithLikes(
+        allModulePostsRaw,
+        ctx.subject.id,
+      );
 
       const subtreeIds = new Set(collectSubtreeIds(root.id, allModulePosts));
       const subtreePosts = allModulePosts.filter((p) => subtreeIds.has(p.id));
