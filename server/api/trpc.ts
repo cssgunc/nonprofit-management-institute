@@ -4,15 +4,21 @@ import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { Subject } from "../models/auth";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Define the context */
 interface CreateContextOptions {
   subject: Subject | null;
+  supabase: SupabaseClient | null;
 }
 
-const createInnerTRPCContext = ({ subject }: CreateContextOptions) => {
+const createInnerTRPCContext = ({
+  subject,
+  supabase,
+}: CreateContextOptions) => {
   return {
     subject,
+    supabase,
   };
 };
 
@@ -24,6 +30,7 @@ export const createTRPCContext = async ({
   if (process.env.MOCK_AUTH === "true") {
     return createInnerTRPCContext({
       subject: { id: process.env.MOCK_USER_ID ?? "mock-student" },
+      supabase: null,
     });
   }
   const supabase = createApiClient(req, res);
@@ -34,6 +41,7 @@ export const createTRPCContext = async ({
           id: userData.user.id,
         }
       : null,
+    supabase,
   });
 };
 
@@ -117,6 +125,7 @@ export const protectedProcedure = t.procedure
         // infers the `subject` as non-nullable at this point since it is
         // a guarantee that the user is signed in
         subject: ctx.subject!,
+        supabase: ctx.supabase,
       },
     });
   });
