@@ -5,6 +5,7 @@ import {
   MoreHorizontal,
   MessageCircle,
   Star,
+  Heart,
 } from "lucide-react";
 
 export type Author = {
@@ -20,6 +21,8 @@ export type Post = {
   content: string;
   createdAt: string | number | Date;
   isDeleted?: boolean;
+  likeCount?: number;
+  hasLiked?: boolean;
   replyCount?: number;
   replies?: Post[];
 };
@@ -29,6 +32,8 @@ export type DiscussionPostProps = {
   isReply?: boolean;
   canManage?: boolean;
   onReply?: (post: Post) => void;
+  onToggleLike?: (post: Post) => void;
+  isLikePending?: (postId: string | number) => boolean;
   onEdit?: (id: string | number, newContent: string) => void;
   onDelete?: (id: string | number) => void;
   children?: React.ReactNode;
@@ -126,6 +131,8 @@ function ReplyPost({
   isLast = false,
   canManage = false,
   onReply,
+  onToggleLike,
+  isLikePending,
   onEdit,
   onDelete,
   children,
@@ -253,14 +260,35 @@ function ReplyPost({
               ) : (
                 <div />
               )}
-              {onReply && !isDeleted ? (
-                <button
-                  type="button"
-                  onClick={() => onReply(post)}
-                  className="text-sm text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
-                >
-                  Reply
-                </button>
+              {!isDeleted ? (
+                <div className="flex items-center gap-3">
+                  {onToggleLike && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleLike(post)}
+                      disabled={isLikePending?.(post.id) === true}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                        post.hasLiked
+                          ? "border-red-200 bg-red-50 text-red-700"
+                          : "border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800"
+                      }`}
+                    >
+                      <Heart
+                        className={`h-3.5 w-3.5 ${post.hasLiked ? "fill-current" : ""}`}
+                      />
+                      <span>{post.likeCount ?? 0}</span>
+                    </button>
+                  )}
+                  {onReply && (
+                    <button
+                      type="button"
+                      onClick={() => onReply(post)}
+                      className="text-sm text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
+                    >
+                      Reply
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div />
               )}
@@ -281,6 +309,8 @@ function TopLevelPost({
   post,
   canManage = false,
   onReply,
+  onToggleLike,
+  isLikePending,
   onEdit,
   onDelete,
   children,
@@ -424,18 +454,40 @@ function TopLevelPost({
 
       {/* Reply count pill */}
       {!isDeleted && (
-        <button
-          type="button"
-          onClick={() => onReply?.(post)}
-          title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-700"
-        >
-          <MessageCircle className="h-3.5 w-3.5 flex-shrink-0 fill-current" />
-          <span className="text-xs font-semibold">{replyCount}</span>
-          <span className="text-xs font-normal">
-            {replyCount === 1 ? "reply" : "replies"}
-          </span>
-        </button>
+        <div className="mt-4 flex items-center gap-2">
+          {onToggleLike && (
+            <button
+              type="button"
+              onClick={() => onToggleLike(post)}
+              disabled={isLikePending?.(post.id) === true}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${
+                post.hasLiked
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:text-zinc-800"
+              }`}
+            >
+              <Heart
+                className={`h-3.5 w-3.5 flex-shrink-0 ${post.hasLiked ? "fill-current" : ""}`}
+              />
+              <span className="font-semibold">{post.likeCount ?? 0}</span>
+              <span className="font-normal">
+                {(post.likeCount ?? 0) === 1 ? "like" : "likes"}
+              </span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onReply?.(post)}
+            title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+          >
+            <MessageCircle className="h-3.5 w-3.5 flex-shrink-0 fill-current" />
+            <span className="text-xs font-semibold">{replyCount}</span>
+            <span className="text-xs font-normal">
+              {replyCount === 1 ? "reply" : "replies"}
+            </span>
+          </button>
+        </div>
       )}
 
       {/* Nested replies */}
@@ -453,6 +505,8 @@ export default function DiscussionPost({
   isReply = false,
   canManage = false,
   onReply,
+  onToggleLike,
+  isLikePending,
   onEdit,
   onDelete,
   children,
@@ -463,6 +517,8 @@ export default function DiscussionPost({
         post={post}
         canManage={canManage}
         onReply={onReply}
+        onToggleLike={onToggleLike}
+        isLikePending={isLikePending}
         onEdit={onEdit}
         onDelete={onDelete}
       >
@@ -476,6 +532,8 @@ export default function DiscussionPost({
       post={post}
       canManage={canManage}
       onReply={onReply}
+      onToggleLike={onToggleLike}
+      isLikePending={isLikePending}
       onEdit={onEdit}
       onDelete={onDelete}
     >

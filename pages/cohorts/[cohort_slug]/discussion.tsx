@@ -81,6 +81,8 @@ function mapThreadNodeToDiscussionPost(
     content: node.body ?? "",
     createdAt: node.created_at ?? new Date(0),
     isDeleted: node.is_deleted ?? false,
+    likeCount: node.like_count ?? 0,
+    hasLiked: node.viewer_has_liked ?? false,
     canManage: isAdmin || node.author_id === currentUserId,
     replies: node.children.map((child) =>
       mapThreadNodeToDiscussionPost(
@@ -90,6 +92,33 @@ function mapThreadNodeToDiscussionPost(
         isAdmin,
       ),
     ),
+  };
+}
+
+function patchThreadLikeState(
+  node: ThreadNode,
+  postId: number,
+  nextLiked: boolean,
+): ThreadNode {
+  const selfChanged = node.id === postId;
+  const children = node.children.map((child) =>
+    patchThreadLikeState(child, postId, nextLiked),
+  );
+
+  if (!selfChanged) {
+    return { ...node, children };
+  }
+
+  const alreadyLiked = node.viewer_has_liked ?? false;
+  if (alreadyLiked === nextLiked) {
+    return { ...node, children };
+  }
+
+  return {
+    ...node,
+    children,
+    viewer_has_liked: nextLiked,
+    like_count: Math.max(0, (node.like_count ?? 0) + (nextLiked ? 1 : -1)),
   };
 }
 
@@ -103,6 +132,8 @@ function ThreadPreview({
   resolveAvatarUrl,
   onEdit,
   onDelete,
+  onToggleLike,
+  isLikePending,
 }: {
   thread: ThreadListItem;
   cohortSlug: string;
@@ -113,6 +144,8 @@ function ThreadPreview({
   resolveAvatarUrl: (avatarPath: string | null) => string | null;
   onEdit: (id: string | number, newContent: string) => void;
   onDelete: (id: string | number) => void;
+  onToggleLike: (post: DiscussionUiPost) => void;
+  isLikePending: (postId: string | number) => boolean;
 }) {
   const threadQuery = api.discussions.getThread.useQuery(
     { postId: thread.id, cohortSlug },
@@ -132,6 +165,8 @@ function ThreadPreview({
     content: thread.body ?? "",
     createdAt: thread.created_at ?? new Date(0),
     isDeleted: thread.is_deleted ?? false,
+    likeCount: thread.like_count ?? 0,
+    hasLiked: thread.viewer_has_liked ?? false,
     replyCount: threadQuery.data ? countReplies(threadQuery.data) : 0,
     replies: [],
   };
@@ -142,6 +177,8 @@ function ThreadPreview({
         post={topLevelPost}
         canManage={isAdmin || thread.author_id === currentUserId}
         onReply={onToggleReplies}
+        onToggleLike={onToggleLike}
+        isLikePending={isLikePending}
         onEdit={onEdit}
         onDelete={onDelete}
       />
@@ -177,6 +214,8 @@ function ThreadPreview({
       post={reply}
       isReply
       canManage={reply.canManage}
+      onToggleLike={onToggleLike}
+      isLikePending={isLikePending}
       onEdit={onEdit}
       onDelete={onDelete}
     >
@@ -193,6 +232,8 @@ function ThreadPreview({
       }}
       canManage={mappedThread.canManage}
       onReply={onToggleReplies}
+      onToggleLike={onToggleLike}
+      isLikePending={isLikePending}
       onEdit={onEdit}
       onDelete={onDelete}
     >
@@ -258,6 +299,126 @@ export default function DiscussionPage() {
       }
     },
   });
+  const likePostMutation = api.discussions.likePost.useMutation({
+    onMutate: async ({ post_id }) => {
+      await apiUtils.discussions.listGeneralThreads.cancel({ cohortSlug });
+      const previousThreads = apiUtils.discussions.listGeneralThreads.getData({
+        cohortSlug,
+      });
+      const previousExpandedThread =
+        expandedThreadId !== null
+          ? apiUtils.discussions.getThread.getData({
+              postId: expandedThreadId,
+              cohortSlug,
+            })
+          : undefined;
+
+      apiUtils.discussions.listGeneralThreads.setData({ cohortSlug }, (old) =>
+        old?.map((thread) => {
+          if (thread.id !== post_id) return thread;
+          if (thread.viewer_has_liked) return thread;
+          return {
+            ...thread,
+            viewer_has_liked: true,
+            like_count: (thread.like_count ?? 0) + 1,
+          };
+        }),
+      );
+
+      if (expandedThreadId !== null) {
+        apiUtils.discussions.getThread.setData(
+          { postId: expandedThreadId, cohortSlug },
+          (old) => (old ? patchThreadLikeState(old, post_id, true) : old),
+        );
+      }
+
+      return { previousThreads, previousExpandedThread };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previousThreads) {
+        apiUtils.discussions.listGeneralThreads.setData(
+          { cohortSlug },
+          context.previousThreads,
+        );
+      }
+
+      if (expandedThreadId !== null && context?.previousExpandedThread) {
+        apiUtils.discussions.getThread.setData(
+          { postId: expandedThreadId, cohortSlug },
+          context.previousExpandedThread,
+        );
+      }
+    },
+    onSettled: async () => {
+      await apiUtils.discussions.listGeneralThreads.invalidate({ cohortSlug });
+      if (expandedThreadId !== null) {
+        await apiUtils.discussions.getThread.invalidate({
+          postId: expandedThreadId,
+          cohortSlug,
+        });
+      }
+    },
+  });
+  const unlikePostMutation = api.discussions.unlikePost.useMutation({
+    onMutate: async ({ post_id }) => {
+      await apiUtils.discussions.listGeneralThreads.cancel({ cohortSlug });
+      const previousThreads = apiUtils.discussions.listGeneralThreads.getData({
+        cohortSlug,
+      });
+      const previousExpandedThread =
+        expandedThreadId !== null
+          ? apiUtils.discussions.getThread.getData({
+              postId: expandedThreadId,
+              cohortSlug,
+            })
+          : undefined;
+
+      apiUtils.discussions.listGeneralThreads.setData({ cohortSlug }, (old) =>
+        old?.map((thread) => {
+          if (thread.id !== post_id) return thread;
+          if (!thread.viewer_has_liked) return thread;
+          return {
+            ...thread,
+            viewer_has_liked: false,
+            like_count: Math.max(0, (thread.like_count ?? 0) - 1),
+          };
+        }),
+      );
+
+      if (expandedThreadId !== null) {
+        apiUtils.discussions.getThread.setData(
+          { postId: expandedThreadId, cohortSlug },
+          (old) => (old ? patchThreadLikeState(old, post_id, false) : old),
+        );
+      }
+
+      return { previousThreads, previousExpandedThread };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previousThreads) {
+        apiUtils.discussions.listGeneralThreads.setData(
+          { cohortSlug },
+          context.previousThreads,
+        );
+      }
+
+      if (expandedThreadId !== null && context?.previousExpandedThread) {
+        apiUtils.discussions.getThread.setData(
+          { postId: expandedThreadId, cohortSlug },
+          context.previousExpandedThread,
+        );
+      }
+    },
+    onSettled: async () => {
+      await apiUtils.discussions.listGeneralThreads.invalidate({ cohortSlug });
+      if (expandedThreadId !== null) {
+        await apiUtils.discussions.getThread.invalidate({
+          postId: expandedThreadId,
+          cohortSlug,
+        });
+      }
+    },
+  });
 
   const discussionItems: DiscussionNavItem[] = [
     { id: 0, title: "General", href: `${baseCohortPath}/discussion` },
@@ -284,6 +445,20 @@ export default function DiscussionPage() {
   const handleDelete = (id: string | number) => {
     if (typeof id !== "number") return;
     deletePostMutation.mutate({ post_id: id });
+  };
+  const isLikePending = (postId: string | number) =>
+    (likePostMutation.isPending && likePostMutation.variables?.post_id === postId) ||
+    (unlikePostMutation.isPending &&
+      unlikePostMutation.variables?.post_id === postId);
+  const handleToggleLike = (post: DiscussionUiPost) => {
+    if (typeof post.id !== "number") return;
+
+    if (post.hasLiked) {
+      unlikePostMutation.mutate({ post_id: post.id });
+      return;
+    }
+
+    likePostMutation.mutate({ post_id: post.id });
   };
 
   return (
@@ -333,6 +508,8 @@ export default function DiscussionPage() {
                     resolveAvatarUrl={resolveAvatarUrl}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onToggleLike={handleToggleLike}
+                    isLikePending={isLikePending}
                     onToggleReplies={() =>
                       setExpandedThreadId((current) =>
                         current === thread.id ? null : thread.id,
