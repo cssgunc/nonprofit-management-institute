@@ -4,6 +4,11 @@ import DiscussionPost, {
   type Post as DiscussionUiPost,
 } from "@/components/DiscussionPost";
 import CohortAccessGuard from "@/components/CohortAccessGuard";
+import {
+  applyLikeOverride,
+  applyLikeOverrideToPost,
+  useDiscussionLikeQueue,
+} from "@/utils/discussionLikes";
 import { api, type RouterOutputs } from "@/utils/trpc/api";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 import { useRouter } from "next/router";
@@ -134,6 +139,7 @@ function ThreadPreview({
   onDelete,
   onToggleLike,
   isLikePending,
+  getDesiredLike,
 }: {
   thread: ThreadListItem;
   cohortSlug: string;
@@ -146,10 +152,14 @@ function ThreadPreview({
   onDelete: (id: string | number) => void;
   onToggleLike: (post: DiscussionUiPost) => void;
   isLikePending: (postId: string | number) => boolean;
+  getDesiredLike: (postId: number) => boolean | undefined;
 }) {
   const threadQuery = api.discussions.getThread.useQuery(
     { postId: thread.id, cohortSlug },
-    { retry: false, enabled: !!cohortSlug },
+    { 
+      retry: false, 
+      enabled: !!cohortSlug && !isLikePending(thread.id)
+    },
   );
 
   const topLevelPost: DiscussionUiPost = {
@@ -170,6 +180,15 @@ function ThreadPreview({
     replyCount: threadQuery.data ? countReplies(threadQuery.data) : 0,
     replies: [],
   };
+
+  const topLevelLikeOverride = applyLikeOverride(
+    topLevelPost.hasLiked ?? false,
+    topLevelPost.likeCount ?? 0,
+    getDesiredLike(thread.id),
+  );
+
+  topLevelPost.hasLiked = topLevelLikeOverride.hasLiked;
+  topLevelPost.likeCount = topLevelLikeOverride.likeCount;
 
   if (!expanded) {
     return (
@@ -201,11 +220,14 @@ function ThreadPreview({
     );
   }
 
-  const mappedThread = mapThreadNodeToDiscussionPost(
-    threadQuery.data,
-    resolveAvatarUrl,
-    currentUserId,
-    isAdmin,
+  const mappedThread = applyLikeOverrideToPost(
+    mapThreadNodeToDiscussionPost(
+      threadQuery.data,
+      resolveAvatarUrl,
+      currentUserId,
+      isAdmin,
+    ),
+    getDesiredLike,
   );
 
   const renderReply = (reply: DiscussionRenderablePost) => (
@@ -254,9 +276,6 @@ export default function DiscussionPage() {
   const apiUtils = api.useUtils();
   const [mounted, setMounted] = useState(false);
   const [expandedThreadId, setExpandedThreadId] = useState<number | null>(null);
-  const likeDesiredByPostRef = useRef(new Map<number, boolean>());
-  const likeInFlightByPostRef = useRef(new Set<number>());
-  const [likePendingVersion, setLikePendingVersion] = useState(0);
   const expandedThreadIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -307,8 +326,6 @@ export default function DiscussionPage() {
       }
     },
   });
-  const likePostMutation = api.discussions.likePost.useMutation();
-  const unlikePostMutation = api.discussions.unlikePost.useMutation();
 
   const discussionItems: DiscussionNavItem[] = [
     { id: 0, title: "General", href: `${baseCohortPath}/discussion` },
@@ -373,59 +390,11 @@ export default function DiscussionPage() {
     }
   };
 
-  const flushLikeIntent = async (postId: number) => {
-    if (likeInFlightByPostRef.current.has(postId)) {
-      return;
-    }
-
-    const desired = likeDesiredByPostRef.current.get(postId);
-    if (desired === undefined) {
-      return;
-    }
-
-    likeInFlightByPostRef.current.add(postId);
-    setLikePendingVersion((v) => v + 1);
-
-    try {
-      if (desired) {
-        await likePostMutation.mutateAsync({ post_id: postId });
-      } else {
-        await unlikePostMutation.mutateAsync({ post_id: postId });
-      }
-    } catch {
-      await refreshLikeCaches();
-    } finally {
-      likeInFlightByPostRef.current.delete(postId);
-      setLikePendingVersion((v) => v + 1);
-
-      const latestDesired = likeDesiredByPostRef.current.get(postId);
-      if (latestDesired === desired) {
-        likeDesiredByPostRef.current.delete(postId);
-        await refreshLikeCaches();
-      } else {
-        void flushLikeIntent(postId);
-      }
-    }
-  };
-
-  const isLikePending = (postId: string | number) => {
-    if (typeof postId !== "number") return false;
-    return likeInFlightByPostRef.current.has(postId);
-  };
-
-  void likePendingVersion;
-
-  const handleToggleLike = (post: DiscussionUiPost) => {
-    if (typeof post.id !== "number") return;
-
-    const currentDesired = likeDesiredByPostRef.current.get(post.id);
-    const effectiveLiked = currentDesired ?? (post.hasLiked ?? false);
-    const nextLiked = !effectiveLiked;
-
-    likeDesiredByPostRef.current.set(post.id, nextLiked);
-    applyLikeOptimistic(post.id, nextLiked);
-    void flushLikeIntent(post.id);
-  };
+  const { handleToggleLike, isLikePending, getDesiredLike } =
+    useDiscussionLikeQueue({
+      onOptimisticUpdate: applyLikeOptimistic,
+      onRefresh: refreshLikeCaches,
+    });
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
@@ -476,6 +445,7 @@ export default function DiscussionPage() {
                     onDelete={handleDelete}
                     onToggleLike={handleToggleLike}
                     isLikePending={isLikePending}
+                    getDesiredLike={getDesiredLike}
                     onToggleReplies={() =>
                       setExpandedThreadId((current) =>
                         current === thread.id ? null : thread.id,
