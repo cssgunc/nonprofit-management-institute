@@ -1,10 +1,11 @@
 import z from "zod";
-import { eq, isNull, asc, desc, and } from "drizzle-orm";
+import { eq, isNull, asc, desc, and, inArray, count } from "drizzle-orm";
 import { db } from "@/server/db";
 import {
   cohort_memberships,
   cohort_modules,
   cohorts,
+  discussion_likes,
   discussions_post,
   modules,
   profiles,
@@ -110,8 +111,57 @@ type PostWithAuthor = PostRow & {
   author_full_name: string | null;
   author_avatar_url: string | null;
   author_role: "admin" | "student" | null;
+  like_count: number;
+  viewer_has_liked: boolean;
 };
 type PostNode = PostWithAuthor & { children: PostNode[] };
+
+async function enrichPostsWithLikes(
+  posts: Array<
+    Omit<PostWithAuthor, "like_count" | "viewer_has_liked"> & {
+      like_count?: number;
+      viewer_has_liked?: boolean;
+    }
+  >,
+  viewerId: string,
+): Promise<PostWithAuthor[]> {
+  if (posts.length === 0) {
+    return [];
+  }
+
+  const postIds = posts.map((post) => post.id);
+
+  const likeCounts = await db
+    .select({
+      post_id: discussion_likes.post_id,
+      like_count: count(discussion_likes.profile_id),
+    })
+    .from(discussion_likes)
+    .where(inArray(discussion_likes.post_id, postIds))
+    .groupBy(discussion_likes.post_id);
+
+  const viewerLikes = await db
+    .select({ post_id: discussion_likes.post_id })
+    .from(discussion_likes)
+    .where(
+      and(
+        eq(discussion_likes.profile_id, viewerId),
+        inArray(discussion_likes.post_id, postIds),
+      ),
+    );
+
+  const likeCountMap = new Map<number, number>(
+    likeCounts.map((row) => [row.post_id, Number(row.like_count)]),
+  );
+
+  const viewerLikedSet = new Set<number>(viewerLikes.map((row) => row.post_id));
+
+  return posts.map((post) => ({
+    ...post,
+    like_count: likeCountMap.get(post.id) ?? 0,
+    viewer_has_liked: viewerLikedSet.has(post.id),
+  }));
+}
 
 function buildTree(postId: number, allPosts: PostWithAuthor[]): PostNode {
   const post = allPosts.find((p) => p.id === postId);
@@ -153,7 +203,7 @@ export const discussionsRouter = createTRPCRouter({
       const cohort = await resolveCohortBySlug(input.cohortSlug);
       await requireCohortAccess(ctx.subject.id, cohort.id);
 
-      return db
+      const rows = await db
         .select({
           id: discussions_post.id,
           module_id: discussions_post.module_id,
@@ -178,6 +228,8 @@ export const discussionsRouter = createTRPCRouter({
           ),
         )
         .orderBy(desc(discussions_post.created_at));
+
+      return enrichPostsWithLikes(rows, ctx.subject.id);
     }),
 
   listThreadsByModuleSlug: protectedProcedure
@@ -196,7 +248,7 @@ export const discussionsRouter = createTRPCRouter({
         foundModule.id,
       );
 
-      return db
+      const rows = await db
         .select({
           id: discussions_post.id,
           module_id: discussions_post.module_id,
@@ -221,6 +273,8 @@ export const discussionsRouter = createTRPCRouter({
           ),
         )
         .orderBy(desc(discussions_post.created_at));
+
+      return enrichPostsWithLikes(rows, ctx.subject.id);
     }),
 
   listRepliesByParentPostId: protectedProcedure
@@ -243,7 +297,7 @@ export const discussionsRouter = createTRPCRouter({
         await requireCohortAccess(ctx.subject.id, cohort.id);
       }
 
-      return db
+      const rows = await db
         .select({
           id: discussions_post.id,
           module_id: discussions_post.module_id,
@@ -267,6 +321,8 @@ export const discussionsRouter = createTRPCRouter({
           ),
         )
         .orderBy(asc(discussions_post.created_at));
+
+      return enrichPostsWithLikes(rows, ctx.subject.id);
     }),
 
   getThread: protectedProcedure
@@ -296,7 +352,7 @@ export const discussionsRouter = createTRPCRouter({
         await requireCohortAccess(ctx.subject.id, cohort.id);
       }
 
-      const allModulePosts = await db
+      const allModulePostsRaw = await db
         .select({
           id: discussions_post.id,
           module_id: discussions_post.module_id,
@@ -326,10 +382,58 @@ export const discussionsRouter = createTRPCRouter({
         )
         .orderBy(asc(discussions_post.created_at));
 
+      const allModulePosts = await enrichPostsWithLikes(
+        allModulePostsRaw,
+        ctx.subject.id,
+      );
+
       const subtreeIds = new Set(collectSubtreeIds(root.id, allModulePosts));
       const subtreePosts = allModulePosts.filter((p) => subtreeIds.has(p.id));
 
       return buildTree(root.id, subtreePosts);
+    }),
+
+  likePost: protectedProcedure
+    .input(z.object({ post_id: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const post = await fetchPost(input.post_id);
+      if (post.cohort_id == null) {
+        throw new TRPCError({ code: "BAD_REQUEST" });
+      }
+
+      await requireCohortAccess(ctx.subject.id, post.cohort_id);
+
+      await db
+        .insert(discussion_likes)
+        .values({
+          post_id: input.post_id,
+          profile_id: ctx.subject.id,
+        })
+        .onConflictDoNothing();
+
+      return { post_id: input.post_id };
+    }),
+
+  unlikePost: protectedProcedure
+    .input(z.object({ post_id: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      const post = await fetchPost(input.post_id);
+      if (post.cohort_id == null) {
+        throw new TRPCError({ code: "BAD_REQUEST" });
+      }
+
+      await requireCohortAccess(ctx.subject.id, post.cohort_id);
+
+      await db
+        .delete(discussion_likes)
+        .where(
+          and(
+            eq(discussion_likes.post_id, input.post_id),
+            eq(discussion_likes.profile_id, ctx.subject.id),
+          ),
+        );
+
+      return { post_id: input.post_id };
     }),
 
   createPost: protectedProcedure

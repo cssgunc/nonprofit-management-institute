@@ -4,10 +4,15 @@ import DiscussionPost, {
   type Post as DiscussionUiPost,
 } from "@/components/DiscussionPost";
 import CohortAccessGuard from "@/components/CohortAccessGuard";
+import {
+  applyLikeOverride,
+  applyLikeOverrideToPost,
+  useDiscussionLikeQueue,
+} from "@/utils/discussionLikes";
 import { api, type RouterOutputs } from "@/utils/trpc/api";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 import { useRouter } from "next/router";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -81,6 +86,8 @@ function mapThreadNodeToDiscussionPost(
     content: node.body ?? "",
     createdAt: node.created_at ?? new Date(0),
     isDeleted: node.is_deleted ?? false,
+    likeCount: node.like_count ?? 0,
+    hasLiked: node.viewer_has_liked ?? false,
     canManage: isAdmin || node.author_id === currentUserId,
     replies: node.children.map((child) =>
       mapThreadNodeToDiscussionPost(
@@ -90,6 +97,33 @@ function mapThreadNodeToDiscussionPost(
         isAdmin,
       ),
     ),
+  };
+}
+
+function patchThreadLikeState(
+  node: ThreadNode,
+  postId: number,
+  nextLiked: boolean,
+): ThreadNode {
+  const selfChanged = node.id === postId;
+  const children = node.children.map((child) =>
+    patchThreadLikeState(child, postId, nextLiked),
+  );
+
+  if (!selfChanged) {
+    return { ...node, children };
+  }
+
+  const alreadyLiked = node.viewer_has_liked ?? false;
+  if (alreadyLiked === nextLiked) {
+    return { ...node, children };
+  }
+
+  return {
+    ...node,
+    children,
+    viewer_has_liked: nextLiked,
+    like_count: Math.max(0, (node.like_count ?? 0) + (nextLiked ? 1 : -1)),
   };
 }
 
@@ -103,6 +137,9 @@ function ThreadPreview({
   resolveAvatarUrl,
   onEdit,
   onDelete,
+  onToggleLike,
+  isLikePending,
+  getDesiredLike,
 }: {
   thread: ThreadListItem;
   cohortSlug: string;
@@ -113,10 +150,16 @@ function ThreadPreview({
   resolveAvatarUrl: (avatarPath: string | null) => string | null;
   onEdit: (id: string | number, newContent: string) => void;
   onDelete: (id: string | number) => void;
+  onToggleLike: (post: DiscussionUiPost) => void;
+  isLikePending: (postId: string | number) => boolean;
+  getDesiredLike: (postId: number) => boolean | undefined;
 }) {
   const threadQuery = api.discussions.getThread.useQuery(
     { postId: thread.id, cohortSlug },
-    { retry: false, enabled: !!cohortSlug },
+    {
+      retry: false,
+      enabled: !!cohortSlug && !isLikePending(thread.id),
+    },
   );
 
   const topLevelPost: DiscussionUiPost = {
@@ -132,9 +175,20 @@ function ThreadPreview({
     content: thread.body ?? "",
     createdAt: thread.created_at ?? new Date(0),
     isDeleted: thread.is_deleted ?? false,
+    likeCount: thread.like_count ?? 0,
+    hasLiked: thread.viewer_has_liked ?? false,
     replyCount: threadQuery.data ? countReplies(threadQuery.data) : 0,
     replies: [],
   };
+
+  const topLevelLikeOverride = applyLikeOverride(
+    topLevelPost.hasLiked ?? false,
+    topLevelPost.likeCount ?? 0,
+    getDesiredLike(thread.id),
+  );
+
+  topLevelPost.hasLiked = topLevelLikeOverride.hasLiked;
+  topLevelPost.likeCount = topLevelLikeOverride.likeCount;
 
   if (!expanded) {
     return (
@@ -142,6 +196,8 @@ function ThreadPreview({
         post={topLevelPost}
         canManage={isAdmin || thread.author_id === currentUserId}
         onReply={onToggleReplies}
+        onToggleLike={onToggleLike}
+        isLikePending={isLikePending}
         onEdit={onEdit}
         onDelete={onDelete}
       />
@@ -164,11 +220,14 @@ function ThreadPreview({
     );
   }
 
-  const mappedThread = mapThreadNodeToDiscussionPost(
-    threadQuery.data,
-    resolveAvatarUrl,
-    currentUserId,
-    isAdmin,
+  const mappedThread = applyLikeOverrideToPost(
+    mapThreadNodeToDiscussionPost(
+      threadQuery.data,
+      resolveAvatarUrl,
+      currentUserId,
+      isAdmin,
+    ),
+    getDesiredLike,
   );
 
   const renderReply = (reply: DiscussionRenderablePost) => (
@@ -177,6 +236,8 @@ function ThreadPreview({
       post={reply}
       isReply
       canManage={reply.canManage}
+      onToggleLike={onToggleLike}
+      isLikePending={isLikePending}
       onEdit={onEdit}
       onDelete={onDelete}
     >
@@ -193,6 +254,8 @@ function ThreadPreview({
       }}
       canManage={mappedThread.canManage}
       onReply={onToggleReplies}
+      onToggleLike={onToggleLike}
+      isLikePending={isLikePending}
       onEdit={onEdit}
       onDelete={onDelete}
     >
@@ -213,6 +276,11 @@ export default function DiscussionPage() {
   const apiUtils = api.useUtils();
   const [mounted, setMounted] = useState(false);
   const [expandedThreadId, setExpandedThreadId] = useState<number | null>(null);
+  const expandedThreadIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    expandedThreadIdRef.current = expandedThreadId;
+  }, [expandedThreadId]);
 
   useIsomorphicLayoutEffect(() => {
     setMounted(true);
@@ -285,6 +353,48 @@ export default function DiscussionPage() {
     if (typeof id !== "number") return;
     deletePostMutation.mutate({ post_id: id });
   };
+  const applyLikeOptimistic = (postId: number, nextLiked: boolean) => {
+    apiUtils.discussions.listGeneralThreads.setData({ cohortSlug }, (old) =>
+      old?.map((thread) => {
+        if (thread.id !== postId) return thread;
+        const currentLiked = thread.viewer_has_liked ?? false;
+        if (currentLiked === nextLiked) return thread;
+        return {
+          ...thread,
+          viewer_has_liked: nextLiked,
+          like_count: Math.max(
+            0,
+            (thread.like_count ?? 0) + (nextLiked ? 1 : -1),
+          ),
+        };
+      }),
+    );
+
+    const expandedId = expandedThreadIdRef.current;
+    if (expandedId !== null) {
+      apiUtils.discussions.getThread.setData(
+        { postId: expandedId, cohortSlug },
+        (old) => (old ? patchThreadLikeState(old, postId, nextLiked) : old),
+      );
+    }
+  };
+
+  const refreshLikeCaches = async () => {
+    await apiUtils.discussions.listGeneralThreads.invalidate({ cohortSlug });
+    const expandedId = expandedThreadIdRef.current;
+    if (expandedId !== null) {
+      await apiUtils.discussions.getThread.invalidate({
+        postId: expandedId,
+        cohortSlug,
+      });
+    }
+  };
+
+  const { handleToggleLike, isLikePending, getDesiredLike } =
+    useDiscussionLikeQueue({
+      onOptimisticUpdate: applyLikeOptimistic,
+      onRefresh: refreshLikeCaches,
+    });
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
@@ -333,6 +443,9 @@ export default function DiscussionPage() {
                     resolveAvatarUrl={resolveAvatarUrl}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onToggleLike={handleToggleLike}
+                    isLikePending={isLikePending}
+                    getDesiredLike={getDesiredLike}
                     onToggleReplies={() =>
                       setExpandedThreadId((current) =>
                         current === thread.id ? null : thread.id,
