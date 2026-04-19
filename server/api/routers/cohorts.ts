@@ -13,6 +13,67 @@ const CohortSchema = z.object({
 });
 
 export const cohortsApiRouter = createTRPCRouter({
+  list: protectedProcedure
+    .output(z.array(CohortSchema))
+    .query(async ({ ctx }) => {
+      const [profile] = await db
+        .select({ role: profiles.role })
+        .from(profiles)
+        .where(eq(profiles.id, ctx.subject.id))
+        .limit(1);
+
+      if (!profile || profile.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can list cohorts",
+        });
+      }
+
+      const rows = await db.select().from(cohorts);
+      return rows.map((r) => CohortSchema.parse(r));
+    }),
+
+  createCohort: protectedProcedure
+    .input(
+      z.object({
+        slug: z.string().min(1),
+        accessHash: z.string().min(1),
+      }),
+    )
+    .output(CohortSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [profile] = await db
+        .select({ role: profiles.role })
+        .from(profiles)
+        .where(eq(profiles.id, ctx.subject.id))
+        .limit(1);
+
+      if (!profile || profile.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can create cohorts",
+        });
+      }
+
+      const [inserted] = await db
+        .insert(cohorts)
+        .values({
+          slug: input.slug,
+          access_hash: input.accessHash,
+          is_active: true,
+        })
+        .returning();
+
+      if (!inserted) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create cohort",
+        });
+      }
+
+      return CohortSchema.parse(inserted);
+    }),
+
   hasCohortMembership: publicProcedure
     .input(z.object({ userId: z.string().uuid().optional() }))
     .output(CohortSchema.nullable())
