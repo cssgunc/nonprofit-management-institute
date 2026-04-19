@@ -4,10 +4,12 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import ProfileMenu from "@/components/ProfileMenu";
 import { api } from "@/utils/trpc/api";
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 import { Menu } from "lucide-react";
 
 export default function Header() {
   const router = useRouter();
+  const supabase = createSupabaseComponentClient();
   const { cohort_slug } = router.query;
   const profileQuery = api.profiles.me.useQuery(undefined, {
     retry: false,
@@ -25,6 +27,11 @@ export default function Header() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+  const avatarPublicUrl = profileQuery.data?.avatar_url
+    ? supabase.storage
+        .from("avatars")
+        .getPublicUrl(profileQuery.data.avatar_url).data.publicUrl
+    : undefined;
 
   const navLinks = cohort_slug
     ? [
@@ -131,6 +138,7 @@ export default function Header() {
         <ProfileMenu
           profileHref={profileHref}
           initials={initials || "?"}
+          avatarUrl={avatarPublicUrl}
           className="ml-3 lg:ml-16"
         />
       </div>

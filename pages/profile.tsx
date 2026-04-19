@@ -44,6 +44,9 @@ export default function ProfilePage() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update email.");
+    },
+  });
+
   const updateAvatarMutation = api.profiles.updateProfilePicture.useMutation({
     onSuccess: async () => {
       toast.success("Profile picture updated!");
