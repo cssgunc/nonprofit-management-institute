@@ -11,7 +11,7 @@ import {
 } from "@/server/db/schema";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-const ResourceTypeEnum = z.enum(["handout", "recording", "link"]);
+const ResourceTypeEnum = z.enum(["handout", "recording", "link", "document"]);
 
 export type ResourceType = z.infer<typeof ResourceTypeEnum>;
 
@@ -125,9 +125,9 @@ function parseResourceIdOrThrow(id: string): number {
 }
 
 async function assertCohortIdValidOrNull(
-  cohortId: string | null,
+  cohortId: string | null | undefined,
 ): Promise<void> {
-  if (cohortId === null) return;
+  if (cohortId === null || cohortId === undefined) return;
   const parsed = Number(cohortId);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid cohortId" });
@@ -148,7 +148,7 @@ function mapResourceRowToDto(
   row: {
     id: number;
     title: string;
-    type: "handout" | "recording" | "link";
+    type: "handout" | "recording" | "link" | "document";
     url: string | null;
     cohortId: number | null;
     created_by: string | null;
@@ -290,7 +290,7 @@ export const resourcesRouter = createTRPCRouter({
         title: z.string().trim().min(1, "Title cannot be empty"),
         type: ResourceTypeEnum,
         url: z.string().url().optional().nullable(),
-        cohortId: z.string().min(1).nullable(),
+        cohortSlug: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -299,11 +299,29 @@ export const resourcesRouter = createTRPCRouter({
 
       // Ensure the module exists before attaching a resource to it
       const foundModule = await findModuleBySlugOrThrow(input.moduleSlug);
-      await assertCohortIdValidOrNull(input.cohortId);
 
-      const cohortIdAsInt =
-        input.cohortId !== null ? Number(input.cohortId) : null;
+      // 1. Look up the integer ID using the slug (Replaces assertCohortIdValidOrNull)
+      let safeCohortId: number | null = null;
 
+      if (input.cohortSlug) {
+        const [foundCohort] = await db
+          .select({ id: cohorts.id })
+          .from(cohorts)
+          .where(eq(cohorts.slug, input.cohortSlug))
+          .limit(1);
+
+        // If they passed a slug but it doesn't match anything in the DB, reject it
+        if (!foundCohort) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Cohort with slug '${input.cohortSlug}' not found`,
+          });
+        }
+
+        safeCohortId = foundCohort.id;
+      }
+
+      // 2. Insert into Drizzle
       const [inserted] = await db
         .insert(resources)
         .values({
@@ -311,7 +329,7 @@ export const resourcesRouter = createTRPCRouter({
           title: input.title.trim(),
           type: input.type,
           url: input.url ?? null,
-          cohort_id: cohortIdAsInt,
+          cohort_id: safeCohortId,
           created_by: ctx.subject.id,
         })
         .returning({
@@ -332,7 +350,6 @@ export const resourcesRouter = createTRPCRouter({
 
       return mapResourceRowToDto(inserted, foundModule.slug);
     }),
-
   /**
    * resources.update()
    * - Admin-only
