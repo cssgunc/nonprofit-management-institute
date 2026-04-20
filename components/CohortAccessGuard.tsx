@@ -23,7 +23,7 @@ export default function CohortAccessGuard({
 
   if (!cohortSlug) {
     return (
-      <div className="flex min-h-[calc(100vh-7rem)] items-center justify-center bg-[#f5f5f5] px-6">
+      <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] items-center justify-center px-6">
         <div className="w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <h1 className="text-2xl font-semibold text-black">
             Loading cohort...
@@ -35,7 +35,7 @@ export default function CohortAccessGuard({
 
   if (membershipQuery.isLoading || profileQuery.isLoading) {
     return (
-      <div className="flex min-h-[calc(100vh-7rem)] items-center justify-center bg-[#f5f5f5] px-6">
+      <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] items-center justify-center px-6">
         <div className="w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <h1 className="text-2xl font-semibold text-black">
             Checking access...
@@ -50,7 +50,7 @@ export default function CohortAccessGuard({
 
   if (membershipQuery.error || profileQuery.error) {
     return (
-      <div className="flex min-h-[calc(100vh-7rem)] items-center justify-center bg-[#f5f5f5] px-6">
+      <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] items-center justify-center px-6">
         <div className="w-full max-w-xl rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm">
           <h1 className="text-2xl font-semibold text-black">
             We couldn&apos;t verify your cohort access
@@ -72,7 +72,7 @@ export default function CohortAccessGuard({
 
   if (!hasAccess) {
     return (
-      <div className="flex min-h-[calc(100vh-7rem)] items-center justify-center bg-[#f5f5f5] px-6">
+      <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] items-center justify-center px-6">
         <div className="w-full max-w-xl rounded-3xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <h1 className="text-3xl font-semibold text-black">
             You don&apos;t have access to this cohort

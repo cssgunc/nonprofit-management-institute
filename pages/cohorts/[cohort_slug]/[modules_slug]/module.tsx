@@ -203,7 +203,7 @@ export default function ModulePage() {
     <CohortAccessGuard cohortSlug={cohortSlug}>
       <div className="flex min-h-[calc(100vh-7rem)] w-full">
         <SidebarModules items={sidebarItems} activeId={0} />
-        <div className="flex min-h-[calc(100vh-7rem)] flex-1 justify-center bg-[linear-gradient(180deg,#f8f4ee_0%,#f4f0e9_100%)]">
+        <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] flex-1 justify-center">
           <div className="motion-fade flex w-full max-w-5xl flex-col gap-8 px-8 py-10">
             <div className="motion-rise">
               <h1 className="text-3xl font-bold text-gray-900">

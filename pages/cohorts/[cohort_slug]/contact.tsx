@@ -19,7 +19,7 @@ export default function Contact() {
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="min-h-screen bg-[linear-gradient(180deg,#f8f4ee_0%,#f5f1eb_100%)] px-6 py-10">
+      <div className="app-muted-bg min-h-[calc(100vh-7rem)] px-6 py-10">
         <div className="mx-auto w-full max-w-[1162px] rounded-[2rem] border border-[rgba(40,132,164,0.08)] bg-[rgba(255,252,248,0.78)] px-6 py-8 shadow-[0_22px_60px_rgba(61,52,45,0.06)] md:px-8">
           <div className="mb-8 border-b border-[rgba(40,132,164,0.08)] pb-5">
             <h1 className="text-4xl font-bold text-zinc-900">Cohort Members</h1>

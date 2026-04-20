@@ -53,7 +53,7 @@ export default function SignUp() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-[#2884A4] via-[#7D328C] to-[#A27A4A] p-6 lg:p-10 box-border">
+    <div className="auth-brand-bg h-screen w-screen overflow-hidden flex items-center justify-center p-6 lg:p-10 box-border">
       <div className="w-full h-full max-h-[850px] max-w-7xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
         <div className="w-full md:w-1/2 p-6 lg:p-10 flex flex-col items-center justify-between bg-white relative">
           <h2

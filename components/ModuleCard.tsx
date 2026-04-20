@@ -31,7 +31,7 @@ export default function ModuleCard({
   const href = cohortSlug ? `/cohorts/${cohortSlug}/${slug}/module` : null;
   const isInactive = isActive !== true;
   const isLockedForViewer = isInactive && !isAdmin;
-  const cardClassName = `block h-[240px] w-full max-w-[500px] overflow-hidden rounded-[1.15rem] border border-[rgba(40,132,164,0.12)] bg-[linear-gradient(180deg,#ffffff_0%,#fbf9f6_100%)] shadow-[0_14px_28px_rgba(61,52,45,0.08)] transition-transform duration-300 hover:scale-[1.04] hover:shadow-[0_22px_46px_rgba(40,132,164,0.14)] ${className} ${
+  const cardClassName = `block h-[205px] w-full overflow-hidden rounded-[0.85rem] border border-[rgba(40,132,164,0.14)] bg-white shadow-[0_12px_24px_rgba(61,52,45,0.08)] transition-transform duration-300 hover:scale-[1.025] hover:shadow-[0_18px_36px_rgba(40,132,164,0.14)] md:h-[218px] xl:h-[230px] ${className} ${
     isInactive ? "opacity-45" : ""
   } ${isLockedForViewer ? "cursor-not-allowed" : ""}`;
   const image = (
@@ -40,7 +40,7 @@ export default function ModuleCard({
       alt={title}
       width={500}
       height={240}
-      className={`h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03] ${
+      className={`h-full w-full scale-[1.08] bg-white object-contain transition-transform duration-300 hover:scale-[1.095] ${
         isInactive ? "grayscale brightness-90 contrast-90" : ""
       } ${imageClassName}`}
       priority
@@ -48,7 +48,7 @@ export default function ModuleCard({
   );
 
   return (
-    <div className="motion-rise relative">
+    <div className="motion-rise relative w-full">
       {isAdmin === true && (
         <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-[rgba(255,250,244,0.94)] px-2 py-1 shadow-sm">
           <span

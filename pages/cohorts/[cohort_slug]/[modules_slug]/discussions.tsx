@@ -353,7 +353,7 @@ export default function ModuleDiscussions() {
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="flex min-h-[calc(100vh-7rem)] w-full items-stretch bg-[linear-gradient(180deg,#f8f4ee_0%,#f4f0e9_100%)]">
+      <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] w-full items-stretch">
         {mounted &&
           (sidebarContext === "discussions" ? (
             <SidebarDiscussions
@@ -368,81 +368,87 @@ export default function ModuleDiscussions() {
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
             <div className="overflow-hidden rounded-[1.75rem] border border-[rgba(125,50,140,0.08)] bg-[rgba(255,252,248,0.8)] shadow-[0_20px_54px_rgba(61,52,45,0.06)]">
               <div className="motion-rise border-b border-[rgba(125,50,140,0.08)] px-6 py-5">
-              <h1 className="text-3xl font-bold text-black">
-                {moduleQuery.data?.title ?? "Module Discussion"}
-              </h1>
+                <h1 className="text-3xl font-bold text-black">
+                  {moduleQuery.data?.title ?? "Module Discussion"}
+                </h1>
               </div>
 
               <div className="px-5 py-5 md:px-6">
-            {moduleQuery.isLoading ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
-                Loading module...
-              </div>
-            ) : moduleErrorCode === "FORBIDDEN" ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
-                <Lock className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
-                <p className="font-medium text-gray-600">
-                  This module is locked.
-                </p>
-                <p className="text-sm text-gray-400">
-                  You do not have access to this module yet.
-                </p>
-                <Link
-                  href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
-                  className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Back to Dashboard
-                </Link>
-              </div>
-            ) : moduleErrorCode === "NOT_FOUND" || !moduleQuery.data ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
-                <AlertCircle
-                  className="h-8 w-8 text-gray-400"
-                  strokeWidth={1.5}
-                />
-                <p className="font-medium text-gray-600">Module not found.</p>
-                <Link
-                  href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
-                  className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                >
-                  Back to Dashboard
-                </Link>
-              </div>
-            ) : threadsQuery.isLoading ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
-                Loading discussions...
-              </div>
-            ) : threadsQuery.error ? (
-              <div className="rounded-xl border border-red-200 bg-white p-6 text-sm text-red-600">
-                Failed to load discussions for this module.
-              </div>
-            ) : threads.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center text-zinc-500">
-                No discussion threads have been posted for this module yet.
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {threads.map((thread: ThreadListItem) => (
-                  <ThreadPreview
-                    key={thread.id}
-                    thread={thread}
-                    postId={thread.id}
-                    currentUserId={currentUserId}
-                    isAdmin={isAdmin}
-                    expanded={expandedThreadId === thread.id}
-                    resolveAvatarUrl={resolveAvatarUrl}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    cohortSlug={cohortSlug}
-                    onToggleReplies={() =>
-                      setExpandedThreadId((current) =>
-                        current === thread.id ? null : thread.id,
-                      )
-                    }
-                  />
-                ))}
-              </div>
-            )}
+                {moduleQuery.isLoading ? (
+                  <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
+                    Loading module...
+                  </div>
+                ) : moduleErrorCode === "FORBIDDEN" ? (
+                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
+                    <Lock className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                    <p className="font-medium text-gray-600">
+                      This module is locked.
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      You do not have access to this module yet.
+                    </p>
+                    <Link
+                      href={
+                        cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"
+                      }
+                      className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                    >
+                      Back to Dashboard
+                    </Link>
+                  </div>
+                ) : moduleErrorCode === "NOT_FOUND" || !moduleQuery.data ? (
+                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
+                    <AlertCircle
+                      className="h-8 w-8 text-gray-400"
+                      strokeWidth={1.5}
+                    />
+                    <p className="font-medium text-gray-600">
+                      Module not found.
+                    </p>
+                    <Link
+                      href={
+                        cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"
+                      }
+                      className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                    >
+                      Back to Dashboard
+                    </Link>
+                  </div>
+                ) : threadsQuery.isLoading ? (
+                  <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
+                    Loading discussions...
+                  </div>
+                ) : threadsQuery.error ? (
+                  <div className="rounded-xl border border-red-200 bg-white p-6 text-sm text-red-600">
+                    Failed to load discussions for this module.
+                  </div>
+                ) : threads.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center text-zinc-500">
+                    No discussion threads have been posted for this module yet.
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {threads.map((thread: ThreadListItem) => (
+                      <ThreadPreview
+                        key={thread.id}
+                        thread={thread}
+                        postId={thread.id}
+                        currentUserId={currentUserId}
+                        isAdmin={isAdmin}
+                        expanded={expandedThreadId === thread.id}
+                        resolveAvatarUrl={resolveAvatarUrl}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        cohortSlug={cohortSlug}
+                        onToggleReplies={() =>
+                          setExpandedThreadId((current) =>
+                            current === thread.id ? null : thread.id,
+                          )
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

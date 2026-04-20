@@ -28,22 +28,29 @@ export default function DashboardPage() {
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="relative min-h-[calc(100vh-7rem)] w-full bg-[radial-gradient(circle_at_top_left,rgba(40,132,164,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(125,50,140,0.1),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(162,122,74,0.1),transparent_22%)]">
-        <div className="motion-fade mx-auto max-w-[1360px] px-5 py-6 md:px-8 lg:px-10 lg:py-7">
-          <div className="motion-rise relative overflow-hidden rounded-[2rem] border border-[rgba(40,132,164,0.08)] bg-[linear-gradient(180deg,rgba(255,255,255,0.84)_0%,rgba(251,248,244,0.92)_100%)] shadow-[0_24px_70px_rgba(61,52,45,0.08)]">
-            <div className="border-b border-[rgba(40,132,164,0.08)] px-6 py-5 md:px-8">
-              <h1 className="text-[2.2rem] font-semibold tracking-tight text-[#1f2b34] md:text-[2.6rem]">
-                Participant Dashboard
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6c6d72]">
-                Review active course modules, upcoming learning materials, and
-                discussions for this cohort.
-              </p>
+      <div className="app-muted-bg relative min-h-[calc(100vh-7rem)] w-full overflow-hidden">
+        <div className="motion-fade relative mx-auto max-w-[1500px] px-3 py-4 md:px-5 lg:px-7">
+          <div className="motion-rise relative overflow-hidden rounded-[1.35rem] border border-[rgba(40,132,164,0.1)] bg-[rgba(255,253,248,0.82)] shadow-[0_24px_70px_rgba(61,52,45,0.1)]">
+            <div className="absolute inset-x-0 top-0 flex h-1">
+              <span className="flex-1 bg-[var(--brand-plum)]" />
+              <span className="flex-1 bg-[var(--brand-lime)]" />
+              <span className="flex-1 bg-[var(--brand-teal)]" />
             </div>
-            <div className="px-3 py-4 md:px-5 md:py-5">
+            <div className="flex flex-col gap-3 border-b border-[rgba(40,132,164,0.08)] px-5 py-4 md:flex-row md:items-end md:justify-between md:px-6">
+              <div>
+                <h1 className="text-[2rem] font-semibold tracking-tight text-[#1f2b34] md:text-[2.35rem]">
+                  Participant Dashboard
+                </h1>
+                <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[#6c6d72]">
+                  Review active course modules, upcoming learning materials, and
+                  discussions for this cohort.
+                </p>
+              </div>
+            </div>
+            <div className="px-3 py-3 md:px-4 md:py-4">
               <ModuleGrid
                 cohortSlug={cohortSlug}
-                className="pt-0 lg:grid-cols-3"
+                className="pt-2 lg:grid-cols-3"
                 isAdmin={isAdmin}
                 onToggleStatus={
                   isAdmin

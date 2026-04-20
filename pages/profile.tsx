@@ -109,7 +109,7 @@ export default function ProfilePage() {
     : undefined;
 
   return (
-    <div className="w-full bg-[linear-gradient(180deg,#f8f4ee_0%,#f3efe8_100%)]">
+    <div className="app-muted-bg min-h-[calc(100vh-7rem)] w-full">
       <div className="mx-auto max-w-[1360px] px-4 py-4 md:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
           <section className="border-b border-[var(--line-soft)] px-4 py-4 lg:border-b-0 lg:border-r lg:px-5 lg:py-3">

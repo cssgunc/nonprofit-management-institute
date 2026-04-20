@@ -17,13 +17,30 @@ function App({ Component, pageProps }: AppProps) {
   ]);
 
   const shouldShowHeader = !routesWithoutHeader.has(router.pathname);
+  const routesWithoutMutedBackground = new Set([
+    "/login",
+    "/signup",
+    "/signout",
+  ]);
+  const shouldUseMutedBackground = !routesWithoutMutedBackground.has(
+    router.pathname,
+  );
 
   return (
-    <>
+    <div
+      className={
+        shouldUseMutedBackground
+          ? "app-shell-bg min-h-screen app-muted-bg"
+          : ""
+      }
+    >
+      {shouldUseMutedBackground ? (
+        <span aria-hidden="true" className="app-shell-panel" />
+      ) : null}
       {shouldShowHeader ? <Header /> : null}
       <Component {...pageProps} />
       <Toaster position="bottom-right" />
-    </>
+    </div>
   );
 }
 
