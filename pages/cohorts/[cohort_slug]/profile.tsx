@@ -12,7 +12,9 @@ import { Camera } from "lucide-react";
 export default function ProfilePage() {
   const router = useRouter();
   const cohortSlug =
-    typeof router.query.cohort_slug === "string" ? router.query.cohort_slug : "";
+    typeof router.query.cohort_slug === "string"
+      ? router.query.cohort_slug
+      : "";
   const profileQuery = api.profiles.me.useQuery();
   const apiUtils = api.useUtils();
   const supabase = createSupabaseComponentClient();
@@ -141,7 +143,8 @@ export default function ProfilePage() {
               Profile
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-[#62636a]">
-              Keep your participant profile current for cohort discussions and contact lists.
+              Keep your participant profile current for cohort discussions and
+              contact lists.
             </p>
 
             <div className="mt-12 grid gap-x-10 gap-y-8 md:grid-cols-2">
@@ -165,7 +168,9 @@ export default function ProfilePage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={profileQuery.data?.email ?? "Rosedoe123@gmail.com"}
+                  placeholder={
+                    profileQuery.data?.email ?? "Rosedoe123@gmail.com"
+                  }
                   className="mt-2 w-full border-0 border-b-2 border-[rgba(0,138,171,0.22)] bg-transparent px-0 pb-3 pt-2 text-2xl font-medium text-black placeholder:text-zinc-400 focus:border-[var(--brand-teal)] focus:outline-none"
                 />
               </label>

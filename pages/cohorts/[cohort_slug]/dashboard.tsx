@@ -55,7 +55,9 @@ export default function DashboardPage() {
               </div>
               <div className="rounded-[1.15rem] border border-[rgba(94,13,139,0.08)] bg-white/58 px-5 py-5 shadow-[0_12px_30px_rgba(61,52,45,0.06)]">
                 <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.2em]">
-                  <span className="text-[var(--brand-plum)]">Many missions</span>
+                  <span className="text-[var(--brand-plum)]">
+                    Many missions
+                  </span>
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-lime)]" />
                   <span className="text-[var(--brand-teal)]">100 counties</span>
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-lime)]" />
@@ -63,9 +65,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                   <Link
-                    href={
-                      cohortBasePath ? `${cohortBasePath}/discussion` : "#"
-                    }
+                    href={cohortBasePath ? `${cohortBasePath}/discussion` : "#"}
                     className="inline-flex items-center justify-center rounded-full bg-[var(--brand-plum)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#4f0b75]"
                   >
                     Open Discussions

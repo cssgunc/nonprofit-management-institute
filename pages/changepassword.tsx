@@ -11,7 +11,9 @@ const supabase = createClient(
 export default function ChangePassword() {
   const router = useRouter();
   const cohortSlug =
-    typeof router.query.cohort_slug === "string" ? router.query.cohort_slug : "";
+    typeof router.query.cohort_slug === "string"
+      ? router.query.cohort_slug
+      : "";
   const profileHref = cohortSlug ? `/cohorts/${cohortSlug}/profile` : "/";
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

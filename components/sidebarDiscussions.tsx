@@ -96,7 +96,7 @@ export default function SidebarDiscussions({
                         : isDisabled
                           ? "cursor-not-allowed text-zinc-400"
                           : "font-normal text-zinc-900 hover:bg-[rgba(125,50,140,0.05)]",
-                      )}
+                    )}
                   >
                     <span className="flex items-center gap-2">
                       <Icon

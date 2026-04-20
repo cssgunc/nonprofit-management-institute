@@ -134,7 +134,7 @@ export default function SidebarModules({
                     className={cn(
                       "relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] transition-colors",
                       isActive
-                      ? "rounded-r-xl bg-[rgba(40,132,164,0.09)] font-bold text-[#23485a]"
+                        ? "rounded-r-xl bg-[rgba(40,132,164,0.09)] font-bold text-[#23485a]"
                         : "font-normal text-zinc-900 hover:bg-[rgba(40,132,164,0.05)]",
                     )}
                   >
