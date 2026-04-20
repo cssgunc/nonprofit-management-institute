@@ -57,15 +57,22 @@ export default function AdminCohortsPage() {
 
             <div className="mb-4">
               <label className="mb-1 block text-sm font-semibold text-black">
-                Cohort Name
+                Cohort Slug
               </label>
               <input
                 type="text"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) =>
+                  setSlug(
+                    e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+                  )
+                }
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-black focus:border-[#0090b1] focus:outline-none focus:ring-1 focus:ring-[#0090b1]"
                 placeholder="e.g., fall-2026"
               />
+              <p className="mt-1 text-xs text-zinc-400">
+                Lowercase letters, digits, and hyphens only. Used in the URL.
+              </p>
             </div>
 
             <div className="mb-6">

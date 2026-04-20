@@ -36,8 +36,15 @@ export const cohortsApiRouter = createTRPCRouter({
   createCohort: protectedProcedure
     .input(
       z.object({
-        slug: z.string().min(1),
-        accessHash: z.string().min(1),
+        slug: z
+          .string()
+          .trim()
+          .min(1)
+          .regex(
+            /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+            "Slug must be lowercase letters, digits, and hyphens (e.g. fall-2026)",
+          ),
+        accessHash: z.string().trim().min(1),
       }),
     )
     .output(CohortSchema)
@@ -52,6 +59,26 @@ export const cohortsApiRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only admins can create cohorts",
+        });
+      }
+
+      const existingSlug = await db.query.cohorts.findFirst({
+        where: eq(cohorts.slug, input.slug),
+      });
+      if (existingSlug) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A cohort with this slug already exists",
+        });
+      }
+
+      const existingHash = await db.query.cohorts.findFirst({
+        where: eq(cohorts.access_hash, input.accessHash),
+      });
+      if (existingHash) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A cohort with this access code already exists",
         });
       }
 
