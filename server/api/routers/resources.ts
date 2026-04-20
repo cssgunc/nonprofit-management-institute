@@ -4,6 +4,7 @@ import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/server/db";
 import {
   cohort_memberships,
+  cohort_modules,
   cohorts,
   modules,
   profiles,
@@ -434,6 +435,119 @@ export const resourcesRouter = createTRPCRouter({
       }
 
       return mapResourceRowToDto(updated, exists.moduleSlug);
+    }),
+
+  /**
+   * resources.upsertRecording()
+   * - Admin-only
+   * - Updates the cohort-scoped recording for a module if one exists
+   * - Creates the recording resource if one does not exist yet
+   */
+  upsertRecording: protectedProcedure
+    .input(
+      z.object({
+        moduleId: z.number().int().positive(),
+        cohortId: z.number().int().positive(),
+        url: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const viewer = await getViewer(ctx.subject.id);
+      assertAdmin(viewer);
+
+      const [moduleForCohort] = await db
+        .select({
+          id: modules.id,
+          slug: modules.slug,
+          title: modules.title,
+        })
+        .from(modules)
+        .innerJoin(
+          cohort_modules,
+          and(
+            eq(cohort_modules.module_id, modules.id),
+            eq(cohort_modules.cohort_id, input.cohortId),
+          ),
+        )
+        .where(eq(modules.id, input.moduleId))
+        .limit(1);
+
+      if (!moduleForCohort) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Module not found in this cohort",
+        });
+      }
+
+      const normalizedUrl = input.url.trim() || null;
+      const [existingRecording] = await db
+        .select({
+          id: resources.id,
+        })
+        .from(resources)
+        .where(
+          and(
+            eq(resources.module_id, input.moduleId),
+            eq(resources.cohort_id, input.cohortId),
+            eq(resources.type, "recording"),
+          ),
+        )
+        .limit(1);
+
+      if (existingRecording) {
+        const [updated] = await db
+          .update(resources)
+          .set({
+            url: normalizedUrl,
+            title: moduleForCohort.title,
+          })
+          .where(eq(resources.id, existingRecording.id))
+          .returning({
+            id: resources.id,
+            title: resources.title,
+            type: resources.type,
+            url: resources.url,
+            cohortId: resources.cohort_id,
+            created_by: resources.created_by,
+          });
+
+        if (!updated) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update recording",
+          });
+        }
+
+        return mapResourceRowToDto(updated, moduleForCohort.slug);
+      }
+
+      const [inserted] = await db
+        .insert(resources)
+        .values({
+          module_id: input.moduleId,
+          cohort_id: input.cohortId,
+          type: "recording",
+          title: moduleForCohort.title,
+          url: normalizedUrl,
+          created_by: ctx.subject.id,
+        })
+        .returning({
+          id: resources.id,
+          title: resources.title,
+          type: resources.type,
+          url: resources.url,
+          cohortId: resources.cohort_id,
+          created_by: resources.created_by,
+        });
+
+      if (!inserted) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create recording",
+        });
+      }
+
+      return mapResourceRowToDto(inserted, moduleForCohort.slug);
     }),
 
   /**

@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+import { useState } from "react";
 import { VideoOff, Lock, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/utils/trpc/api";
@@ -6,6 +7,7 @@ import { TRPCClientError } from "@trpc/client";
 import SidebarModules from "@/components/sidebarModules";
 import type { SidebarNavItem } from "@/components/sidebarModules";
 import CohortAccessGuard from "@/components/CohortAccessGuard";
+import { toast } from "sonner";
 
 function parseYouTubeEmbedUrl(url: string): string | null {
   try {
@@ -48,6 +50,10 @@ export default function ModulePage() {
   const cohortSlug = cohort_slug as string;
   const baseModulePath =
     cohortSlug && slug ? `/cohorts/${cohortSlug}/${slug}` : "/cohorts";
+  const [isEditing, setIsEditing] = useState(false);
+  const [editUrl, setEditUrl] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const utils = api.useUtils();
 
   const sidebarItems: SidebarNavItem[] = [
     {
@@ -82,10 +88,75 @@ export default function ModulePage() {
       { enabled: !!slug && !!cohortSlug, retry: false },
     );
 
+  const profileQuery = api.profiles.me.useQuery(undefined, {
+    retry: false,
+  });
+  const isAdmin = profileQuery.isSuccess && profileQuery.data.role === "admin";
+  const updateModule = api.modules.update.useMutation();
+  const upsertRecording = api.resources.upsertRecording.useMutation();
+  const isSaving = updateModule.isPending || upsertRecording.isPending;
+
   const isLoading = moduleLoading || recordingsLoading;
 
-  const recording = recordings?.[0];
-  const embedUrl = recording?.url ? parseYouTubeEmbedUrl(recording.url) : null;
+  const recording =
+    module && recordings
+      ? (recordings.find(
+          (item) => item.cohortId === String(module.cohort_id),
+        ) ??
+        recordings.find((item) => item.cohortId === null) ??
+        recordings[0])
+      : undefined;
+  const displayUrl = isEditing ? editUrl : (recording?.url ?? "");
+  const embedUrl = displayUrl ? parseYouTubeEmbedUrl(displayUrl) : null;
+  const hasEditChanges =
+    editUrl !== (recording?.url ?? "") ||
+    editDescription !== (module?.description ?? "");
+
+  const enterEditMode = () => {
+    setEditUrl(recording?.url ?? "");
+    setEditDescription(module?.description ?? "");
+    setIsEditing(true);
+  };
+
+  const cancelEditMode = () => {
+    setEditUrl(recording?.url ?? "");
+    setEditDescription(module?.description ?? "");
+    setIsEditing(false);
+  };
+
+  const saveChanges = async () => {
+    if (!module) return;
+
+    if (!hasEditChanges) {
+      toast.info("Make a change before saving.");
+      return;
+    }
+
+    try {
+      await updateModule.mutateAsync({
+        moduleId: module.id,
+        description: editDescription,
+      });
+      await upsertRecording.mutateAsync({
+        moduleId: module.id,
+        cohortId: module.cohort_id,
+        url: editUrl,
+      });
+      await Promise.all([
+        utils.modules.bySlug.invalidate({ slug, cohortSlug }),
+        utils.resources.listByModuleSlug.invalidate({
+          moduleSlug: slug,
+          type: "recording",
+        }),
+      ]);
+      toast.success("Module updated.");
+      setIsEditing(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update module.",
+      );
+    }
+  };
 
   if (isLoading) {
     return (
@@ -203,12 +274,44 @@ export default function ModulePage() {
     <CohortAccessGuard cohortSlug={cohortSlug}>
       <div className="flex min-h-[calc(100vh-7rem)] w-full">
         <SidebarModules items={sidebarItems} activeId={0} />
-        <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] flex-1 justify-center">
-          <div className="motion-fade flex w-full max-w-5xl flex-col gap-8 px-8 py-10">
-            <div className="motion-rise">
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 justify-center bg-zinc-50">
+          <div className="flex w-full max-w-4xl flex-col gap-8 p-8">
+            <div className="flex items-start justify-between gap-4">
               <h1 className="text-3xl font-bold text-gray-900">
                 {module.title}
               </h1>
+              {isAdmin &&
+                (isEditing ? (
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={cancelEditMode}
+                      disabled={isSaving}
+                      className="rounded-full px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveChanges}
+                      disabled={isSaving}
+                      aria-disabled={!hasEditChanges}
+                      className={`rounded-full bg-[#007997] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#006b85] disabled:cursor-not-allowed disabled:opacity-70 ${
+                        !hasEditChanges ? "cursor-not-allowed opacity-70" : ""
+                      }`}
+                    >
+                      {isSaving ? "Saving..." : "Done"}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={enterEditMode}
+                    className="shrink-0 rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-white hover:text-zinc-950"
+                  >
+                    Edit
+                  </button>
+                ))}
             </div>
 
             {embedUrl ? (
@@ -235,14 +338,36 @@ export default function ModulePage() {
               </div>
             )}
 
-            {module.description && (
-              <div className="motion-rise motion-delay-2 max-w-3xl">
-                <h2 className="mb-2 text-xl font-semibold text-gray-800">
+            {isEditing && (
+              <label className="flex items-center gap-3 text-sm font-semibold text-gray-800">
+                <span className="shrink-0">URL:</span>
+                <input
+                  type="url"
+                  value={editUrl}
+                  onChange={(event) => setEditUrl(event.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-normal text-zinc-800 outline-none transition focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
+                />
+              </label>
+            )}
+
+            {(module.description || isEditing) && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">
                   Description
                 </h2>
-                <p className="leading-relaxed text-gray-700">
-                  {module.description}
-                </p>
+                {isEditing ? (
+                  <textarea
+                    value={editDescription}
+                    onChange={(event) => setEditDescription(event.target.value)}
+                    rows={8}
+                    className="w-full resize-y rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm leading-relaxed text-zinc-800 outline-none transition focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
+                  />
+                ) : (
+                  <p className="text-gray-700 leading-relaxed">
+                    {module.description}
+                  </p>
+                )}
               </div>
             )}
           </div>

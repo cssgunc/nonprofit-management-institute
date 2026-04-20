@@ -75,7 +75,7 @@ export const resourceTypeEnum = pgEnum("resource_type", [
   "handout",
   "recording",
   "link",
-  "document"
+  "document",
 ]);
 
 export const resources = pgTable("resources", {
