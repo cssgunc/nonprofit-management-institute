@@ -2,19 +2,14 @@ import { z } from "zod";
 import { eq, and, count, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/server/db";
-import { 
-  cohorts, 
-  cohort_memberships, 
-  profiles, 
-  resources, 
-  discussions_post 
+import {
+  cohorts,
+  cohort_memberships,
+  profiles,
+  resources,
+  discussions_post,
 } from "@/server/db/schema";
-import { 
-  createTRPCRouter, 
-  publicProcedure, 
-  protectedProcedure 
-} from "../trpc";
-
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 
 const CohortSchema = z.object({
   id: z.number(),
@@ -163,7 +158,7 @@ export const cohortsApiRouter = createTRPCRouter({
       return CohortSchema.parse(cohort);
     }),
 
-    getAllCohorts: protectedProcedure
+  getAllCohorts: protectedProcedure
     .output(z.array(CohortWithStatsSchema))
     .query(async ({ ctx }) => {
       await requireAdmin(ctx.subject.id);
@@ -175,7 +170,10 @@ export const cohortsApiRouter = createTRPCRouter({
           const [memberCountRow] = await db
             .select({ count: count() })
             .from(cohort_memberships)
-            .innerJoin(profiles, eq(profiles.id, cohort_memberships.profiles_id))
+            .innerJoin(
+              profiles,
+              eq(profiles.id, cohort_memberships.profiles_id),
+            )
             .where(
               and(
                 eq(cohort_memberships.cohort_id, cohort.id),
@@ -232,9 +230,7 @@ export const cohortsApiRouter = createTRPCRouter({
         .delete(discussions_post)
         .where(eq(discussions_post.cohort_id, input.id));
 
-      await db
-        .delete(resources)
-        .where(eq(resources.cohort_id, input.id));
+      await db.delete(resources).where(eq(resources.cohort_id, input.id));
 
       await db
         .delete(cohort_memberships)
