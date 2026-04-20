@@ -8,6 +8,8 @@ import {
   profiles,
   resources,
   discussions_post,
+  cohort_modules,
+  modules
 } from "@/server/db/schema";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 
@@ -105,6 +107,7 @@ export const cohortsApiRouter = createTRPCRouter({
         });
       }
 
+      // create the Cohort
       const [inserted] = await db
         .insert(cohorts)
         .values({
@@ -119,6 +122,29 @@ export const cohortsApiRouter = createTRPCRouter({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create cohort",
         });
+      }
+
+      // add the Admin to the Cohort Membership
+      await db.insert(cohort_memberships).values({
+        profiles_id: ctx.subject.id,
+        cohort_id: inserted.id,
+      });
+
+      // fetch the existing global modules
+      const existingModules = await db.select({ id: modules.id }).from(modules);
+
+      // ensure modules exist in the DB to link to
+      if (existingModules.length > 0) {
+        // create the bridge links in cohort_modules so this cohort can see them
+        await db.insert(cohort_modules).values(
+          existingModules.map((mod) => ({
+            cohort_id: inserted.id,
+            module_id: mod.id,
+            is_active: true, // or false, depending on if you want them hidden by default
+          }))
+        );
+      } else {
+        console.warn("No global modules found in the database to link to the new cohort.");
       }
 
       return CohortSchema.parse(inserted);
