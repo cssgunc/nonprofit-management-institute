@@ -145,13 +145,13 @@ function ReplyPost({
       <div className="flex flex-col flex-shrink-0" style={{ width: 40 }}>
         {/* top vertical segment, down to the elbow */}
         <div
-          className="border-l border-b border-zinc-200"
+          className="border-l-2 border-b-2 border-zinc-300"
           style={{ height: 24, width: 20, borderBottomLeftRadius: 4 }}
         />
         {/* bottom vertical continuation (if not last reply) */}
         {!isLast ? (
           <div
-            className="border-l border-zinc-200 flex-1"
+            className="border-l-2 border-zinc-300 flex-1"
             style={{ marginLeft: 0 }}
           />
         ) : (
@@ -440,7 +440,7 @@ function TopLevelPost({
 
       {/* Nested replies */}
       {children && (
-        <div className="mt-3 border-t border-zinc-100 pt-3">{children}</div>
+        <div className="mt-3 border-t border-zinc-200 pt-3">{children}</div>
       )}
     </article>
   );

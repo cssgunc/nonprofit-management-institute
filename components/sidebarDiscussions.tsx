@@ -66,7 +66,7 @@ export default function SidebarDiscussions({
               Discussion Spaces
             </p>
           </div>
-          <ul className="m-0 flex list-none flex-col gap-1 px-3 pb-4">
+          <ul className="m-0 list-none p-0 pb-4">
             {items.map((item) => {
               const isActive = activeId === item.id;
               const isLocked = item.isLocked === true;
@@ -90,34 +90,35 @@ export default function SidebarDiscussions({
                       onSelect?.(item.id);
                     }}
                     className={cn(
-                      "relative flex items-center gap-2.5 whitespace-nowrap rounded-xl px-2.5 py-2.5 text-[15px] tracking-[0.01em] transition-colors",
+                      "relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] transition-colors",
                       isActive && !isDisabled
-                        ? "bg-[rgba(125,50,140,0.11)] font-bold text-[#5f2d69] shadow-[inset_0_0_0_1px_rgba(125,50,140,0.12)]"
+                        ? "font-bold text-[#5f2d69]"
                         : isDisabled
                           ? "cursor-not-allowed text-zinc-400"
-                          : "font-normal text-zinc-900 hover:bg-[rgba(255,255,255,0.58)]",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
-                        isActive && !isDisabled
-                          ? "border-[rgba(125,50,140,0.2)] bg-white text-[#6b3476]"
-                          : isDisabled
-                            ? "border-transparent bg-zinc-100 text-zinc-400"
-                            : "border-transparent bg-[rgba(125,50,140,0.07)] text-[#6b4a72]",
+                          : "font-normal text-zinc-900 hover:bg-[rgba(125,50,140,0.05)]",
                       )}
-                    >
-                      <Icon className="h-4 w-4" strokeWidth={1.8} />
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isActive && !isDisabled
+                            ? "text-[#6b3476]"
+                            : isDisabled
+                              ? "text-zinc-400"
+                              : "text-[#6b4a72]",
+                        )}
+                        strokeWidth={1.8}
+                      />
+                      <span className="min-w-0 flex-1 truncate">
+                        {item.title}
+                      </span>
+                      {isLocked && (
+                        <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                      )}
                     </span>
-                    <span className="min-w-0 flex-1 truncate">
-                      {item.title}
-                    </span>
-                    {isLocked && (
-                      <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                    )}
                     {isActive && !isDisabled && (
-                      <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-[var(--brand-plum)]" />
+                      <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-[var(--brand-plum)]" />
                     )}
                   </Link>
                 </li>

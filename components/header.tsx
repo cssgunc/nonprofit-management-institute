@@ -70,13 +70,24 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--line-soft)] bg-[rgba(252,250,247,0.92)] shadow-[0_8px_28px_rgba(61,52,45,0.06)] backdrop-blur-md">
       <div className="mx-auto flex h-[7rem] items-center px-4 md:px-8 xl:px-12">
-        <Link href={logoHref} className="motion-fade hover-bob flex-shrink-0">
+        <Link
+          href={logoHref}
+          className="motion-fade hover-bob flex shrink-0 items-center gap-3 md:gap-4"
+        >
           <Image
             src="/assets/NCCNonProfit_LOGO.png"
-            alt="NPMI/NCCN Logo"
+            alt="Center for Nonprofits Logo"
             width={200}
             height={80}
             className="h-14 w-auto md:h-20"
+          />
+          <span className="h-10 w-px bg-[rgba(94,13,139,0.18)] md:h-14" />
+          <Image
+            src="/assets/npmi_logo.png"
+            alt="Nonprofit Management Institute Logo"
+            width={300}
+            height={200}
+            className="h-20 w-auto max-w-[145px] object-contain md:h-32 md:max-w-[235px] xl:h-36 xl:max-w-[265px]"
           />
         </Link>
 
