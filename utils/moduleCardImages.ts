@@ -20,6 +20,7 @@ export const MODULE_CARD_IMAGES: Array<{
   {
     moduleIndex: 4,
     imageSrc: "/assets/strategic_planning.png",
+    imageClassName: "translate-y-3 scale-[1.12]",
   },
   {
     moduleIndex: 5,
@@ -28,6 +29,7 @@ export const MODULE_CARD_IMAGES: Array<{
   {
     moduleIndex: 6,
     imageSrc: "/assets/human_resources.png",
+    imageClassName: "translate-y-5 scale-[1.12]",
   },
 ];
 

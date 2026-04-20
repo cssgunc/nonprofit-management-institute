@@ -10,7 +10,7 @@ type ProfileMenuProps = {
 };
 
 export default function ProfileMenu({
-  profileHref = "/profile",
+  profileHref = "/",
   logoutHref = "/signout",
   initials = "U",
   avatarUrl,
@@ -25,12 +25,7 @@ export default function ProfileMenu({
           className={`${className} rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2`}
         >
           <Avatar className="h-14 w-14 border border-gray-300 bg-gray-200 transition-brightness hover:brightness-90">
-            {avatarUrl && (
-              <AvatarImage
-                src={avatarUrl}
-                className="h-full w-full object-cover"
-              />
-            )}
+            {avatarUrl && <AvatarImage src={avatarUrl} />}
             <AvatarFallback className="text-sm font-semibold text-gray-700">
               {initials}
             </AvatarFallback>

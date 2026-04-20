@@ -36,7 +36,7 @@ export default function MemberCard({
     : undefined;
 
   return (
-    <article className="h-24 w-full rounded-[8px] bg-[#ededed] px-4 text-zinc-800">
+    <article className="motion-rise h-24 w-full rounded-[14px] border border-[rgba(40,132,164,0.08)] bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f3_100%)] px-4 text-zinc-800 shadow-[0_10px_24px_rgba(61,52,45,0.05)] transition-transform duration-300 hover:-translate-y-0.5">
       <div className="grid h-full grid-cols-1 items-center gap-3 md:grid-cols-[minmax(0,2fr)_2fr_2fr_2fr] md:gap-6">
         <div className="flex min-w-0 items-center gap-10">
           <Avatar className="h-16 w-16 border border-zinc-300">
