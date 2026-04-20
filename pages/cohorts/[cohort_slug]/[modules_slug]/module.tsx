@@ -315,17 +315,19 @@ export default function ModulePage() {
             </div>
 
             {embedUrl ? (
-              <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
-                <iframe
-                  src={embedUrl}
-                  title={module.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="w-full h-full"
-                />
+              <div className="motion-rise motion-delay-1 overflow-hidden rounded-[1.4rem] border border-[rgba(40,132,164,0.12)] bg-[rgba(255,255,255,0.76)] p-4 shadow-[0_18px_34px_rgba(61,52,45,0.08)]">
+                <div className="w-full aspect-video overflow-hidden rounded-[1rem] bg-black shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <iframe
+                    src={embedUrl}
+                    title={module.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
               </div>
             ) : (
-              <div className="w-full aspect-video rounded-lg bg-gray-100 border border-gray-200 flex flex-col items-center justify-center gap-3">
+              <div className="motion-rise motion-delay-1 flex w-full aspect-video flex-col items-center justify-center gap-3 rounded-[1.4rem] border border-[rgba(40,132,164,0.12)] bg-[rgba(255,255,255,0.76)] p-6 text-center shadow-[0_18px_34px_rgba(61,52,45,0.08)]">
                 <VideoOff
                   className="w-10 h-10 text-gray-400"
                   strokeWidth={1.5}
@@ -357,9 +359,7 @@ export default function ModulePage() {
                 {isEditing ? (
                   <textarea
                     value={editDescription}
-                    onChange={(event) =>
-                      setEditDescription(event.target.value)
-                    }
+                    onChange={(event) => setEditDescription(event.target.value)}
                     rows={8}
                     className="w-full resize-y rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm leading-relaxed text-zinc-800 outline-none transition focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
                   />

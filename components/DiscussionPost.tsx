@@ -109,7 +109,7 @@ function Avatar({
       <img
         src={avatarUrl}
         alt={`${name} avatar`}
-        className={`${sizeClass} rounded-full object-cover flex-shrink-0`}
+        className={`${sizeClass} rounded-full flex-shrink-0`}
       />
     );
   }
@@ -145,18 +145,18 @@ function ReplyPost({
   };
 
   return (
-    <div className="flex">
+    <div className="motion-rise flex">
       {/* L-shaped connector line */}
       <div className="flex flex-col flex-shrink-0" style={{ width: 40 }}>
         {/* top vertical segment, down to the elbow */}
         <div
-          className="border-l border-b border-zinc-200"
+          className="border-l-2 border-b-2 border-zinc-300"
           style={{ height: 24, width: 20, borderBottomLeftRadius: 4 }}
         />
         {/* bottom vertical continuation (if not last reply) */}
         {!isLast ? (
           <div
-            className="border-l border-zinc-200 flex-1"
+            className="border-l-2 border-zinc-300 flex-1"
             style={{ marginLeft: 0 }}
           />
         ) : (
@@ -333,7 +333,7 @@ function TopLevelPost({
     post.replyCount ?? (post.replies ? countAllReplies(post.replies) : 0);
 
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-5">
+    <article className="motion-rise rounded-xl border border-zinc-200 bg-white p-5">
       {/* Header row */}
       <div className="flex items-start gap-3">
         <Avatar
@@ -502,7 +502,7 @@ function TopLevelPost({
 
       {/* Nested replies */}
       {children && (
-        <div className="mt-3 border-t border-zinc-100 pt-3">{children}</div>
+        <div className="mt-3 border-t border-zinc-200 pt-3">{children}</div>
       )}
     </article>
   );

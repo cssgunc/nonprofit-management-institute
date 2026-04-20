@@ -21,7 +21,9 @@ const ModuleSummary = z.object({
   is_active: z.boolean(),
 });
 
-const ModuleDetail = ModuleSummary;
+const ModuleDetail = ModuleSummary.extend({
+  cohort_id: z.number(),
+});
 
 const CohortSlugInput = z.object({
   cohortSlug: z.string(),

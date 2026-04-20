@@ -13,6 +13,7 @@ import { api, type RouterOutputs } from "@/utils/trpc/api";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 import { useRouter } from "next/router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import CreatePostModal from "@/components/CreatePostModal";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -277,6 +278,7 @@ export default function DiscussionPage() {
   const [mounted, setMounted] = useState(false);
   const [expandedThreadId, setExpandedThreadId] = useState<number | null>(null);
   const expandedThreadIdRef = useRef<number | null>(null);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
   useEffect(() => {
     expandedThreadIdRef.current = expandedThreadId;
@@ -292,6 +294,11 @@ export default function DiscussionPage() {
       : "";
 
   const baseCohortPath = cohortSlug ? `/cohorts/${cohortSlug}` : "/cohorts";
+
+  const cohortQuery = api.cohorts.bySlug.useQuery(
+    { slug: cohortSlug },
+    { enabled: !!cohortSlug },
+  );
 
   const modulesQuery = api.modules.list.useQuery(
     { cohortSlug },
@@ -408,14 +415,34 @@ export default function DiscussionPage() {
         )}
         <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col">
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-black">
-                General Discussion
-              </h1>
-              <p className="text-sm text-zinc-600">
-                General cohort-wide discussion threads.
-              </p>
+            <div className="flex w-full items-center justify-between">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold text-black">
+                  General Discussion
+                </h1>
+                <p className="text-sm text-zinc-600">
+                  General cohort-wide discussion threads.
+                </p>
+              </div>
+
+              {cohortQuery.data && (
+                <button
+                  onClick={() => setIsPostModalOpen(true)}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                >
+                  Make a Post
+                </button>
+              )}
             </div>
+
+            {/* Place the modal right here */}
+            <CreatePostModal
+              open={isPostModalOpen}
+              onClose={() => setIsPostModalOpen(false)}
+              cohortSlug={cohortSlug}
+              cohortId={cohortQuery.data?.id}
+              // Notice we DO NOT pass moduleSlug or moduleId here!
+            />
 
             {threadsQuery.isLoading ? (
               <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
