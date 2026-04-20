@@ -36,6 +36,94 @@ async function requireAdmin(userId: string) {
 }
 
 export const cohortsApiRouter = createTRPCRouter({
+  list: protectedProcedure
+    .output(z.array(CohortSchema))
+    .query(async ({ ctx }) => {
+      const [profile] = await db
+        .select({ role: profiles.role })
+        .from(profiles)
+        .where(eq(profiles.id, ctx.subject.id))
+        .limit(1);
+
+      if (!profile || profile.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can list cohorts",
+        });
+      }
+
+      const rows = await db.select().from(cohorts);
+      return rows.map((r) => CohortSchema.parse(r));
+    }),
+
+  createCohort: protectedProcedure
+    .input(
+      z.object({
+        slug: z
+          .string()
+          .trim()
+          .min(1)
+          .regex(
+            /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+            "Slug must be lowercase letters, digits, and hyphens (e.g. fall-2026)",
+          ),
+        accessHash: z.string().trim().min(1),
+      }),
+    )
+    .output(CohortSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [profile] = await db
+        .select({ role: profiles.role })
+        .from(profiles)
+        .where(eq(profiles.id, ctx.subject.id))
+        .limit(1);
+
+      if (!profile || profile.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can create cohorts",
+        });
+      }
+
+      const existingSlug = await db.query.cohorts.findFirst({
+        where: eq(cohorts.slug, input.slug),
+      });
+      if (existingSlug) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A cohort with this slug already exists",
+        });
+      }
+
+      const existingHash = await db.query.cohorts.findFirst({
+        where: eq(cohorts.access_hash, input.accessHash),
+      });
+      if (existingHash) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A cohort with this access code already exists",
+        });
+      }
+
+      const [inserted] = await db
+        .insert(cohorts)
+        .values({
+          slug: input.slug,
+          access_hash: input.accessHash,
+          is_active: true,
+        })
+        .returning();
+
+      if (!inserted) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create cohort",
+        });
+      }
+
+      return CohortSchema.parse(inserted);
+    }),
+
   hasCohortMembership: publicProcedure
     .input(z.object({ userId: z.string().uuid().optional() }))
     .output(CohortSchema.nullable())
