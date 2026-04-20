@@ -162,6 +162,24 @@ export const cohortsApiRouter = createTRPCRouter({
       return CohortSchema.parse(cohort);
     }),
 
+  bySlug: protectedProcedure
+    .input(z.object({ slug: z.string() }))
+    .output(CohortSchema)
+    .query(async ({ input }) => {
+      const cohort = await db.query.cohorts.findFirst({
+        where: eq(cohorts.slug, input.slug),
+      });
+
+      if (!cohort) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Cohort with slug "${input.slug}" not found`,
+        });
+      }
+
+      return CohortSchema.parse(cohort);
+    }),
+
   joinCohort: protectedProcedure
     .input(
       z.object({

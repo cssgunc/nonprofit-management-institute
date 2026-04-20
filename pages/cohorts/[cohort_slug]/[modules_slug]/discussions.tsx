@@ -19,6 +19,7 @@ import { AlertCircle, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import CreatePostModal from "@/components/CreatePostModal";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -287,6 +288,7 @@ export default function ModuleDiscussions() {
     "modules" | "discussions"
   >("modules");
   const [expandedThreadId, setExpandedThreadId] = useState<number | null>(null);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const expandedThreadIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -481,11 +483,31 @@ export default function ModuleDiscussions() {
           ))}
         <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col">
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-            <div className="space-y-2">
+            <div className="flex w-full items-center justify-between">
               <h1 className="text-3xl font-bold text-black">
                 {moduleQuery.data?.title ?? "Module Discussion"}
               </h1>
+
+              {/* Only show the button if the module data has loaded so we have the IDs */}
+              {moduleQuery.data && (
+                <button
+                  onClick={() => setIsPostModalOpen(true)}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                >
+                  Make a Post
+                </button>
+              )}
             </div>
+
+            {/* Place the modal right under the header area */}
+            <CreatePostModal
+              open={isPostModalOpen}
+              onClose={() => setIsPostModalOpen(false)}
+              moduleSlug={moduleSlug}
+              cohortSlug={cohortSlug}
+              moduleId={moduleQuery.data?.id}
+              cohortId={moduleQuery.data?.cohort_id}
+            />
 
             {moduleQuery.isLoading ? (
               <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">

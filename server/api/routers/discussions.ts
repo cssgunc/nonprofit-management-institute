@@ -447,12 +447,9 @@ export const discussionsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (input.parent_post_id == null) {
-        if (!input.module_id) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "module_id is required when creating a thread",
-          });
-        }
+        // --- NEW THREAD (Module or General) ---
+
+        // 1. Cohort is ALWAYS required for a new thread
         if (!input.cohort_id) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -460,18 +457,7 @@ export const discussionsRouter = createTRPCRouter({
           });
         }
 
-        const [module] = await db
-          .select({ id: modules.id })
-          .from(modules)
-          .where(eq(modules.id, input.module_id))
-          .limit(1);
-        if (!module) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Module not found",
-          });
-        }
-
+        // 2. Validate Cohort exists
         const [cohort] = await db
           .select({ id: cohorts.id })
           .from(cohorts)
@@ -484,30 +470,47 @@ export const discussionsRouter = createTRPCRouter({
           });
         }
 
-        const [cohortModule] = await db
-          .select({
-            cohort_id: cohort_modules.cohort_id,
-            module_id: cohort_modules.module_id,
-          })
-          .from(cohort_modules)
-          .where(
-            and(
-              eq(cohort_modules.cohort_id, input.cohort_id),
-              eq(cohort_modules.module_id, input.module_id),
-            ),
-          )
-          .limit(1);
-        if (!cohortModule) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "module_id is not available in the specified cohort",
-          });
-        }
-
+        // 3. Check access
         await requireCohortAccess(ctx.subject.id, input.cohort_id);
 
+        // 4. ONLY validate module if a module_id was actually provided
+        if (input.module_id) {
+          const [module] = await db
+            .select({ id: modules.id })
+            .from(modules)
+            .where(eq(modules.id, input.module_id))
+            .limit(1);
+          if (!module) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Module not found",
+            });
+          }
+
+          const [cohortModule] = await db
+            .select({
+              cohort_id: cohort_modules.cohort_id,
+              module_id: cohort_modules.module_id,
+            })
+            .from(cohort_modules)
+            .where(
+              and(
+                eq(cohort_modules.cohort_id, input.cohort_id),
+                eq(cohort_modules.module_id, input.module_id),
+              ),
+            )
+            .limit(1);
+          if (!cohortModule) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "module_id is not available in the specified cohort",
+            });
+          }
+        }
+
+        // 5. Insert the top-level post!
         await db.insert(discussions_post).values({
-          module_id: input.module_id,
+          module_id: input.module_id ?? null,
           cohort_id: input.cohort_id,
           author_id: ctx.subject.id,
           parent_post_id: null,
@@ -517,6 +520,7 @@ export const discussionsRouter = createTRPCRouter({
           is_deleted: false,
         });
       } else {
+        // --- REPLY TO EXISTING THREAD ---
         const parent = await fetchPost(input.parent_post_id);
         if (parent.is_deleted) {
           throw new TRPCError({
