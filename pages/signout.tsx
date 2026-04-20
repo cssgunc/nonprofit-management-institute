@@ -32,7 +32,7 @@ export default function SignOut() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <div className="auth-brand-bg flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
         <h1 className="text-3xl text-black font-bold mb-4">Sign Out</h1>
 

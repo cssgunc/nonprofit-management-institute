@@ -20,6 +20,8 @@ function App({ Component, pageProps }: AppProps) {
   const routesWithoutMutedBackground = new Set([
     "/login",
     "/signup",
+    "/resetpassword",
+    "/changepassword",
     "/cohort-access",
     "/signout",
   ]);

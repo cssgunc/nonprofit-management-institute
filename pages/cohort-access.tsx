@@ -81,7 +81,7 @@ export default function CohortAccessPage() {
   };
 
   return (
-    <div className="app-muted-bg flex h-screen w-screen items-center justify-center overflow-hidden p-6 box-border lg:p-10">
+    <div className="auth-brand-bg flex h-screen w-screen items-center justify-center overflow-hidden p-6 box-border lg:p-10">
       <div className="w-full h-full max-h-[850px] max-w-7xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
         <div className="w-full md:w-1/2 p-6 lg:p-10 flex flex-col items-center justify-between bg-white relative">
           <h2

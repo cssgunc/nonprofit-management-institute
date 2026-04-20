@@ -100,7 +100,7 @@ export default function SidebarModules({
           {moduleQuery.data && moduleCardImage && (
             <div className="px-4 pb-4 pt-2">
               <div className="overflow-hidden rounded-xl border border-[rgba(40,132,164,0.16)] bg-white shadow-[0_10px_24px_rgba(61,52,45,0.08)]">
-                <div className="relative aspect-[1.3/1] w-full bg-[var(--surface-soft)]">
+                <div className="relative aspect-[1.3/1] w-full bg-white">
                   <Image
                     src={moduleCardImage.imageSrc}
                     alt={moduleQuery.data.title}

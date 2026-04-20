@@ -93,7 +93,16 @@ body {
 }
 
 .auth-brand-bg {
-  background: linear-gradient(135deg, #2884a4 0%, #7d328c 54%, #a27a4a 100%);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(0, 138, 171, 0.34) 0%,
+      rgba(0, 138, 171, 0.16) 24%,
+      rgba(255, 253, 248, 0.72) 40%,
+      rgba(180, 190, 53, 0.16) 62%,
+      rgba(94, 13, 139, 0.3) 100%
+    ),
+    linear-gradient(180deg, #fffdf8 0%, #f8f6f0 100%);
 }
 
 @keyframes gentle-rise {
