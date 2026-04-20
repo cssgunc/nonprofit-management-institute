@@ -112,7 +112,7 @@ export default function ModuleMaterials() {
       <CohortAccessGuard cohortSlug={cohortSlug}>
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={2} />
-          <div className="flex min-h-[calc(100vh-7rem)] flex-1 items-center justify-center bg-zinc-50">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 items-center justify-center">
             <p className="text-sm text-gray-400">Loading...</p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function ModuleMaterials() {
       <CohortAccessGuard cohortSlug={cohortSlug}>
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={2} />
-          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
             {code === "FORBIDDEN" ? (
               <Lock className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
             ) : (
@@ -169,7 +169,7 @@ export default function ModuleMaterials() {
       <CohortAccessGuard cohortSlug={cohortSlug}>
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={2} />
-          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
             <AlertCircle className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
             <p className="font-medium text-gray-600">Module not found.</p>
             <Link
@@ -196,18 +196,19 @@ export default function ModuleMaterials() {
       <div className="flex min-h-[calc(100vh-7rem)] w-full">
         <SidebarModules items={sidebarItems} activeId={2} />
 
-        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col bg-zinc-50">
-          {/* Page header */}
-          <div className="px-8 py-5">
-            <h1 className="text-3xl font-bold text-black pt-2.5">
-              Additional Resources
-            </h1>
-          </div>
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col">
+          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-7 px-6 py-8">
+            <div className="motion-rise space-y-2">
+              <h1 className="text-3xl font-bold text-black">
+                Additional Resources
+              </h1>
+              <p className="text-sm text-zinc-600">
+                Websites, documents, and handouts for this module.
+              </p>
+            </div>
 
-          {/* Sections */}
-          <div className="flex flex-1 flex-col gap-10 px-8 py-8">
             {/* Websites */}
-            <section>
+            <section className="motion-rise motion-delay-1 rounded-[1.4rem] border border-[rgba(40,132,164,0.1)] bg-[rgba(255,253,248,0.76)] px-5 py-5 shadow-[0_18px_44px_rgba(61,52,45,0.06)]">
               <SectionHeader
                 title="Websites"
                 isAdmin={isAdmin}
@@ -222,7 +223,7 @@ export default function ModuleMaterials() {
                   onAdd={() => setOpenModal("website")}
                 />
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   {websites.map((r) => (
                     <WebsiteCard
                       key={r.id}
@@ -236,7 +237,7 @@ export default function ModuleMaterials() {
             </section>
 
             {/* Documents */}
-            <section>
+            <section className="motion-rise motion-delay-2 rounded-[1.4rem] border border-[rgba(40,132,164,0.1)] bg-[rgba(255,253,248,0.76)] px-5 py-5 shadow-[0_18px_44px_rgba(61,52,45,0.06)]">
               <SectionHeader
                 title="Documents"
                 isAdmin={isAdmin}
@@ -251,7 +252,7 @@ export default function ModuleMaterials() {
                   onAdd={() => setOpenModal("document")}
                 />
               ) : (
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-5">
                   {documents.map((r) => (
                     <DocumentCard
                       key={r.id}
@@ -265,7 +266,7 @@ export default function ModuleMaterials() {
             </section>
 
             {/* Handouts */}
-            <section>
+            <section className="motion-rise motion-delay-3 rounded-[1.4rem] border border-[rgba(40,132,164,0.1)] bg-[rgba(255,253,248,0.76)] px-5 py-5 shadow-[0_18px_44px_rgba(61,52,45,0.06)]">
               <SectionHeader
                 title="Handout"
                 isAdmin={isAdmin}
@@ -280,7 +281,7 @@ export default function ModuleMaterials() {
                   onAdd={() => setOpenModal("handout")}
                 />
               ) : (
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-5">
                   {handouts.map((r) => (
                     <DocumentCard
                       key={r.id}
@@ -334,14 +335,14 @@ function SectionHeader({
   onAdd: () => void;
 }) {
   return (
-    <div className="mb-4 flex items-center justify-between">
+    <div className="mb-4 flex items-center justify-between gap-4">
       <h2 className="text-xl font-bold text-gray-900">{title}</h2>
       {isAdmin && (
         <button
           onClick={onAdd}
-          className="cursor-pointer inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-600 shadow-sm transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-[#007997] px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(0,121,151,0.18)] transition hover:bg-[#006b85] hover:shadow-[0_14px_28px_rgba(0,121,151,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007997] focus-visible:ring-offset-2"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-4 w-4" strokeWidth={2.2} />
           Add
         </button>
       )}
@@ -359,12 +360,12 @@ function SectionEmpty({
   onAdd: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2 py-2 text-sm text-zinc-400">
+    <div className="rounded-xl border border-dashed border-[rgba(40,132,164,0.16)] bg-white/70 px-5 py-6 text-center text-sm text-zinc-500">
       <span>No {label} yet.</span>
       {isAdmin && (
         <button
           onClick={onAdd}
-          className="cursor-pointer text-zinc-500 underline underline-offset-2 hover:text-zinc-700"
+          className="ml-2 cursor-pointer font-semibold text-[var(--brand-teal)] underline underline-offset-4 hover:text-[#007997]"
         >
           Add one
         </button>
@@ -380,7 +381,7 @@ function SectionSkeleton({ type }: { type: "list" | "grid" }) {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="h-14 w-full animate-pulse rounded-lg bg-zinc-200"
+            className="h-16 w-full animate-pulse rounded-xl bg-[rgba(40,132,164,0.1)]"
           />
         ))}
       </div>
@@ -391,7 +392,7 @@ function SectionSkeleton({ type }: { type: "list" | "grid" }) {
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="h-[224px] w-[168px] animate-pulse rounded-md bg-zinc-200"
+          className="h-[224px] w-[168px] animate-pulse rounded-xl bg-[rgba(40,132,164,0.1)]"
         />
       ))}
     </div>

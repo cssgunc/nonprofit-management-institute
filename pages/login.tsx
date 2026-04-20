@@ -45,6 +45,10 @@ export default function Login() {
     {},
     { enabled: false },
   );
+  const profileQuery = api.profiles.me.useQuery(undefined, {
+    enabled: false,
+    retry: false,
+  });
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -72,6 +76,13 @@ export default function Login() {
 
       // Wait for session to be set
       await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const profileResult = await profileQuery.refetch();
+      if (profileResult.data?.role === "admin") {
+        router.push("/admin/cohorts");
+        setLoading(false);
+        return;
+      }
 
       const result = await checkMembership.refetch();
       const cohort = result.data;

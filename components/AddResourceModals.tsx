@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X, Plus, Upload, FileText, Loader2 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
 import { api } from "@/utils/trpc/api";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 
@@ -25,30 +25,33 @@ function ModalShell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/35 px-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl bg-white shadow-xl"
+        className="w-full max-w-md overflow-hidden rounded-2xl border border-[rgba(40,132,164,0.12)] bg-[rgba(255,253,248,0.98)] shadow-[0_24px_70px_rgba(61,52,45,0.18)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between border-b border-[rgba(40,132,164,0.1)] bg-white px-6 py-4">
+          <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="cursor-pointer rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="cursor-pointer rounded-full p-1.5 text-zinc-400 transition hover:bg-[rgba(40,132,164,0.08)] hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-teal)] focus-visible:ring-offset-2"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -64,12 +67,12 @@ function ModalFooter({
   saveLabel?: string;
 }) {
   return (
-    <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4">
+    <div className="flex justify-end gap-3 border-t border-[rgba(40,132,164,0.1)] bg-white px-6 py-4">
       <button
         type="button"
         onClick={onCancel}
         disabled={isSaving}
-        className="cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+        className="cursor-pointer rounded-full px-5 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Cancel
       </button>
@@ -77,7 +80,7 @@ function ModalFooter({
         type="button"
         onClick={onSave}
         disabled={isSaving}
-        className="cursor-pointer inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--brand-teal)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(0,138,171,0.18)] transition hover:bg-[#007997] hover:shadow-[0_14px_28px_rgba(0,138,171,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isSaving ? (
           <>
@@ -106,7 +109,10 @@ function TitleField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="res-title" className="text-sm font-medium text-gray-700">
+      <label
+        htmlFor="res-title"
+        className="text-sm font-semibold text-zinc-700"
+      >
         Title
       </label>
       <input
@@ -115,7 +121,7 @@ function TitleField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? "Enter a title"}
-        className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
+        className="rounded-xl border border-[rgba(40,132,164,0.18)] bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
       />
     </div>
   );
@@ -189,12 +195,12 @@ function useFileUpload(moduleSlug: string, cohortId: string | null) {
 
   const DropZone = () => (
     <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-gray-700">File</span>
+      <span className="text-sm font-semibold text-zinc-700">File</span>
 
       {selectedFile ? (
-        <div className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3">
+        <div className="flex items-center justify-between rounded-xl border border-[rgba(40,132,164,0.14)] bg-white px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
-            <FileText className="h-4 w-4 shrink-0 text-zinc-400" />
+            <FileText className="h-4 w-4 shrink-0 text-[var(--brand-teal)]" />
             <span className="truncate text-sm text-gray-700">
               {selectedFile.name}
             </span>
@@ -205,7 +211,7 @@ function useFileUpload(moduleSlug: string, cohortId: string | null) {
           <button
             type="button"
             onClick={() => setSelectedFile(null)}
-            className="cursor-pointer ml-3 shrink-0 text-xs text-zinc-400 hover:text-zinc-600"
+            className="ml-3 shrink-0 cursor-pointer text-xs font-semibold text-zinc-400 hover:text-zinc-700"
           >
             Remove
           </button>
@@ -216,22 +222,24 @@ function useFileUpload(moduleSlug: string, cohortId: string | null) {
           onDragOver={handleDragOver}
           onDragLeave={() => setDragOver(false)}
           onClick={() => fileInputRef.current?.click()}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 transition ${
             dragOver
-              ? "border-zinc-400 bg-zinc-50"
-              : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50"
+              ? "border-[var(--brand-teal)] bg-[rgba(0,138,171,0.06)]"
+              : "border-[rgba(40,132,164,0.18)] bg-white hover:border-[rgba(0,138,171,0.38)] hover:bg-[rgba(0,138,171,0.04)]"
           }`}
         >
           <Upload
             className={`h-7 w-7 transition-colors ${
-              dragOver ? "text-zinc-500" : "text-zinc-300"
+              dragOver
+                ? "text-[var(--brand-teal)]"
+                : "text-[var(--brand-teal)]/60"
             }`}
             strokeWidth={1.5}
           />
           <div className="text-center">
-            <p className="text-sm font-medium text-gray-600">
+            <p className="text-sm font-semibold text-zinc-700">
               Drop PDF here or{" "}
-              <span className="text-zinc-900 underline underline-offset-2">
+              <span className="text-[var(--brand-teal)] underline underline-offset-4">
                 browse
               </span>
             </p>
@@ -249,9 +257,9 @@ function useFileUpload(moduleSlug: string, cohortId: string | null) {
       />
 
       {uploadProgress !== null && uploadProgress < 100 && (
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[rgba(0,138,171,0.1)]">
           <div
-            className="h-full rounded-full bg-zinc-900 transition-all duration-300"
+            className="h-full rounded-full bg-[var(--brand-teal)] transition-all duration-300"
             style={{ width: `${uploadProgress}%` }}
           />
         </div>
@@ -350,7 +358,7 @@ export function AddWebsiteModal({
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="res-url"
-            className="text-sm font-medium text-gray-700"
+            className="text-sm font-semibold text-zinc-700"
           >
             URL
           </label>
@@ -360,7 +368,7 @@ export function AddWebsiteModal({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://..."
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
+            className="rounded-xl border border-[rgba(40,132,164,0.18)] bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
           />
         </div>
 
@@ -426,7 +434,7 @@ export function AddDocumentModal({
     setIsSaving(true);
     try {
       setStatusLabel("Uploading file...");
-      const { url, mimeType, sizeBytes } = await upload();
+      const { url } = await upload();
       setStatusLabel("Saving...");
       create.mutate({
         moduleSlug,
@@ -512,7 +520,7 @@ export function AddHandoutModal({
     setIsSaving(true);
     try {
       setStatusLabel("Uploading file...");
-      const { url, mimeType, sizeBytes } = await upload();
+      const { url } = await upload();
       setStatusLabel("Saving...");
       create.mutate({
         moduleSlug,

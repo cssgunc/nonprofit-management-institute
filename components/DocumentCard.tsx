@@ -73,9 +73,9 @@ export default function DocumentCard({
 
   return (
     <>
-      <div className="flex w-[168px] flex-col gap-2">
+      <div className="motion-rise flex w-[168px] flex-col gap-2.5">
         {/* Thumbnail card */}
-        <div className="group relative aspect-[3/4] w-full overflow-hidden rounded-md border border-zinc-200 bg-zinc-50 shadow-sm transition-shadow duration-200 hover:shadow-md">
+        <div className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-[rgba(40,132,164,0.1)] bg-white shadow-[0_10px_24px_rgba(61,52,45,0.05)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(61,52,45,0.08)]">
           {thumbnail ? (
             <img
               src={thumbnail}
@@ -83,9 +83,12 @@ export default function DocumentCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-white">
-              <FileText className="h-8 w-8 text-zinc-300" strokeWidth={1.5} />
-              <span className="px-2 text-center text-[11px] leading-tight text-zinc-400">
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f3_100%)]">
+              <FileText
+                className="h-8 w-8 text-[var(--brand-teal)]/70"
+                strokeWidth={1.5}
+              />
+              <span className="px-2 text-center text-[11px] leading-tight text-zinc-500">
                 PDF Preview
               </span>
             </div>
@@ -96,7 +99,7 @@ export default function DocumentCard({
             <button
               onClick={handleDownload}
               aria-label={`Download ${resource.title}`}
-              className="cursor-pointer rounded-full bg-white/90 p-2 shadow-md transition-transform duration-150 hover:scale-110 hover:bg-white active:scale-95"
+              className="cursor-pointer rounded-full bg-white/95 p-2 shadow-md transition duration-150 hover:scale-110 hover:bg-white active:scale-95"
             >
               <Download className="h-4 w-4 text-gray-800" />
             </button>
@@ -115,7 +118,7 @@ export default function DocumentCard({
             <button
               onClick={() => setIsDeleteModalOpen(true)}
               aria-label={`Remove ${resource.title}`}
-              className="mt-0.5 cursor-pointer shrink-0 rounded-md p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 active:scale-95"
+              className="mt-0.5 cursor-pointer shrink-0 rounded-full p-1 text-zinc-400 transition hover:bg-red-50 hover:text-red-600 active:scale-95"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -126,13 +129,13 @@ export default function DocumentCard({
       {/* Delete confirmation */}
       {isDeleteModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/35 px-4 backdrop-blur-[2px]"
           role="dialog"
           aria-modal="true"
           onClick={() => setIsDeleteModalOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl"
+            className="w-full max-w-sm rounded-2xl border border-[rgba(40,132,164,0.12)] bg-[rgba(255,253,248,0.98)] p-5 shadow-[0_24px_70px_rgba(61,52,45,0.18)]"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-gray-900">
@@ -149,7 +152,7 @@ export default function DocumentCard({
               <button
                 type="button"
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="cursor-pointer rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                className="cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
               >
                 Cancel
               </button>
@@ -159,7 +162,7 @@ export default function DocumentCard({
                   onDelete?.(resource.id);
                   setIsDeleteModalOpen(false);
                 }}
-                className="cursor-pointer rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                className="cursor-pointer rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
               >
                 Delete
               </button>
