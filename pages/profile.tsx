@@ -38,6 +38,16 @@ export default function ProfilePage() {
     },
   });
 
+  const updateEmail = api.profiles.handleEmailUpdate.useMutation({
+    onSuccess: async () => {
+      toast.success("Email updated successfully!");
+      await profileQuery.refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update email.");
+    },
+  });
+
   const updateAvatarMutation = api.profiles.updateProfilePicture.useMutation({
     onSuccess: async () => {
       toast.success("Profile picture updated!");
@@ -56,9 +66,14 @@ export default function ProfilePage() {
   };
 
   const handleSave = () => {
+    const hasEmailChanged = email.trim() !== (profileQuery.data?.email ?? "");
+
+    if (hasEmailChanged) {
+      updateEmail.mutate({ email: email.trim() });
+    }
+
     updateProfile.mutate({
       full_name: fullName.trim() || profileQuery.data?.full_name || "",
-      email: email.trim() || undefined,
       job_role: jobTitle.trim() || undefined,
       organization: organization.trim() || undefined,
     });
@@ -99,6 +114,7 @@ export default function ProfilePage() {
   const hasChanges = Boolean(
     profileQuery.data &&
     (fullName !== (profileQuery.data.full_name ?? "") ||
+      email !== (profileQuery.data.email ?? "") ||
       jobTitle !== (profileQuery.data.job_role ?? "") ||
       organization !== (profileQuery.data.organization ?? "")),
   );
@@ -121,8 +137,7 @@ export default function ProfilePage() {
               Profile
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-[#62636a]">
-              Keep your participant details current for cohort discussions,
-              materials access, and contact lists.
+              Keep your participant profile current for cohort discussions and contact lists.
             </p>
 
             <div className="mt-12 grid gap-x-10 gap-y-8 md:grid-cols-2">
@@ -143,10 +158,11 @@ export default function ProfilePage() {
                   Email
                 </span>
                 <input
+                  type="email"
                   value={email}
-                  disabled
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder={profileQuery.data?.email ?? "Rosedoe123@gmail.com"}
-                  className="mt-2 w-full cursor-not-allowed border-0 border-b-2 border-[rgba(0,138,171,0.18)] bg-transparent px-0 pb-3 pt-2 text-2xl font-medium text-zinc-500 placeholder:text-zinc-400 focus:outline-none"
+                  className="mt-2 w-full border-0 border-b-2 border-[rgba(0,138,171,0.22)] bg-transparent px-0 pb-3 pt-2 text-2xl font-medium text-black placeholder:text-zinc-400 focus:border-[var(--brand-teal)] focus:outline-none"
                 />
               </label>
 
@@ -181,12 +197,15 @@ export default function ProfilePage() {
                 onClick={handleSave}
                 disabled={
                   updateProfile.isPending ||
+                  updateEmail.isPending ||
                   profileQuery.isLoading ||
                   !hasChanges
                 }
                 className="inline-flex min-w-[150px] items-center justify-center rounded-full bg-[#d1d3de] px-7 py-3 text-base font-semibold text-white transition enabled:bg-[var(--brand-teal)] enabled:hover:bg-[#007997] disabled:cursor-not-allowed"
               >
-                {updateProfile.isPending ? "Saving..." : "Save Changes"}
+                {updateProfile.isPending || updateEmail.isPending
+                  ? "Saving..."
+                  : "Save Changes"}
               </button>
               <button
                 type="button"

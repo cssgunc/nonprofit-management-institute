@@ -57,7 +57,7 @@ export default function ModuleMaterials() {
       {isLoading ? (
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={2} />
-          <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] flex-1 items-center justify-center">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 items-center justify-center bg-zinc-50">
             <p className="text-sm text-gray-400">Loading...</p>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function ModuleMaterials() {
             return (
               <div className="flex min-h-[calc(100vh-7rem)] w-full">
                 <SidebarModules items={sidebarItems} activeId={2} />
-                <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
+                <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
                   <Lock className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
                   <p className="font-medium text-gray-600">
                     This module is locked.
@@ -94,7 +94,7 @@ export default function ModuleMaterials() {
           return (
             <div className="flex min-h-[calc(100vh-7rem)] w-full">
               <SidebarModules items={sidebarItems} activeId={2} />
-              <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
+              <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
                 <AlertCircle
                   className="h-8 w-8 text-gray-400"
                   strokeWidth={1.5}
@@ -117,7 +117,7 @@ export default function ModuleMaterials() {
       ) : !module ? (
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={2} />
-          <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center gap-3 bg-zinc-50">
             <AlertCircle className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
             <p className="font-medium text-gray-600">Module not found.</p>
             <Link
@@ -131,7 +131,7 @@ export default function ModuleMaterials() {
       ) : (
         <div className="flex min-h-[calc(100vh-7rem)] w-full">
           <SidebarModules items={sidebarItems} activeId={2} />
-          <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center">
+          <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col items-center justify-center bg-zinc-50">
             <h1 className="text-3xl font-bold text-black">Materials</h1>
             <p className="text-black">
               This page is intentionally blank for now.

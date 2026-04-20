@@ -6,6 +6,11 @@ import DiscussionPost, {
   type Post as DiscussionUiPost,
 } from "@/components/DiscussionPost";
 import CohortAccessGuard from "@/components/CohortAccessGuard";
+import {
+  applyLikeOverride,
+  applyLikeOverrideToPost,
+  useDiscussionLikeQueue,
+} from "@/utils/discussionLikes";
 import { getDiscussionSidebarContext } from "@/utils/sidebarContext";
 import { api, type RouterOutputs } from "@/utils/trpc/api";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
@@ -13,7 +18,7 @@ import { TRPCClientError } from "@trpc/client";
 import { AlertCircle, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -87,6 +92,8 @@ function mapThreadNodeToDiscussionPost(
     content: node.body ?? "",
     createdAt: node.created_at ?? new Date(0),
     isDeleted: node.is_deleted ?? false,
+    likeCount: node.like_count ?? 0,
+    hasLiked: node.viewer_has_liked ?? false,
     canManage: isAdmin || node.author_id === currentUserId,
     replies: node.children.map((child) =>
       mapThreadNodeToDiscussionPost(
@@ -96,6 +103,33 @@ function mapThreadNodeToDiscussionPost(
         isAdmin,
       ),
     ),
+  };
+}
+
+function patchThreadLikeState(
+  node: ThreadNode,
+  postId: number,
+  nextLiked: boolean,
+): ThreadNode {
+  const selfChanged = node.id === postId;
+  const children = node.children.map((child) =>
+    patchThreadLikeState(child, postId, nextLiked),
+  );
+
+  if (!selfChanged) {
+    return { ...node, children };
+  }
+
+  const alreadyLiked = node.viewer_has_liked ?? false;
+  if (alreadyLiked === nextLiked) {
+    return { ...node, children };
+  }
+
+  return {
+    ...node,
+    children,
+    viewer_has_liked: nextLiked,
+    like_count: Math.max(0, (node.like_count ?? 0) + (nextLiked ? 1 : -1)),
   };
 }
 
@@ -110,6 +144,9 @@ function ThreadPreview({
   onEdit,
   onDelete,
   cohortSlug,
+  onToggleLike,
+  isLikePending,
+  getDesiredLike,
 }: {
   thread: ThreadListItem;
   postId: number;
@@ -121,10 +158,16 @@ function ThreadPreview({
   onEdit: (id: string | number, newContent: string) => void;
   onDelete: (id: string | number) => void;
   cohortSlug: string;
+  onToggleLike: (post: DiscussionUiPost) => void;
+  isLikePending: (postId: string | number) => boolean;
+  getDesiredLike: (postId: number) => boolean | undefined;
 }) {
   const threadQuery = api.discussions.getThread.useQuery(
     { postId, cohortSlug },
-    { retry: false, enabled: !!cohortSlug },
+    {
+      retry: false,
+      enabled: !!cohortSlug && !isLikePending(postId),
+    },
   );
 
   const topLevelPost: DiscussionUiPost = {
@@ -140,9 +183,20 @@ function ThreadPreview({
     content: thread.body ?? "",
     createdAt: thread.created_at ?? new Date(0),
     isDeleted: thread.is_deleted ?? false,
+    likeCount: thread.like_count ?? 0,
+    hasLiked: thread.viewer_has_liked ?? false,
     replyCount: threadQuery.data ? countReplies(threadQuery.data) : 0,
     replies: [],
   };
+
+  const topLevelLikeOverride = applyLikeOverride(
+    topLevelPost.hasLiked ?? false,
+    topLevelPost.likeCount ?? 0,
+    getDesiredLike(thread.id),
+  );
+
+  topLevelPost.hasLiked = topLevelLikeOverride.hasLiked;
+  topLevelPost.likeCount = topLevelLikeOverride.likeCount;
 
   if (!expanded) {
     return (
@@ -150,6 +204,8 @@ function ThreadPreview({
         post={topLevelPost}
         canManage={isAdmin || thread.author_id === currentUserId}
         onReply={onToggleReplies}
+        onToggleLike={onToggleLike}
+        isLikePending={isLikePending}
         onEdit={onEdit}
         onDelete={onDelete}
       />
@@ -172,11 +228,14 @@ function ThreadPreview({
     );
   }
 
-  const mappedThread = mapThreadNodeToDiscussionPost(
-    threadQuery.data,
-    resolveAvatarUrl,
-    currentUserId,
-    isAdmin,
+  const mappedThread = applyLikeOverrideToPost(
+    mapThreadNodeToDiscussionPost(
+      threadQuery.data,
+      resolveAvatarUrl,
+      currentUserId,
+      isAdmin,
+    ),
+    getDesiredLike,
   );
 
   const renderReply = (reply: DiscussionRenderablePost) => (
@@ -185,6 +244,8 @@ function ThreadPreview({
       post={reply}
       isReply
       canManage={reply.canManage}
+      onToggleLike={onToggleLike}
+      isLikePending={isLikePending}
       onEdit={onEdit}
       onDelete={onDelete}
     >
@@ -201,6 +262,8 @@ function ThreadPreview({
       }}
       canManage={mappedThread.canManage}
       onReply={onToggleReplies}
+      onToggleLike={onToggleLike}
+      isLikePending={isLikePending}
       onEdit={onEdit}
       onDelete={onDelete}
     >
@@ -224,6 +287,11 @@ export default function ModuleDiscussions() {
     "modules" | "discussions"
   >("modules");
   const [expandedThreadId, setExpandedThreadId] = useState<number | null>(null);
+  const expandedThreadIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    expandedThreadIdRef.current = expandedThreadId;
+  }, [expandedThreadId]);
 
   const cohortSlug =
     typeof router.query.cohort_slug === "string"
@@ -345,6 +413,53 @@ export default function ModuleDiscussions() {
     if (typeof id !== "number") return;
     deletePostMutation.mutate({ post_id: id });
   };
+  const applyLikeOptimistic = (postId: number, nextLiked: boolean) => {
+    apiUtils.discussions.listThreadsByModuleSlug.setData(
+      { moduleSlug, cohortSlug },
+      (old) =>
+        old?.map((thread) => {
+          if (thread.id !== postId) return thread;
+          const currentLiked = thread.viewer_has_liked ?? false;
+          if (currentLiked === nextLiked) return thread;
+          return {
+            ...thread,
+            viewer_has_liked: nextLiked,
+            like_count: Math.max(
+              0,
+              (thread.like_count ?? 0) + (nextLiked ? 1 : -1),
+            ),
+          };
+        }),
+    );
+
+    const expandedId = expandedThreadIdRef.current;
+    if (expandedId !== null) {
+      apiUtils.discussions.getThread.setData(
+        { postId: expandedId, cohortSlug },
+        (old) => (old ? patchThreadLikeState(old, postId, nextLiked) : old),
+      );
+    }
+  };
+
+  const refreshLikeCaches = async () => {
+    await apiUtils.discussions.listThreadsByModuleSlug.invalidate({
+      moduleSlug,
+      cohortSlug,
+    });
+    const expandedId = expandedThreadIdRef.current;
+    if (expandedId !== null) {
+      await apiUtils.discussions.getThread.invalidate({
+        postId: expandedId,
+        cohortSlug,
+      });
+    }
+  };
+
+  const { handleToggleLike, isLikePending, getDesiredLike } =
+    useDiscussionLikeQueue({
+      onOptimisticUpdate: applyLikeOptimistic,
+      onRefresh: refreshLikeCaches,
+    });
 
   const moduleErrorCode =
     moduleQuery.error instanceof TRPCClientError
@@ -353,7 +468,7 @@ export default function ModuleDiscussions() {
 
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
-      <div className="app-muted-bg flex min-h-[calc(100vh-7rem)] w-full items-stretch">
+      <div className="flex min-h-[calc(100vh-7rem)] w-full items-stretch">
         {mounted &&
           (sidebarContext === "discussions" ? (
             <SidebarDiscussions
@@ -366,91 +481,84 @@ export default function ModuleDiscussions() {
           ))}
         <div className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col">
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-            <div className="overflow-hidden rounded-[1.75rem] border border-[rgba(125,50,140,0.08)] bg-[rgba(255,252,248,0.8)] shadow-[0_20px_54px_rgba(61,52,45,0.06)]">
-              <div className="motion-rise border-b border-[rgba(125,50,140,0.08)] px-6 py-5">
-                <h1 className="text-3xl font-bold text-black">
-                  {moduleQuery.data?.title ?? "Module Discussion"}
-                </h1>
-              </div>
-
-              <div className="px-5 py-5 md:px-6">
-                {moduleQuery.isLoading ? (
-                  <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
-                    Loading module...
-                  </div>
-                ) : moduleErrorCode === "FORBIDDEN" ? (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
-                    <Lock className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
-                    <p className="font-medium text-gray-600">
-                      This module is locked.
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      You do not have access to this module yet.
-                    </p>
-                    <Link
-                      href={
-                        cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"
-                      }
-                      className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                    >
-                      Back to Dashboard
-                    </Link>
-                  </div>
-                ) : moduleErrorCode === "NOT_FOUND" || !moduleQuery.data ? (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
-                    <AlertCircle
-                      className="h-8 w-8 text-gray-400"
-                      strokeWidth={1.5}
-                    />
-                    <p className="font-medium text-gray-600">
-                      Module not found.
-                    </p>
-                    <Link
-                      href={
-                        cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"
-                      }
-                      className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-                    >
-                      Back to Dashboard
-                    </Link>
-                  </div>
-                ) : threadsQuery.isLoading ? (
-                  <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
-                    Loading discussions...
-                  </div>
-                ) : threadsQuery.error ? (
-                  <div className="rounded-xl border border-red-200 bg-white p-6 text-sm text-red-600">
-                    Failed to load discussions for this module.
-                  </div>
-                ) : threads.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center text-zinc-500">
-                    No discussion threads have been posted for this module yet.
-                  </div>
-                ) : (
-                  <div className="space-y-5">
-                    {threads.map((thread: ThreadListItem) => (
-                      <ThreadPreview
-                        key={thread.id}
-                        thread={thread}
-                        postId={thread.id}
-                        currentUserId={currentUserId}
-                        isAdmin={isAdmin}
-                        expanded={expandedThreadId === thread.id}
-                        resolveAvatarUrl={resolveAvatarUrl}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        cohortSlug={cohortSlug}
-                        onToggleReplies={() =>
-                          setExpandedThreadId((current) =>
-                            current === thread.id ? null : thread.id,
-                          )
-                        }
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-black">
+                {moduleQuery.data?.title ?? "Module Discussion"}
+              </h1>
             </div>
+
+            {moduleQuery.isLoading ? (
+              <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
+                Loading module...
+              </div>
+            ) : moduleErrorCode === "FORBIDDEN" ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
+                <Lock className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                <p className="font-medium text-gray-600">
+                  This module is locked.
+                </p>
+                <p className="text-sm text-gray-400">
+                  You do not have access to this module yet.
+                </p>
+                <Link
+                  href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+                  className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
+            ) : moduleErrorCode === "NOT_FOUND" || !moduleQuery.data ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white p-10 text-center">
+                <AlertCircle
+                  className="h-8 w-8 text-gray-400"
+                  strokeWidth={1.5}
+                />
+                <p className="font-medium text-gray-600">Module not found.</p>
+                <Link
+                  href={cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/"}
+                  className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
+            ) : threadsQuery.isLoading ? (
+              <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
+                Loading discussions...
+              </div>
+            ) : threadsQuery.error ? (
+              <div className="rounded-xl border border-red-200 bg-white p-6 text-sm text-red-600">
+                Failed to load discussions for this module.
+              </div>
+            ) : threads.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center text-zinc-500">
+                No discussion threads have been posted for this module yet.
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {threads.map((thread: ThreadListItem) => (
+                  <ThreadPreview
+                    key={thread.id}
+                    thread={thread}
+                    postId={thread.id}
+                    currentUserId={currentUserId}
+                    isAdmin={isAdmin}
+                    expanded={expandedThreadId === thread.id}
+                    resolveAvatarUrl={resolveAvatarUrl}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    cohortSlug={cohortSlug}
+                    onToggleLike={handleToggleLike}
+                    isLikePending={isLikePending}
+                    getDesiredLike={getDesiredLike}
+                    onToggleReplies={() =>
+                      setExpandedThreadId((current) =>
+                        current === thread.id ? null : thread.id,
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

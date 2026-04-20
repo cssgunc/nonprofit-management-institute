@@ -49,7 +49,7 @@ export default function DashboardPage() {
                   Participant Dashboard
                 </h1>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-[#62636a]">
-                  Review active course modules, upcoming learning materials, and
+                  Review active course modules, learning materials, and
                   discussions for this cohort.
                 </p>
               </div>
@@ -84,17 +84,10 @@ export default function DashboardPage() {
           <section className="motion-rise motion-delay-1 mt-5 rounded-[1.5rem] border border-[rgba(40,132,164,0.08)] bg-[rgba(255,253,248,0.72)] px-3 py-4 shadow-[0_18px_48px_rgba(61,52,45,0.07)] md:px-4 md:py-5">
             <div className="flex flex-col gap-2 px-2 pb-3 md:flex-row md:items-end md:justify-between md:px-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--brand-teal)]">
-                  Curriculum
-                </p>
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight text-[#24262b]">
                   Course Modules
                 </h2>
               </div>
-              <p className="max-w-xl text-sm leading-6 text-[#686970]">
-                Move through the modules at your cohort&apos;s pace, then use
-                discussions and materials to keep the work going.
-              </p>
             </div>
             <div>
               <ModuleGrid
