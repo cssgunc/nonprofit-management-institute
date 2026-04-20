@@ -14,6 +14,7 @@ import { createSupabaseComponentClient } from "@/utils/supabase/clients/componen
 import { useRouter } from "next/router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import CreatePostModal from "@/components/CreatePostModal";
+import { Plus } from "lucide-react";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -428,8 +429,9 @@ export default function DiscussionPage() {
               {cohortQuery.data && (
                 <button
                   onClick={() => setIsPostModalOpen(true)}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--brand-teal)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(0,138,171,0.18)] transition hover:bg-[#007997] hover:shadow-[0_14px_28px_rgba(0,138,171,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-teal)] focus-visible:ring-offset-2"
                 >
+                  <Plus className="h-4 w-4" strokeWidth={2.2} />
                   Make a Post
                 </button>
               )}

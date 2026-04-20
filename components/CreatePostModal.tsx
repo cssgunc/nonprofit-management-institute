@@ -66,21 +66,21 @@ export default function CreatePostModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/35 px-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-xl bg-white shadow-xl transition-all"
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-[rgba(40,132,164,0.12)] bg-[rgba(255,253,248,0.98)] shadow-[0_24px_70px_rgba(61,52,45,0.18)] transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
-          <h2 className="text-base font-semibold text-gray-900">Make a Post</h2>
+        <div className="flex items-center justify-between border-b border-[rgba(40,132,164,0.1)] bg-white px-6 py-4">
+          <h2 className="text-lg font-semibold text-zinc-900">Make a Post</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="cursor-pointer rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="cursor-pointer rounded-full p-1.5 text-zinc-400 transition hover:bg-[rgba(40,132,164,0.08)] hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-teal)] focus-visible:ring-offset-2"
           >
             <X className="h-5 w-5" />
           </button>
@@ -91,17 +91,17 @@ export default function CreatePostModal({
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Share your thoughts with the cohort..."
-            className="min-h-[120px] w-full resize-none rounded-md border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
+            className="min-h-[140px] w-full resize-none rounded-xl border border-[rgba(40,132,164,0.18)] bg-white px-4 py-3 text-sm leading-relaxed text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-zinc-100 px-6 py-4">
+        <div className="flex justify-end gap-3 border-t border-[rgba(40,132,164,0.1)] bg-white px-6 py-4">
           <button
             type="button"
             onClick={onClose}
             disabled={createPost.isPending}
-            className="cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            className="cursor-pointer rounded-full px-5 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>
@@ -109,7 +109,7 @@ export default function CreatePostModal({
             type="button"
             onClick={handlePost}
             disabled={createPost.isPending}
-            className="cursor-pointer inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--brand-teal)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(0,138,171,0.18)] transition hover:bg-[#007997] hover:shadow-[0_14px_28px_rgba(0,138,171,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {createPost.isPending ? (
               <>

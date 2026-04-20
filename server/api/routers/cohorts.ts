@@ -9,7 +9,7 @@ import {
   resources,
   discussions_post,
   cohort_modules,
-  modules
+  modules,
 } from "@/server/db/schema";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 
@@ -141,10 +141,12 @@ export const cohortsApiRouter = createTRPCRouter({
             cohort_id: inserted.id,
             module_id: mod.id,
             is_active: true, // or false, depending on if you want them hidden by default
-          }))
+          })),
         );
       } else {
-        console.warn("No global modules found in the database to link to the new cohort.");
+        console.warn(
+          "No global modules found in the database to link to the new cohort.",
+        );
       }
 
       return CohortSchema.parse(inserted);

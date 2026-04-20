@@ -274,7 +274,7 @@ export default function ModulePage() {
     <CohortAccessGuard cohortSlug={cohortSlug}>
       <div className="flex min-h-[calc(100vh-7rem)] w-full">
         <SidebarModules items={sidebarItems} activeId={0} />
-        <div className="flex min-h-[calc(100vh-7rem)] flex-1 justify-center bg-zinc-50">
+        <div className="flex min-h-[calc(100vh-7rem)] flex-1 justify-center">
           <div className="flex w-full max-w-4xl flex-col gap-8 p-8">
             <div className="flex items-start justify-between gap-4">
               <h1 className="text-3xl font-bold text-gray-900">
@@ -297,7 +297,7 @@ export default function ModulePage() {
                       disabled={isSaving}
                       aria-disabled={!hasEditChanges}
                       className={`rounded-full bg-[#007997] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#006b85] disabled:cursor-not-allowed disabled:opacity-70 ${
-                        !hasEditChanges ? "cursor-not-allowed opacity-70" : ""
+                        !hasEditChanges ? "opacity-70" : ""
                       }`}
                     >
                       {isSaving ? "Saving..." : "Done"}
