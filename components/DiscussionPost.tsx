@@ -109,7 +109,7 @@ function Avatar({
       <img
         src={avatarUrl}
         alt={`${name} avatar`}
-        className={`${sizeClass} rounded-full object-cover flex-shrink-0`}
+        className={`${sizeClass} rounded-full flex-shrink-0`}
       />
     );
   }
