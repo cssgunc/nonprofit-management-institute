@@ -25,7 +25,7 @@ export default function ModuleGrid({
 
   return (
     <div
-      className={`grid grid-cols-1 justify-items-center gap-x-6 gap-y-8 pt-6 pb-2 md:grid-cols-2 xl:grid-cols-3 ${className}`}
+      className={`grid grid-cols-1 justify-items-center gap-x-4 gap-y-5 pt-3 pb-1 md:grid-cols-2 xl:grid-cols-3 ${className}`}
     >
       {(modules ?? []).map((module) => {
         const cardImage = getModuleCardImage(module.module_index);

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 export default function DashboardPage() {
   const router = useRouter();
   const { cohort_slug } = router.query;
+  const cohortSlug = typeof cohort_slug === "string" ? cohort_slug : "";
   const profileQuery = api.profiles.me.useQuery(undefined, {
     retry: false,
   });
@@ -26,24 +27,27 @@ export default function DashboardPage() {
   });
 
   return (
-    <CohortAccessGuard cohortSlug={cohort_slug as string}>
-      <div className="min-h-screen w-full bg-[#f5f5f5]">
-        <div className="mx-auto max-w-7xl px-6 py-8 md:px-10">
-          <ModuleGrid
-            cohortSlug={cohort_slug as string}
-            isAdmin={isAdmin}
-            onToggleStatus={
-              isAdmin
-                ? (slug, isActive) =>
-                    updateStatus.mutate({
-                      slug,
-                      cohortSlug: cohort_slug as string,
-                      isActive,
-                    })
-                : undefined
-            }
-            isToggling={updateStatus.isPending}
-          />
+    <CohortAccessGuard cohortSlug={cohortSlug}>
+      <div className="relative min-h-[calc(100vh-7rem)] w-full">
+        <div className="relative mx-auto max-w-[1360px] px-5 py-5 md:px-8 lg:px-10 lg:py-6">
+          <div className="relative">
+            <ModuleGrid
+              cohortSlug={cohortSlug}
+              className="pt-0 lg:grid-cols-3"
+              isAdmin={isAdmin}
+              onToggleStatus={
+                isAdmin
+                  ? (slug, isActive) =>
+                      updateStatus.mutate({
+                        slug,
+                        cohortSlug,
+                        isActive,
+                      })
+                  : undefined
+              }
+              isToggling={updateStatus.isPending}
+            />
+          </div>
         </div>
       </div>
     </CohortAccessGuard>

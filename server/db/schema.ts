@@ -101,4 +101,18 @@ export const discussions_post = pgTable("discussion_posts", {
   body: text("body"),
   created_at: timestamp("created_at"),
   edited_at: timestamp("edited_at"),
+  is_deleted: boolean("is_deleted").$default(() => false),
 });
+
+export const discussion_likes = pgTable(
+  "discussion_likes",
+  {
+    post_id: integer("post_id")
+      .notNull()
+      .references(() => discussions_post.id),
+    profile_id: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+  },
+  (t) => [primaryKey({ columns: [t.post_id, t.profile_id] })],
+);

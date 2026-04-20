@@ -11,6 +11,20 @@ export default function SignOut() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  const handleCancel = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    const cohortSlug =
+      typeof router.query.cohort_slug === "string"
+        ? router.query.cohort_slug
+        : "";
+
+    router.push(cohortSlug ? `/cohorts/${cohortSlug}/dashboard` : "/");
+  };
+
   const handleLogout = async () => {
     setLoading(true);
     await supabase.auth.signOut();
@@ -35,7 +49,7 @@ export default function SignOut() {
         </button>
 
         <button
-          onClick={() => router.push("/login")}
+          onClick={handleCancel}
           className="mt-4 w-full py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
         >
           Cancel

@@ -9,6 +9,7 @@ import { resourcesRouter } from "./routers/resources";
 import { profilesApiRouter } from "./routers/profiles";
 import { modulesApiRouter } from "./routers/modules";
 import { cohortsApiRouter } from "./routers/cohorts";
+import { discussionsRouter } from "./routers/discussions";
 
 // [NOTE]
 // To expose a new API, add a new router here.
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   profiles: profilesApiRouter,
   modules: modulesApiRouter,
   cohorts: cohortsApiRouter,
+  discussions: discussionsRouter,
 });
 
 export type AppRouter = typeof appRouter;

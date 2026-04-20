@@ -184,7 +184,7 @@ const getContactsBySlug = protectedProcedure
       )
       .innerJoin(profiles, eq(profiles.id, cohort_memberships.profiles_id))
       .where(eq(cohorts.slug, input.cohort_slug))
-      .orderBy(asc(profiles.full_name), asc(profiles.id));
+      .orderBy(asc(profiles.role), asc(profiles.full_name), asc(profiles.id));
 
     return rows;
   });
@@ -224,6 +224,86 @@ const handleNewUser = protectedProcedure //COMPLETED AND TESTED
     return;
   });
 
+const updateProfilePicture = protectedProcedure
+  .input(z.object({ avatar_url: z.string().nullable() }))
+  .mutation(async ({ ctx, input }) => {
+    await db
+      .update(profiles)
+      .set({ avatarUrl: input.avatar_url })
+      .where(eq(profiles.id, ctx.subject.id));
+    return;
+  });
+
+/**
+ * Updates the user's email in both auth and profiles table.
+ * Ensures both are kept in sync.
+ */
+const handleEmailUpdate = protectedProcedure
+  .input(z.object({ email: z.string().email() }))
+  .mutation(async ({ ctx, input }) => {
+    const { subject, supabase } = ctx;
+    if (!supabase) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const { email } = input;
+
+    const { data: userData, error: getUserError } =
+      await supabase.auth.getUser();
+    if (getUserError || !userData.user) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Unable to fetch authenticated user before updating email.`,
+      });
+    }
+
+    const oldEmail = userData.user.email;
+
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceRoleKey || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          "Email updates require a Supabase service role key in the server environment.",
+      });
+    }
+
+    const { createClient } = await import("@supabase/supabase-js");
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      serviceRoleKey,
+    );
+
+    const { error: authError } = await adminClient.auth.admin.updateUserById(
+      subject.id,
+      { email },
+    );
+
+    if (authError) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to update auth email: ${authError.message}`,
+      });
+    }
+
+    const [updated] = await db
+      .update(profiles)
+      .set({ email })
+      .where(eq(profiles.id, subject.id))
+      .returning();
+
+    if (!updated) {
+      if (oldEmail) {
+        await supabase.auth.updateUser({ email: oldEmail });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          "Email was updated in auth but could not be updated in your profile. Please try again or contact support.",
+      });
+    }
+
+    return updated;
+  });
+
 export const profilesApiRouter = createTRPCRouter({
   me,
   updateMe,
@@ -231,4 +311,6 @@ export const profilesApiRouter = createTRPCRouter({
   list,
   getContactsBySlug,
   handleNewUser,
+  updateProfilePicture,
+  handleEmailUpdate,
 });

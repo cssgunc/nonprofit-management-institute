@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/avatar";
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 
 type MemberCardProps = {
   fullName: string;
@@ -27,12 +28,19 @@ export default function MemberCard({
 }: MemberCardProps) {
   const isAdmin = role === "admin";
 
+  const supabase = createSupabaseComponentClient();
+
+  const avatarPublicUrl = profilePictureUrl
+    ? supabase.storage.from("avatars").getPublicUrl(profilePictureUrl).data
+        .publicUrl
+    : undefined;
+
   return (
     <article className="h-24 w-full rounded-[8px] bg-[#ededed] px-4 text-zinc-800">
       <div className="grid h-full grid-cols-1 items-center gap-3 md:grid-cols-[minmax(0,2fr)_2fr_2fr_2fr] md:gap-6">
         <div className="flex min-w-0 items-center gap-10">
           <Avatar className="h-16 w-16 border border-zinc-300">
-            <AvatarImage src={profilePictureUrl ?? undefined} alt={fullName} />
+            <AvatarImage src={avatarPublicUrl} alt={fullName} />
             <AvatarFallback className="bg-zinc-200 text-zinc-700">
               {getInitials(fullName)}
             </AvatarFallback>

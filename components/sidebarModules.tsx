@@ -67,7 +67,7 @@ export default function SidebarModules({
   return (
     <aside
       className={cn(
-        "flex h-[calc(100vh-7rem)] min-h-0 flex-col overflow-hidden border-r border-zinc-200 bg-white font-sans transition-[width] duration-200 ease-out",
+        "flex min-h-[calc(100vh-7rem)] self-stretch flex-col overflow-hidden border-r border-zinc-200 bg-white font-sans transition-[width] duration-200 ease-out",
         isOpen ? "w-[220px]" : "w-14",
         className,
       )}
@@ -84,59 +84,64 @@ export default function SidebarModules({
       </div>
       <nav
         className={cn(
-          "flex-1 transition-opacity duration-150",
+          "flex min-h-0 flex-1 flex-col transition-opacity duration-150",
           isOpen
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0",
         )}
       >
-        {moduleQuery.data && moduleCardImage && (
-          <div className="px-4 pb-4 pt-2">
-            <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-              <div className="relative aspect-[1.3/1] w-full bg-zinc-50">
-                <Image
-                  src={moduleCardImage.imageSrc}
-                  alt={moduleQuery.data.title}
-                  fill
-                  sizes="188px"
-                  className={cn("object-cover", moduleCardImage.imageClassName)}
-                  priority
-                />
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {moduleQuery.data && moduleCardImage && (
+            <div className="px-4 pb-4 pt-2">
+              <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+                <div className="relative aspect-[1.3/1] w-full bg-zinc-50">
+                  <Image
+                    src={moduleCardImage.imageSrc}
+                    alt={moduleQuery.data.title}
+                    fill
+                    sizes="188px"
+                    className={cn(
+                      "object-cover",
+                      moduleCardImage.imageClassName,
+                    )}
+                    priority
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        <ul className="m-0 list-none p-0">
-          {resolvedItems.map((item) => {
-            const isActive = active === item.id;
+          )}
+          <ul className="m-0 list-none p-0">
+            {resolvedItems.map((item) => {
+              const isActive = active === item.id;
 
-            return (
-              <li key={item.id}>
-                <Link
-                  href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  onClick={() => {
-                    setDiscussionSidebarContext("modules");
-                    setActive(item.id);
-                    onSelect?.(item.id);
-                  }}
-                  className={cn(
-                    "relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
-                    isActive ? "font-bold" : "font-normal hover:bg-zinc-100",
-                  )}
-                >
-                  {renderItemLabel
-                    ? renderItemLabel(item, isActive)
-                    : item.title}
+              return (
+                <li key={item.id}>
+                  <Link
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={() => {
+                      setDiscussionSidebarContext("modules");
+                      setActive(item.id);
+                      onSelect?.(item.id);
+                    }}
+                    className={cn(
+                      "relative block whitespace-nowrap px-4 pb-2.5 pt-[11px] text-[15px] tracking-[0.01em] text-zinc-900 transition-colors",
+                      isActive ? "font-bold" : "font-normal hover:bg-zinc-100",
+                    )}
+                  >
+                    {renderItemLabel
+                      ? renderItemLabel(item, isActive)
+                      : item.title}
 
-                  {isActive && (
-                    <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-zinc-900" />
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+                    {isActive && (
+                      <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-t-[1px] bg-zinc-900" />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </nav>
     </aside>
   );
