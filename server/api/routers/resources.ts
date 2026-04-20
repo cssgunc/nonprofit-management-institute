@@ -283,14 +283,14 @@ export const resourcesRouter = createTRPCRouter({
    * - Sets created_by = ctx.profile.id
    * - Inserts row
    */
-create: protectedProcedure
+  create: protectedProcedure
     .input(
       z.object({
         moduleSlug: z.string().min(1),
         title: z.string().trim().min(1, "Title cannot be empty"),
         type: ResourceTypeEnum,
         url: z.string().url().optional().nullable(),
-        cohortSlug: z.string().optional(), 
+        cohortSlug: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -302,22 +302,22 @@ create: protectedProcedure
 
       // 1. Look up the integer ID using the slug (Replaces assertCohortIdValidOrNull)
       let safeCohortId: number | null = null;
-      
+
       if (input.cohortSlug) {
         const [foundCohort] = await db
           .select({ id: cohorts.id })
           .from(cohorts)
           .where(eq(cohorts.slug, input.cohortSlug))
           .limit(1);
-        
+
         // If they passed a slug but it doesn't match anything in the DB, reject it
         if (!foundCohort) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
-            message: `Cohort with slug '${input.cohortSlug}' not found` 
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Cohort with slug '${input.cohortSlug}' not found`,
           });
         }
-        
+
         safeCohortId = foundCohort.id;
       }
 
@@ -329,7 +329,7 @@ create: protectedProcedure
           title: input.title.trim(),
           type: input.type,
           url: input.url ?? null,
-          cohort_id: safeCohortId, 
+          cohort_id: safeCohortId,
           created_by: ctx.subject.id,
         })
         .returning({
