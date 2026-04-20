@@ -25,12 +25,17 @@ function App({ Component, pageProps }: AppProps) {
   const shouldUseMutedBackground = !routesWithoutMutedBackground.has(
     router.pathname,
   );
+  const shouldHideTealPanel =
+    router.pathname === "/profile" ||
+    router.pathname === "/cohorts/[cohort_slug]/profile";
 
   return (
     <div
       className={
         shouldUseMutedBackground
-          ? "app-shell-bg min-h-screen app-muted-bg"
+          ? `app-shell-bg min-h-screen app-muted-bg ${
+              shouldHideTealPanel ? "app-shell-bg-no-teal" : ""
+            }`
           : ""
       }
     >

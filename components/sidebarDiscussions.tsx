@@ -46,7 +46,7 @@ export default function SidebarDiscussions({
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[rgba(125,50,140,0.14)] bg-[rgba(255,255,255,0.62)] text-[#60456a] shadow-sm transition hover:bg-white"
+          className="cursor-pointer text-[#60456a] transition hover:text-[var(--brand-plum)]"
         >
           <Menu className="h-6 w-6" aria-hidden="true" />
         </button>

@@ -53,7 +53,7 @@ export default function ModuleCard({
         <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-[rgba(255,250,244,0.94)] px-2 py-1 shadow-sm">
           <span
             className={`h-2.5 w-2.5 rounded-full ${
-              isActive ? "bg-[var(--brand-teal)]" : "bg-gray-400"
+              isActive ? "bg-[var(--brand-lime)]" : "bg-gray-400"
             }`}
           />
           <span className="text-xs font-medium text-black">
@@ -70,8 +70,8 @@ export default function ModuleCard({
               e.stopPropagation();
               onToggleStatus?.(slug, !isActive);
             }}
-            className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-teal)] focus:ring-offset-2 ${
-              isActive ? "bg-[rgba(40,132,164,0.78)]" : "bg-gray-300"
+            className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--brand-lime)] focus:ring-offset-2 ${
+              isActive ? "bg-[var(--brand-lime)]" : "bg-gray-300"
             } ${isToggling ? "opacity-50" : ""}`}
           >
             <span

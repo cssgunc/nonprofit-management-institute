@@ -83,7 +83,7 @@ export default function SidebarModules({
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-          className="cursor-pointer"
+          className="cursor-pointer text-[#514f55] transition hover:text-[var(--brand-teal)]"
         >
           <Menu className="h-6 w-6" aria-hidden="true" />
         </button>

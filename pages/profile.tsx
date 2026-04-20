@@ -6,6 +6,7 @@ import { api } from "@/utils/trpc/api";
 import { Subject } from "@/server/models/auth";
 import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 import { uploadAvatarFileToSupabase } from "@/utils/supabase/clients/storage";
+import { Camera } from "lucide-react";
 
 export default function ProfilePage() {
   const profileQuery = api.profiles.me.useQuery();
@@ -109,137 +110,139 @@ export default function ProfilePage() {
     : undefined;
 
   return (
-    <div className="app-muted-bg min-h-[calc(100vh-7rem)] w-full">
-      <div className="mx-auto max-w-[1360px] px-4 py-4 md:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="border-b border-[var(--line-soft)] px-4 py-4 lg:border-b-0 lg:border-r lg:px-5 lg:py-3">
-            <h1 className="text-3xl font-semibold text-black md:text-4xl">
+    <div className="app-muted-bg min-h-[calc(100vh-7rem)] w-full overflow-hidden">
+      <div className="mx-auto max-w-[1280px] px-5 py-10 md:px-8 lg:py-14">
+        <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_430px] lg:gap-16">
+          <section className="motion-rise">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--brand-plum)]">
+              Account Settings
+            </p>
+            <h1 className="mt-3 text-5xl font-semibold tracking-tight text-[#1f2024] md:text-6xl">
               Profile
             </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-[#62636a]">
+              Keep your participant details current for cohort discussions,
+              materials access, and contact lists.
+            </p>
 
-            <div className="mt-5 flex justify-center">
-              <div className="w-full max-w-[560px]">
-                <div className="space-y-3">
-                  <div>
-                    <label className="mb-1.5 block text-lg font-medium text-black">
-                      Full Name
-                    </label>
-                    <input
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder={profileQuery.data?.full_name ?? "Rose Doe"}
-                      className="w-full rounded-[6px] border border-[rgba(40,132,164,0.14)] bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[rgba(40,132,164,0.28)]"
-                    />
-                  </div>
+            <div className="mt-12 grid gap-x-10 gap-y-8 md:grid-cols-2">
+              <label className="block">
+                <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-[#6d6470]">
+                  Full Name
+                </span>
+                <input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder={profileQuery.data?.full_name ?? "Rose Doe"}
+                  className="mt-2 w-full border-0 border-b-2 border-[rgba(94,13,139,0.22)] bg-transparent px-0 pb-3 pt-2 text-2xl font-medium text-black placeholder:text-zinc-400 focus:border-[var(--brand-plum)] focus:outline-none"
+                />
+              </label>
 
-                  <div>
-                    <label className="mb-1.5 block text-lg font-medium text-black">
-                      Email
-                    </label>
-                    <input
-                      value={email}
-                      disabled
-                      placeholder={
-                        profileQuery.data?.email ?? "Rosedoe123@gmail.com"
-                      }
-                      className="w-full cursor-not-allowed rounded-[6px] border border-zinc-300 bg-zinc-100 px-4 py-2.5 text-lg text-zinc-500 placeholder:text-zinc-400 focus:outline-none"
-                    />
-                  </div>
+              <label className="block">
+                <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-[#6d6470]">
+                  Email
+                </span>
+                <input
+                  value={email}
+                  disabled
+                  placeholder={profileQuery.data?.email ?? "Rosedoe123@gmail.com"}
+                  className="mt-2 w-full cursor-not-allowed border-0 border-b-2 border-[rgba(0,138,171,0.18)] bg-transparent px-0 pb-3 pt-2 text-2xl font-medium text-zinc-500 placeholder:text-zinc-400 focus:outline-none"
+                />
+              </label>
 
-                  <div>
-                    <label className="mb-1.5 block text-lg font-medium text-black">
-                      Job Title
-                    </label>
-                    <input
-                      value={jobTitle}
-                      onChange={(e) => setJobTitle(e.target.value)}
-                      placeholder={profileQuery.data?.job_role ?? "Manager"}
-                      className="w-full rounded-[6px] border border-[rgba(40,132,164,0.14)] bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[rgba(40,132,164,0.28)]"
-                    />
-                  </div>
+              <label className="block">
+                <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-[#6d6470]">
+                  Job Title
+                </span>
+                <input
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  placeholder={profileQuery.data?.job_role ?? "Manager"}
+                  className="mt-2 w-full border-0 border-b-2 border-[rgba(0,138,171,0.22)] bg-transparent px-0 pb-3 pt-2 text-2xl font-medium text-black placeholder:text-zinc-400 focus:border-[var(--brand-teal)] focus:outline-none"
+                />
+              </label>
 
-                  <div>
-                    <label className="mb-1.5 block text-lg font-medium text-black">
-                      Organization
-                    </label>
-                    <input
-                      value={organization}
-                      onChange={(e) => setOrganization(e.target.value)}
-                      placeholder={
-                        profileQuery.data?.organization ?? "Nonprofit"
-                      }
-                      className="w-full rounded-[6px] border border-[rgba(40,132,164,0.14)] bg-white px-4 py-2.5 text-lg text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[rgba(40,132,164,0.28)]"
-                    />
-                  </div>
-                </div>
+              <label className="block">
+                <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-[#6d6470]">
+                  Organization
+                </span>
+                <input
+                  value={organization}
+                  onChange={(e) => setOrganization(e.target.value)}
+                  placeholder={profileQuery.data?.organization ?? "Nonprofit"}
+                  className="mt-2 w-full border-0 border-b-2 border-[rgba(180,190,53,0.34)] bg-transparent px-0 pb-3 pt-2 text-2xl font-medium text-black placeholder:text-zinc-400 focus:border-[var(--brand-lime)] focus:outline-none"
+                />
+              </label>
+            </div>
 
-                <div className="mt-8 flex justify-center">
-                  <Link
-                    href="/changepassword"
-                    className="inline-flex min-w-[210px] items-center justify-center rounded-full border border-[rgba(40,132,164,0.28)] bg-[rgba(255,255,255,0.74)] px-7 py-2.5 text-lg font-medium text-[#224a5c] transition hover:bg-[rgba(40,132,164,0.08)]"
-                  >
-                    Change Password
-                  </Link>
-                </div>
-              </div>
+            <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={
+                  updateProfile.isPending ||
+                  profileQuery.isLoading ||
+                  !hasChanges
+                }
+                className="inline-flex min-w-[150px] items-center justify-center rounded-full bg-[#d1d3de] px-7 py-3 text-base font-semibold text-white transition enabled:bg-[var(--brand-teal)] enabled:hover:bg-[#007997] disabled:cursor-not-allowed"
+              >
+                {updateProfile.isPending ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex min-w-[120px] items-center justify-center rounded-full px-7 py-3 text-base font-semibold text-[#33343a] transition hover:bg-white/55"
+              >
+                Cancel
+              </button>
+              <Link
+                href="/changepassword"
+                className="inline-flex min-w-[190px] items-center justify-center rounded-full border border-[rgba(94,13,139,0.24)] bg-white/45 px-7 py-3 text-base font-semibold text-[var(--brand-plum)] transition hover:bg-white/75"
+              >
+                Change Password
+              </Link>
             </div>
           </section>
 
-          <section className="px-5 py-6 lg:px-4 xl:px-2">
-            <div className="flex h-full w-full flex-col">
-              <div className="relative flex min-h-[260px] items-center justify-center lg:flex-1">
-                <div className="group relative flex h-[240px] w-[240px] items-center justify-center md:h-[300px] md:w-[300px] lg:absolute lg:left-[56%] lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2">
-                  <Avatar className="h-[240px] w-[240px] rounded-full bg-[#d8e6f5] md:h-[300px] md:w-[300px]">
-                    <AvatarImage
-                      src={avatarPublicUrl}
-                      className="h-full w-full object-cover"
-                    />
-                    <AvatarFallback className="h-full w-full bg-[#d8e6f5] text-6xl font-semibold text-zinc-700 md:text-7xl">
-                      {initials || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="pointer-events-none absolute inset-0 rounded-full bg-black/0 transition-colors duration-200 group-hover:bg-black/18" />
-                  <button
-                    type="button"
-                    aria-label="Edit profile image"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-zinc-600 bg-white text-xl text-black shadow-sm transition hover:bg-zinc-100 md:bottom-5 md:right-5 md:h-12 md:w-12"
-                  >
-                    ✎
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
+          <aside className="motion-rise motion-delay-1 flex flex-col items-center pt-4 text-center lg:sticky lg:top-32">
+            <div className="relative flex h-[280px] w-[280px] items-center justify-center md:h-[320px] md:w-[320px]">
+              <div className="group relative flex h-[220px] w-[220px] items-center justify-center md:h-[250px] md:w-[250px]">
+                <Avatar className="h-full w-full rounded-full bg-[#d8e6f5] shadow-[0_24px_70px_rgba(61,52,45,0.16)]">
+                  <AvatarImage
+                    src={avatarPublicUrl}
+                    className="h-full w-full object-cover"
                   />
-                </div>
-              </div>
-
-              <div className="mt-6 flex w-full items-center justify-end gap-2 pr-0 lg:-mr-2 xl:-mr-4">
+                  <AvatarFallback className="h-full w-full bg-[#d8e6f5] text-6xl font-semibold text-zinc-700 md:text-7xl">
+                    {initials || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="pointer-events-none absolute inset-0 rounded-full bg-black/0 transition-colors duration-200 group-hover:bg-black/18" />
                 <button
                   type="button"
-                  onClick={resetForm}
-                  className="inline-flex min-w-[140px] items-center justify-center text-lg font-medium text-black transition hover:opacity-70"
+                  aria-label="Edit profile image"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-2 right-2 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-plum)] text-white shadow-lg transition hover:bg-[#4f0b75]"
                 >
-                  Cancel
+                  <Camera className="h-5 w-5" aria-hidden="true" />
                 </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={
-                    updateProfile.isPending ||
-                    profileQuery.isLoading ||
-                    !hasChanges
-                  }
-                  className="inline-flex min-w-[140px] items-center justify-center rounded-full bg-[#d1d3de] px-7 py-2.5 text-lg font-medium text-white transition enabled:bg-[var(--brand-teal)] enabled:hover:bg-[#216f89] disabled:cursor-not-allowed"
-                >
-                  {updateProfile.isPending ? "Saving..." : "Save"}
-                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </div>
             </div>
-          </section>
+
+            <h2 className="mt-7 max-w-sm text-3xl font-semibold tracking-tight text-[#1f2024]">
+              {displayName || "Your Profile"}
+            </h2>
+            <p className="mt-2 max-w-sm text-base leading-7 text-[#62636a]">
+              {jobTitle || "Participant"}
+              {organization ? ` at ${organization}` : ""}
+            </p>
+          </aside>
         </div>
       </div>
     </div>

@@ -59,6 +59,10 @@ body {
   width: min(36rem, 46vw);
 }
 
+.app-shell-bg-no-teal::before {
+  display: none;
+}
+
 .app-shell-bg::after {
   background: rgba(180, 190, 53, 0.16);
   border-radius: 28px;
