@@ -13,6 +13,7 @@ import {
 
 const ModuleSummary = z.object({
   id: z.number(),
+  cohort_id: z.number(),
   module_index: z.number(),
   slug: z.string(),
   title: z.string(),
@@ -100,6 +101,7 @@ const list = protectedProcedure
     const rows = await db
       .select({
         id: modules.id,
+        cohort_id: cohort_modules.cohort_id,
         module_index: modules.module_index,
         slug: modules.slug,
         title: modules.title,
@@ -118,6 +120,7 @@ const list = protectedProcedure
 
     const result = rows.map((row) => ({
       id: row.id,
+      cohort_id: row.cohort_id,
       module_index: row.module_index,
       slug: row.slug,
       title: row.title,
@@ -142,6 +145,7 @@ const bySlug = protectedProcedure
     const [foundModule] = await db
       .select({
         id: modules.id,
+        cohort_id: cohort_modules.cohort_id,
         module_index: modules.module_index,
         slug: modules.slug,
         title: modules.title,
@@ -175,6 +179,7 @@ const bySlug = protectedProcedure
 
     return {
       id: foundModule.id,
+      cohort_id: foundModule.cohort_id,
       module_index: foundModule.module_index,
       slug: foundModule.slug,
       title: foundModule.title,
@@ -186,6 +191,11 @@ const bySlug = protectedProcedure
 const UpdateModuleStatusOutput = z.object({
   slug: z.string(),
   is_active: z.boolean(),
+});
+
+const UpdateModuleOutput = z.object({
+  id: z.number(),
+  description: z.string().nullable(),
 });
 
 /**
@@ -249,10 +259,55 @@ const updateModuleStatus = protectedProcedure
   });
 
 /**
+ * Update module-level content. Admin only.
+ */
+const update = protectedProcedure
+  .input(
+    z.object({
+      moduleId: z.number().int().positive(),
+      description: z.string(),
+    }),
+  )
+  .output(UpdateModuleOutput)
+  .mutation(async ({ ctx, input }) => {
+    const role = await getRole(ctx.subject.id);
+
+    if (role !== "admin") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Only admins can update modules",
+      });
+    }
+
+    const trimmedDescription = input.description.trim();
+    const [updated] = await db
+      .update(modules)
+      .set({ description: trimmedDescription || null })
+      .where(eq(modules.id, input.moduleId))
+      .returning({
+        id: modules.id,
+        description: modules.description,
+      });
+
+    if (!updated) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Module not found",
+      });
+    }
+
+    return {
+      id: updated.id,
+      description: updated.description ?? null,
+    };
+  });
+
+/**
  * Router for all module-related APIs.
  */
 export const modulesApiRouter = createTRPCRouter({
   list,
   bySlug,
+  update,
   updateModuleStatus,
 });
