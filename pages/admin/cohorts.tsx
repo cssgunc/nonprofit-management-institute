@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { api } from "@/utils/trpc/api";
 import { toast } from "sonner";
+import CohortRow from "@/components/CohortRow";
 
 export default function AdminCohortsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [slug, setSlug] = useState("");
   const [accessHash, setAccessHash] = useState("");
+
+  const {
+    data: cohorts,
+    isLoading,
+    refetch,
+  } = api.cohorts.getAllCohorts.useQuery();
 
   const utils = api.useUtils();
 
@@ -15,7 +22,7 @@ export default function AdminCohortsPage() {
       setIsModalOpen(false);
       setSlug("");
       setAccessHash("");
-      utils.cohorts.list.invalidate();
+      utils.cohorts.getAllCohorts.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to create cohort");
@@ -28,15 +35,34 @@ export default function AdminCohortsPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center bg-[#f5f5f5] px-6 py-10">
-      <h1 className="mb-8 text-3xl font-bold text-black">Select Cohort</h1>
+    <div className="flex min-h-screen flex-col items-center bg-white px-4 py-12">
+      <h1 className="mb-10 text-3xl font-semibold text-gray-900">
+        Select a cohort
+      </h1>
 
-      {/* Placeholder: cohort list will be built by another ticket */}
-      <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <p className="text-center text-zinc-400">
-          Cohort page being implemented in another ticket. For now, use the
-          button below to create a new cohort.
-        </p>
+      <div className="w-full max-w-3xl rounded-lg border border-gray-200 bg-white shadow-sm">
+        {isLoading ? (
+          <div className="px-6 py-8 text-center text-sm text-gray-400">
+            Loading cohorts...
+          </div>
+        ) : !cohorts || cohorts.length === 0 ? (
+          <div className="px-6 py-8 text-center text-sm text-gray-400">
+            No cohorts found.
+          </div>
+        ) : (
+          cohorts.map((cohort) => (
+            <CohortRow
+              key={cohort.id}
+              id={cohort.id}
+              slug={cohort.slug}
+              is_active={cohort.is_active}
+              member_count={cohort.member_count}
+              recent_logins={cohort.recent_logins}
+              onDeleted={() => refetch()}
+              onToggled={() => refetch()}
+            />
+          ))
+        )}
 
         <div className="mt-6 flex justify-center">
           <button
@@ -47,7 +73,6 @@ export default function AdminCohortsPage() {
           </button>
         </div>
       </div>
-
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
