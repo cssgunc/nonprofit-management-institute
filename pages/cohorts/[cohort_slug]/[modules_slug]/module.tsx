@@ -127,6 +127,11 @@ export default function ModulePage() {
   const saveChanges = async () => {
     if (!module) return;
 
+    if (!hasEditChanges) {
+      toast.info("Make a change before saving.");
+      return;
+    }
+
     try {
       await updateModule.mutateAsync({
         moduleId: module.id,
@@ -289,8 +294,11 @@ export default function ModulePage() {
                     <button
                       type="button"
                       onClick={saveChanges}
-                      disabled={isSaving || !hasEditChanges}
-                      className="rounded-full bg-[#007997] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#006b85] disabled:cursor-not-allowed disabled:opacity-70"
+                      disabled={isSaving}
+                      aria-disabled={!hasEditChanges}
+                      className={`rounded-full bg-[#007997] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#006b85] disabled:cursor-not-allowed disabled:opacity-70 ${
+                        !hasEditChanges ? "cursor-not-allowed opacity-70" : ""
+                      }`}
                     >
                       {isSaving ? "Saving..." : "Done"}
                     </button>
