@@ -352,7 +352,7 @@ export const cohortsApiRouter = createTRPCRouter({
         .where(eq(cohorts.id, input.id));
     }),
 
-  deleteCohort: protectedProcedure
+deleteCohort: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       await requireAdmin(ctx.subject.id);
@@ -362,12 +362,20 @@ export const cohortsApiRouter = createTRPCRouter({
         .delete(discussions_post)
         .where(eq(discussions_post.cohort_id, input.id));
 
-      await db.delete(resources).where(eq(resources.cohort_id, input.id));
+      await db
+        .delete(resources)
+        .where(eq(resources.cohort_id, input.id));
 
       await db
         .delete(cohort_memberships)
         .where(eq(cohort_memberships.cohort_id, input.id));
 
+      //clean up the module bridge links
+      await db
+        .delete(cohort_modules)
+        .where(eq(cohort_modules.cohort_id, input.id));
+
+      // finally, delete the cohort itself
       await db.delete(cohorts).where(eq(cohorts.id, input.id));
     }),
 });
