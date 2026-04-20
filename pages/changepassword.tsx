@@ -10,6 +10,9 @@ const supabase = createClient(
 
 export default function ChangePassword() {
   const router = useRouter();
+  const cohortSlug =
+    typeof router.query.cohort_slug === "string" ? router.query.cohort_slug : "";
+  const profileHref = cohortSlug ? `/cohorts/${cohortSlug}/profile` : "/";
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -42,8 +45,8 @@ export default function ChangePassword() {
     if (error) {
       setError(error.message);
     } else {
-      setMessage("Password updated successfully! Redirecting to login...");
-      setTimeout(() => router.push("/login"), 2000);
+      setMessage("Password updated successfully!");
+      setTimeout(() => router.push(profileHref), 1200);
     }
   };
 
@@ -92,8 +95,8 @@ export default function ChangePassword() {
         )}
 
         <div className="mt-6 text-center text-sm">
-          <Link href="/login" className="text-blue-600 hover:underline">
-            Back to Login
+          <Link href={profileHref} className="text-blue-600 hover:underline">
+            Cancel
           </Link>
         </div>
       </div>

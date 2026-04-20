@@ -10,7 +10,7 @@ type ProfileMenuProps = {
 };
 
 export default function ProfileMenu({
-  profileHref = "/profile",
+  profileHref = "/",
   logoutHref = "/signout",
   initials = "U",
   avatarUrl,

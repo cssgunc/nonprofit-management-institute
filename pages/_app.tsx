@@ -27,7 +27,6 @@ function App({ Component, pageProps }: AppProps) {
     router.pathname,
   );
   const shouldHideTealPanel =
-    router.pathname === "/profile" ||
     router.pathname === "/cohorts/[cohort_slug]/profile";
 
   return (

@@ -16,9 +16,10 @@ export default function Header() {
   });
 
   const basePath = cohort_slug ? `/cohorts/${cohort_slug as string}` : "";
-  const isAdmin = profileQuery.data?.role === "admin";
-  const profileHref =
-    cohort_slug && !isAdmin ? `${basePath}/profile` : "/profile";
+  const profileHref = cohort_slug ? `${basePath}/profile` : "/";
+  const logoutHref = cohort_slug
+    ? `/signout?cohort_slug=${encodeURIComponent(cohort_slug as string)}`
+    : "/signout";
   const logoHref = cohort_slug ? `${basePath}/dashboard` : "/";
   const displayName = profileQuery.data?.full_name?.trim() ?? "";
   const initials = displayName
@@ -148,6 +149,7 @@ export default function Header() {
 
         <ProfileMenu
           profileHref={profileHref}
+          logoutHref={logoutHref}
           initials={initials || "?"}
           avatarUrl={avatarUrl}
           className="motion-fade motion-delay-2 ml-3 lg:ml-16"
