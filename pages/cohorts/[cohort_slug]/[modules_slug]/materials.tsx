@@ -66,7 +66,7 @@ export default function ModuleMaterials() {
 
   const { data: documents, isLoading: documentsLoading } =
     api.resources.listByModuleSlug.useQuery(
-      { moduleSlug, type: "recording" },
+      { moduleSlug, type: "document" },
       { enabled, retry: false },
     );
 
@@ -86,10 +86,10 @@ export default function ModuleMaterials() {
           moduleSlug,
           type: "link",
         });
-      } else if (deleted.type === "recording") {
+      } else if (deleted.type === "document") {
         await utils.resources.listByModuleSlug.invalidate({
           moduleSlug,
-          type: "recording",
+          type: "document",
         });
       } else {
         await utils.resources.listByModuleSlug.invalidate({

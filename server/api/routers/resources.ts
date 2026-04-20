@@ -11,7 +11,7 @@ import {
 } from "@/server/db/schema";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-const ResourceTypeEnum = z.enum(["handout", "recording", "link"]);
+const ResourceTypeEnum = z.enum(["handout", "recording", "link", "document"]);
 
 export type ResourceType = z.infer<typeof ResourceTypeEnum>;
 
@@ -148,7 +148,7 @@ function mapResourceRowToDto(
   row: {
     id: number;
     title: string;
-    type: "handout" | "recording" | "link";
+    type: "handout" | "recording" | "link" | "document";
     url: string | null;
     cohortId: number | null;
     created_by: string | null;

@@ -401,7 +401,7 @@ export function AddDocumentModal({
     onSuccess: async () => {
       await utils.resources.listByModuleSlug.invalidate({
         moduleSlug,
-        type: "recording",
+        type: "document",
       });
       onSuccess();
       onClose();
@@ -431,7 +431,7 @@ export function AddDocumentModal({
       create.mutate({
         moduleSlug,
         title: title.trim(),
-        type: "recording",
+        type: "document",
         url,
         cohortSlug,
       });
