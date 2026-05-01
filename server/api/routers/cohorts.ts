@@ -354,7 +354,7 @@ export const cohortsApiRouter = createTRPCRouter({
         .where(eq(cohorts.id, input.id));
     }),
 
-deleteCohort: protectedProcedure
+  deleteCohort: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       await requireAdmin(ctx.subject.id);
@@ -364,9 +364,7 @@ deleteCohort: protectedProcedure
         .delete(discussions_post)
         .where(eq(discussions_post.cohort_id, input.id));
 
-      await db
-        .delete(resources)
-        .where(eq(resources.cohort_id, input.id));
+      await db.delete(resources).where(eq(resources.cohort_id, input.id));
 
       await db
         .delete(cohort_memberships)
