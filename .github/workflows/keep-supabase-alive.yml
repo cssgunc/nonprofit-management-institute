@@ -2,6 +2,7 @@ name: Keep Supabase Alive
 
 on:
   schedule:
+    # Runs every Monday and Thursday at 9:00 AM UTC
     - cron: "0 9 * * 1,4"
   workflow_dispatch:
 
@@ -10,8 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check Supabase secrets exist
+        run: |
+          test -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" || (echo "Missing NEXT_PUBLIC_SUPABASE_URL" && exit 1)
+          test -n "${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" || (echo "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY" && exit 1)
+          echo "Supabase secrets exist"
+
       - name: Ping Supabase REST API
         run: |
-          curl -f -X GET "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/rest/v1/modules?select=id&limit=1" \
-            -H "apikey: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
-            -H "Authorization: Bearer ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}"
+          curl -i -X GET "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/rest/v1/modules?select=id&limit=1" \
+            -H "apikey: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
