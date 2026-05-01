@@ -11,12 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check Supabase secrets exist
-        run: |
-          test -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" || (echo "Missing NEXT_PUBLIC_SUPABASE_URL" && exit 1)
-          test -n "${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" || (echo "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY" && exit 1)
-          echo "Supabase secrets exist"
-
       - name: Ping Supabase REST API
         run: |
           curl -i -X GET "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/rest/v1/modules?select=id&limit=1" \
