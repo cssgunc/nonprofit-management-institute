@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import {
+  ChevronDown,
+  ChevronUp,
+  Check,
+  CornerDownRight,
   Edit2,
   Trash2,
   MoreHorizontal,
-  MessageCircle,
   Star,
   Heart,
+  X,
 } from "lucide-react";
 
 export type Author = {
@@ -30,8 +34,10 @@ export type Post = {
 export type DiscussionPostProps = {
   post: Post;
   isReply?: boolean;
+  repliesOpen?: boolean;
   canManage?: boolean;
   onReply?: (post: Post) => void;
+  onToggleReplies?: (post: Post) => void;
   onToggleLike?: (post: Post) => void;
   isLikePending?: (postId: string | number) => boolean;
   onEdit?: (id: string | number, newContent: string) => void;
@@ -200,31 +206,33 @@ function ReplyPost({
                 [This post has been deleted.]
               </p>
             ) : editing ? (
-              <div className="mt-2 space-y-2">
+              <div className="mt-2 rounded-xl border border-[rgba(40,132,164,0.12)] bg-[rgba(255,253,248,0.7)] p-2">
                 <textarea
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
+                  className="min-h-[96px] w-full resize-none rounded-xl border border-[rgba(40,132,164,0.18)] bg-white px-3 py-2.5 text-sm leading-relaxed text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
                   rows={3}
                   autoFocus
                 />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSaveEdit}
-                    className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 transition-colors"
-                  >
-                    Save
-                  </button>
+                <div className="mt-2 flex justify-end gap-2 border-t border-[rgba(40,132,164,0.1)] pt-2">
                   <button
                     type="button"
                     onClick={() => {
                       setEditing(false);
                       setEditText(post.content);
                     }}
-                    className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
                   >
+                    <X className="h-3.5 w-3.5" />
                     Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveEdit}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-teal)] px-3.5 py-1.5 text-xs font-semibold text-white shadow-[0_8px_18px_rgba(0,138,171,0.16)] transition hover:bg-[#007997]"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Save
                   </button>
                 </div>
               </div>
@@ -235,68 +243,71 @@ function ReplyPost({
             )}
 
             {/* Actions: edit/delete on hover (left), Reply right-aligned */}
-            <div className="flex items-center justify-between mt-2">
-              {canManage && !isDeleted ? (
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    type="button"
-                    onClick={() => setEditing(true)}
-                    aria-label="Edit"
-                    className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete?.(post.id)}
-                    aria-label="Delete"
-                    className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <div />
-              )}
-              {!isDeleted ? (
-                <div className="flex items-center gap-3">
-                  {onToggleLike && (
+            {!editing && (
+              <div className="mt-2 flex items-center justify-between">
+                {canManage && !isDeleted ? (
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleLike(post);
-                      }}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                        post.hasLiked
-                          ? "border-red-200 bg-red-50 text-red-700"
-                          : "border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800"
-                      }`}
+                      onClick={() => setEditing(true)}
+                      aria-label="Edit"
+                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
                     >
-                      <Heart
-                        className={`h-3.5 w-3.5 ${post.hasLiked ? "fill-current" : ""}`}
-                      />
-                      <span>{post.likeCount ?? 0}</span>
+                      <Edit2 className="h-3.5 w-3.5" />
                     </button>
-                  )}
-                  {onReply && (
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onReply(post);
-                      }}
-                      className="text-sm text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
+                      onClick={() => onDelete?.(post.id)}
+                      aria-label="Delete"
+                      className="rounded p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500"
                     >
-                      Reply
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                  )}
-                </div>
-              ) : (
-                <div />
-              )}
-            </div>
+                  </div>
+                ) : (
+                  <div />
+                )}
+                {!isDeleted ? (
+                  <div className="flex items-center gap-3">
+                    {onToggleLike && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleLike(post);
+                        }}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                          post.hasLiked
+                            ? "border-red-200 bg-red-50 text-red-700"
+                            : "border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800"
+                        }`}
+                      >
+                        <Heart
+                          className={`h-3.5 w-3.5 ${post.hasLiked ? "fill-current" : ""}`}
+                        />
+                        <span>{post.likeCount ?? 0}</span>
+                      </button>
+                    )}
+                    {onReply && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onReply(post);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand-teal)] transition-colors hover:text-[#007997]"
+                      >
+                        <CornerDownRight className="h-3.5 w-3.5" />
+                        Add reply
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div />
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -311,8 +322,10 @@ function ReplyPost({
 
 function TopLevelPost({
   post,
+  repliesOpen = false,
   canManage = false,
   onReply,
+  onToggleReplies,
   onToggleLike,
   isLikePending,
   onEdit,
@@ -331,6 +344,11 @@ function TopLevelPost({
 
   const replyCount =
     post.replyCount ?? (post.replies ? countAllReplies(post.replies) : 0);
+  const repliesToggleLabel = repliesOpen
+    ? "Hide replies"
+    : replyCount === 0
+      ? "No replies yet"
+      : `View ${replyCount} ${replyCount === 1 ? "reply" : "replies"}`;
 
   return (
     <article className="motion-rise rounded-xl border border-zinc-200 bg-white p-5">
@@ -421,31 +439,33 @@ function TopLevelPost({
             [This post has been deleted.]
           </p>
         ) : editing ? (
-          <div className="space-y-2">
+          <div className="rounded-xl border border-[rgba(40,132,164,0.12)] bg-[rgba(255,253,248,0.7)] p-3">
             <textarea
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
+              className="min-h-[120px] w-full resize-none rounded-xl border border-[rgba(40,132,164,0.18)] bg-white px-4 py-3 text-sm leading-relaxed text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               rows={4}
               autoFocus
             />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleSaveEdit}
-                className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 transition-colors"
-              >
-                Save
-              </button>
+            <div className="mt-3 flex justify-end gap-3 border-t border-[rgba(40,132,164,0.1)] pt-3">
               <button
                 type="button"
                 onClick={() => {
                   setEditing(false);
                   setEditText(post.content);
                 }}
-                className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
               >
+                <X className="h-3.5 w-3.5" />
                 Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-teal)] px-4 py-2 text-xs font-semibold text-white shadow-[0_8px_18px_rgba(0,138,171,0.16)] transition hover:bg-[#007997]"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Save
               </button>
             </div>
           </div>
@@ -457,8 +477,8 @@ function TopLevelPost({
       </div>
 
       {/* Reply count pill */}
-      {!isDeleted && (
-        <div className="mt-4 flex items-center gap-2">
+      {!isDeleted && !editing && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           {onToggleLike && (
             <button
               type="button"
@@ -486,17 +506,36 @@ function TopLevelPost({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onReply?.(post);
+              onToggleReplies?.(post);
             }}
             title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+              repliesOpen
+                ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+            }`}
           >
-            <MessageCircle className="h-3.5 w-3.5 flex-shrink-0 fill-current" />
-            <span className="text-xs font-semibold">{replyCount}</span>
-            <span className="text-xs font-normal">
-              {replyCount === 1 ? "reply" : "replies"}
-            </span>
+            {repliesOpen ? (
+              <ChevronUp className="h-3.5 w-3.5 flex-shrink-0" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+            )}
+            <span>{repliesToggleLabel}</span>
           </button>
+          {onReply && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onReply(post);
+              }}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[rgba(40,132,164,0.18)] bg-[rgba(40,132,164,0.06)] px-3 py-1 text-xs font-semibold text-[var(--brand-teal)] transition-colors hover:border-[rgba(40,132,164,0.32)] hover:bg-[rgba(40,132,164,0.12)]"
+            >
+              <CornerDownRight className="h-3.5 w-3.5 flex-shrink-0" />
+              Add reply
+            </button>
+          )}
         </div>
       )}
 
@@ -513,8 +552,10 @@ function TopLevelPost({
 export default function DiscussionPost({
   post,
   isReply = false,
+  repliesOpen = false,
   canManage = false,
   onReply,
+  onToggleReplies,
   onToggleLike,
   isLikePending,
   onEdit,
@@ -527,6 +568,7 @@ export default function DiscussionPost({
         post={post}
         canManage={canManage}
         onReply={onReply}
+        onToggleReplies={onToggleReplies}
         onToggleLike={onToggleLike}
         isLikePending={isLikePending}
         onEdit={onEdit}
@@ -540,8 +582,10 @@ export default function DiscussionPost({
   return (
     <TopLevelPost
       post={post}
+      repliesOpen={repliesOpen}
       canManage={canManage}
       onReply={onReply}
+      onToggleReplies={onToggleReplies}
       onToggleLike={onToggleLike}
       isLikePending={isLikePending}
       onEdit={onEdit}
