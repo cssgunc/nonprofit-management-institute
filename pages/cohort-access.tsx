@@ -2,7 +2,8 @@ import { useState } from "react";
 import { api } from "@/utils/trpc/api";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
-import Image from "next/image";
+import AuthPageShell from "@/components/AuthPageShell";
+import { ArrowLeft, HelpCircle, KeyRound, Loader2 } from "lucide-react";
 
 type CookieOptions = { maxAge?: number };
 
@@ -81,146 +82,91 @@ export default function CohortAccessPage() {
   };
 
   return (
-    <div className="auth-brand-bg flex h-screen w-screen items-center justify-center overflow-hidden p-6 box-border lg:p-10">
-      <div className="w-full h-full max-h-[850px] max-w-7xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
-        <div className="w-full md:w-1/2 p-6 lg:p-10 flex flex-col items-center justify-between bg-white relative">
-          <h2
-            className="text-[#5B2983] text-2xl lg:text-4xl font-bold tracking-wide text-center pt-2 lg:pt-4"
-            style={{ fontFamily: "'Lato', sans-serif" }}
-          >
-            Nonprofit Management Institute Participant Dashboard
-          </h2>
+    <AuthPageShell
+      title="Enter your cohort"
+      subtitle="Use the access code you received to unlock your dashboard."
+      accessory={
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-zinc-700">
+            Cohort access code
+            <span className="group relative inline-flex cursor-help text-[var(--brand-teal)]">
+              <HelpCircle className="h-4 w-4" />
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-56 -translate-x-1/2 rounded-lg bg-zinc-900 px-3 py-2 text-center text-xs font-medium leading-relaxed text-white opacity-0 shadow-lg transition group-hover:opacity-100">
+                Enter the cohort access code you received via email.
+              </span>
+            </span>
+          </label>
 
-          <div className="flex-grow flex items-center justify-center w-full my-4">
-            <Image
-              src="/assets/NCCNonProfit_LOGO.png"
-              alt="Center for Nonprofits Logo"
-              width={320}
-              height={150}
-              priority
-              className="w-[60%] lg:w-[70%] max-w-[280px] object-contain"
+          <input
+            type="text"
+            value={accessHash}
+            onChange={(e) => setAccessHash(e.target.value)}
+            required
+            className="w-full rounded-xl border border-[rgba(40,132,164,0.18)] bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
+          />
+        </div>
+
+        <div className="rounded-xl border border-[rgba(40,132,164,0.14)] bg-white/75 px-4 py-4">
+          <label className="flex cursor-pointer items-start gap-3 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setAgreedToTerms(checked);
+                if (checked) {
+                  setError("");
+                }
+              }}
+              className="mt-0.5 h-4 w-4 rounded border-[rgba(40,132,164,0.3)] text-[var(--brand-teal)] focus:ring-[var(--brand-teal)]"
             />
+            <span className="leading-relaxed">
+              <span className="font-semibold text-zinc-800">
+                I agree to the Terms and Conditions
+              </span>{" "}
+              <span className="text-zinc-500">
+                [Lorem ipsum dolor sit amet]
+              </span>
+              <span className="ml-1 font-bold text-red-600">*</span>
+            </span>
+          </label>
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            {error}
           </div>
+        )}
 
-          <p className="text-xs lg:text-sm italic text-black text-center max-w-[250px] pb-2 lg:pb-4">
-            “To educate, connect, and advocate for nonprofits across the state.”
-          </p>
-        </div>
-
-        <div className="w-full md:w-1/2 p-6 lg:p-10 bg-[#BEE3EE] flex flex-col justify-center relative">
-          <button
-            onClick={() => router.back()}
-            className="absolute top-6 left-6 lg:top-8 lg:left-8 flex items-center text-black font-medium text-sm hover:opacity-70 transition"
-          >
-            <svg
-              className="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back
-          </button>
-
-          <h1 className="text-xl lg:text-3xl font-bold text-black text-center mb-8 lg:mb-12">
-            Cohort
-          </h1>
-
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4 lg:space-y-5 w-full max-w-sm mx-auto"
-          >
-            <div>
-              <label className="flex items-center text-black text-xs lg:text-sm mb-1">
-                Cohort Access Code
-                <span className="relative ml-1 text-[#3192B3] group cursor-help">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-800 text-white text-[10px] lg:text-xs text-center rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none">
-                    Enter the cohort access code you received via email
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                  </div>
-                </span>
-              </label>
-
-              <input
-                type="text"
-                value={accessHash}
-                onChange={(e) => setAccessHash(e.target.value)}
-                required
-                className="w-full px-3 py-1.5 lg:px-4 lg:py-2 text-xs lg:text-sm rounded-sm border border-[#74B1C6] bg-[#DBF0F6] text-black 
-                           focus:ring-2 focus:ring-[#3192B3] focus:outline-none transition"
-              />
-            </div>
-
-            <div className="rounded-lg border border-[#74B1C6] bg-white/60 px-3 py-3 lg:px-4 lg:py-4">
-              <label className="flex items-start gap-3 text-xs lg:text-sm text-black cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={agreedToTerms}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setAgreedToTerms(checked);
-                    if (checked) {
-                      setError("");
-                    }
-                  }}
-                  className="mt-0.5 h-4 w-4 rounded border-[#74B1C6] text-[#3192B3] focus:ring-[#3192B3]"
-                />
-                <span className="leading-snug">
-                  <span className="font-medium text-black">
-                    I agree to the Terms and Conditions
-                  </span>{" "}
-                  <span className="text-black/80">
-                    [Lorem ipsum dolor sit amet]
-                  </span>
-                  <span className="ml-1 font-bold text-red-600">*</span>
-                </span>
-              </label>
-            </div>
-
-            <div className="flex justify-center pt-2 lg:pt-4">
-              <button
-                type="submit"
-                disabled={joinMutation.isPending}
-                className={`px-10 py-2 lg:px-12 lg:py-2.5 text-sm lg:text-base rounded-full font-medium text-white transition ${
-                  joinMutation.isPending
-                    ? "bg-[#28819D] cursor-not-allowed opacity-80"
-                    : "bg-[#3192B3] hover:bg-[#257A95]"
-                }`}
-              >
-                {joinMutation.isPending ? "Entering..." : "Enter"}
-              </button>
-            </div>
-          </form>
-
-          {error && (
-            <div className="mt-4 lg:mt-5 p-3 lg:p-4 text-xs lg:text-sm text-red-700 bg-red-50 border border-red-300 rounded-lg max-w-sm mx-auto w-full font-medium shadow-sm">
-              {error}
-            </div>
+        <button
+          type="submit"
+          disabled={joinMutation.isPending}
+          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[var(--brand-teal)] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(0,138,171,0.18)] transition hover:bg-[#007997] hover:shadow-[0_14px_28px_rgba(0,138,171,0.24)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {joinMutation.isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Entering...
+            </>
+          ) : (
+            <>
+              <KeyRound className="h-4 w-4" />
+              Enter
+            </>
           )}
-        </div>
-      </div>
-    </div>
+        </button>
+      </form>
+    </AuthPageShell>
   );
 }
