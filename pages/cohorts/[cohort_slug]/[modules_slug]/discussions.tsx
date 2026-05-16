@@ -33,10 +33,9 @@ type DiscussionRenderablePost = DiscussionUiPost & {
 };
 
 function countReplies(node: ThreadNode): number {
-  return node.children.reduce(
-    (total, child) => total + 1 + countReplies(child),
-    0,
-  );
+  return node.children
+    .filter((child) => !child.is_deleted)
+    .reduce((total, child) => total + 1 + countReplies(child), 0);
 }
 
 function getAuthorProfile(
@@ -196,6 +195,8 @@ function ThreadPreview({
     getDesiredLike(thread.id),
   );
 
+  if (thread.is_deleted) return null;
+
   topLevelPost.hasLiked = topLevelLikeOverride.hasLiked;
   topLevelPost.likeCount = topLevelLikeOverride.likeCount;
 
@@ -239,20 +240,23 @@ function ThreadPreview({
     getDesiredLike,
   );
 
-  const renderReply = (reply: DiscussionRenderablePost) => (
-    <DiscussionPost
-      key={`reply-${reply.id}`}
-      post={reply}
-      isReply
-      canManage={reply.canManage}
-      onToggleLike={onToggleLike}
-      isLikePending={isLikePending}
-      onEdit={onEdit}
-      onDelete={onDelete}
-    >
-      {reply.replies.map(renderReply)}
-    </DiscussionPost>
-  );
+  const renderReply = (reply: DiscussionRenderablePost): React.ReactNode => {
+    if (reply.isDeleted) return null;
+    return (
+      <DiscussionPost
+        key={`reply-${reply.id}`}
+        post={reply}
+        isReply
+        canManage={reply.canManage}
+        onToggleLike={onToggleLike}
+        isLikePending={isLikePending}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      >
+        {reply.replies.map(renderReply)}
+      </DiscussionPost>
+    );
+  };
 
   return (
     <DiscussionPost
