@@ -137,7 +137,7 @@ type UploadedFile = {
   sizeBytes: number;
 };
 
-function useFileUpload(moduleSlug: string, cohortId: string | null) {
+function useFileUpload(moduleSlug: string, cohortSlug: string) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -169,18 +169,19 @@ function useFileUpload(moduleSlug: string, cohortId: string | null) {
     if (!selectedFile) throw new Error("No file selected.");
     const supabase = createSupabaseComponentClient();
     const ext = selectedFile.name.split(".").pop() ?? "pdf";
-    const cohortSegment = cohortId ? `cohort-${cohortId}` : "global";
-    const storagePath = `${cohortSegment}/${moduleSlug}/${Date.now()}-${Math.random()
+
+    // Always scoped to cohortSlug — never falls back to "global"
+    const storagePath = `${cohortSlug}/${moduleSlug}/${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}.${ext}`;
 
     setUploadProgress(0);
 
-    const { error } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from(BUCKET)
       .upload(storagePath, selectedFile, { upsert: false });
 
-    if (error) throw new Error(error.message);
+    if (uploadError) throw new Error(uploadError.message);
 
     setUploadProgress(100);
 
@@ -191,6 +192,16 @@ function useFileUpload(moduleSlug: string, cohortId: string | null) {
       mimeType: selectedFile.type || "application/pdf",
       sizeBytes: selectedFile.size,
     };
+  };
+
+  // Call this if the DB insert fails after a successful upload
+  const deleteOrphan = async (url: string) => {
+    const supabase = createSupabaseComponentClient();
+    const marker = `/storage/v1/object/public/${BUCKET}/`;
+    const idx = url.indexOf(marker);
+    if (idx === -1) return;
+    const path = decodeURIComponent(url.slice(idx + marker.length));
+    await supabase.storage.from(BUCKET).remove([path]);
   };
 
   const DropZone = () => (
@@ -267,7 +278,7 @@ function useFileUpload(moduleSlug: string, cohortId: string | null) {
     </div>
   );
 
-  return { selectedFile, upload, DropZone, uploadProgress };
+  return { selectedFile, upload, deleteOrphan, DropZone, uploadProgress };
 }
 
 // ---------------------------------------------------------------------------
@@ -399,11 +410,12 @@ export function AddDocumentModal({
   const [isSaving, setIsSaving] = useState(false);
   const [statusLabel, setStatusLabel] = useState("Saving...");
 
-  const { selectedFile, upload, DropZone } = useFileUpload(
+  const { selectedFile, upload, deleteOrphan, DropZone } = useFileUpload(
     moduleSlug,
     cohortSlug,
   );
   const utils = api.useUtils();
+  const uploadedUrlRef = useRef<string | null>(null);
 
   const create = api.resources.create.useMutation({
     onSuccess: async () => {
@@ -414,7 +426,11 @@ export function AddDocumentModal({
       onSuccess();
       onClose();
     },
-    onError: (err) => {
+    onError: async (err) => {
+      if (uploadedUrlRef.current) {
+        await deleteOrphan(uploadedUrlRef.current);
+        uploadedUrlRef.current = null;
+      }
       setError(err.message ?? "Failed to save.");
       setIsSaving(false);
     },
@@ -435,6 +451,7 @@ export function AddDocumentModal({
     try {
       setStatusLabel("Uploading file...");
       const { url } = await upload();
+      uploadedUrlRef.current = url;
       setStatusLabel("Saving...");
       create.mutate({
         moduleSlug,
@@ -444,6 +461,10 @@ export function AddDocumentModal({
         cohortSlug,
       });
     } catch (err) {
+      if (uploadedUrlRef.current) {
+        await deleteOrphan(uploadedUrlRef.current);
+        uploadedUrlRef.current = null;
+      }
       setError(err instanceof Error ? err.message : "Upload failed.");
       setIsSaving(false);
     }

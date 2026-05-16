@@ -373,45 +373,89 @@ export const cohortsApiRouter = createTRPCRouter({
   .mutation(async ({ ctx, input }) => {
     await requireAdmin(ctx.subject.id);
 
-    // Fetch file-backed resources before deleting rows
+    // Fetch the cohort slug for storage cleanup
+    const [cohort] = await db
+      .select({ slug: cohorts.slug })
+      .from(cohorts)
+      .where(eq(cohorts.id, input.id))
+      .limit(1);
+
+    if (!cohort) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Cohort not found" });
+    }
+
+    // 1. Collect file-backed resource URLs before deleting rows
     const cohortResources = await db
       .select({ url: resources.url, type: resources.type })
       .from(resources)
       .where(eq(resources.cohort_id, input.id));
 
-    // Delete files from storage
-    const paths = cohortResources
+    const urlPaths = cohortResources
       .filter((r) => r.url && r.type !== "link")
-      .map((r) => extractStoragePath(r.url!, "module-resources"))
+      .map((r) => {
+        const marker = `/storage/v1/object/public/module-resources/`;
+        const idx = r.url!.indexOf(marker);
+        return idx !== -1
+          ? decodeURIComponent(r.url!.slice(idx + marker.length))
+          : null;
+      })
       .filter((p): p is string => p !== null);
 
-    if (paths.length > 0) {
+    // 2. Delete known files from storage
+    if (urlPaths.length > 0) {
       const { error } = await supabaseAdmin.storage
         .from("module-resources")
-        .remove(paths);
+        .remove(urlPaths);
       if (error) {
-        console.error("Failed to delete cohort files from storage:", error.message);
+        console.error("Failed to delete resource files from storage:", error.message);
       }
     }
 
-    // 1. Delete likes first (FK references discussion_posts)
+    // 3. Sweep the cohort's storage folder for any orphaned files
+    // (files uploaded to storage but whose DB row was never created or already deleted)
+    if (cohort.slug) {
+      const sweepFolder = async (folderPath: string) => {
+        const { data: items } = await supabaseAdmin.storage
+          .from("module-resources")
+          .list(folderPath, { limit: 1000 });
+
+        if (!items || items.length === 0) return;
+
+        const filePaths: string[] = [];
+        for (const item of items) {
+          const fullPath = `${folderPath}/${item.name}`;
+          if (item.metadata) {
+            // It's a file
+            filePaths.push(fullPath);
+          } else {
+            // It's a subfolder — recurse
+            await sweepFolder(fullPath);
+          }
+        }
+
+        if (filePaths.length > 0) {
+          await supabaseAdmin.storage
+            .from("module-resources")
+            .remove(filePaths);
+        }
+      };
+
+      await sweepFolder(cohort.slug);
+    }
+
+    // 4. Delete DB rows in dependency order
     const posts = await db
       .select({ id: discussions_post.id })
       .from(discussions_post)
       .where(eq(discussions_post.cohort_id, input.id));
 
     if (posts.length > 0) {
-      const postIds = posts.map((p) => p.id);
       await db
         .delete(discussion_likes)
-        .where(inArray(discussion_likes.post_id, postIds));
+        .where(inArray(discussion_likes.post_id, posts.map((p) => p.id)));
     }
 
-    // 2. Now safe to delete posts
-    await db
-      .delete(discussions_post)
-      .where(eq(discussions_post.cohort_id, input.id));
-
+    await db.delete(discussions_post).where(eq(discussions_post.cohort_id, input.id));
     await db.delete(resources).where(eq(resources.cohort_id, input.id));
     await db.delete(cohort_memberships).where(eq(cohort_memberships.cohort_id, input.id));
     await db.delete(cohort_modules).where(eq(cohort_modules.cohort_id, input.id));
