@@ -46,8 +46,7 @@ const MODULE_ORDER_ALIASES: Record<string, ModuleOrderKey> = {
   "module-5-fundraising-financial-management":
     "fundraising-financial-management",
   "fundraising-basics": "fundraising-financial-management",
-  "fundraising-and-financial-management":
-    "fundraising-financial-management",
+  "fundraising-and-financial-management": "fundraising-financial-management",
   "fundraising-financial-management": "fundraising-financial-management",
 
   "module-6-human-resources": "human-resources",

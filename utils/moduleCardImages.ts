@@ -1,7 +1,4 @@
-import {
-  getModuleOrderKey,
-  type ModuleOrderKey,
-} from "@/utils/moduleOrder";
+import { getModuleOrderKey, type ModuleOrderKey } from "@/utils/moduleOrder";
 
 export const MODULE_CARD_IMAGES: Array<{
   moduleKey: ModuleOrderKey;
