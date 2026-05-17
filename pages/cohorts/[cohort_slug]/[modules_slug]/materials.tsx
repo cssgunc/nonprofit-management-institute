@@ -59,19 +59,19 @@ export default function ModuleMaterials() {
   // Per-section resource queries
   const { data: websites, isLoading: websitesLoading } =
     api.resources.listByModuleSlug.useQuery(
-      { moduleSlug, type: "link" },
+      { moduleSlug, cohortSlug, type: "link" },
       { enabled, retry: false },
     );
 
   const { data: documents, isLoading: documentsLoading } =
     api.resources.listByModuleSlug.useQuery(
-      { moduleSlug, type: "document" },
+      { moduleSlug, cohortSlug, type: "document" },
       { enabled, retry: false },
     );
 
   const { data: handouts, isLoading: handoutsLoading } =
     api.resources.listByModuleSlug.useQuery(
-      { moduleSlug, type: "handout" },
+      { moduleSlug, cohortSlug, type: "handout" },
       { enabled, retry: false },
     );
 
@@ -80,22 +80,16 @@ export default function ModuleMaterials() {
   // Delete mutation — invalidates the relevant query
   const deleteResource = api.resources.delete.useMutation({
     onSuccess: async (deleted) => {
-      if (deleted.type === "link") {
-        await utils.resources.listByModuleSlug.invalidate({
-          moduleSlug,
-          type: "link",
-        });
-      } else if (deleted.type === "document") {
-        await utils.resources.listByModuleSlug.invalidate({
-          moduleSlug,
-          type: "document",
-        });
-      } else {
-        await utils.resources.listByModuleSlug.invalidate({
-          moduleSlug,
-          type: "handout",
-        });
-      }
+      await utils.resources.listByModuleSlug.invalidate({
+        moduleSlug,
+        cohortSlug,
+        type:
+          deleted.type === "link"
+            ? "link"
+            : deleted.type === "document"
+              ? "document"
+              : "handout",
+      });
     },
   });
 
