@@ -14,6 +14,7 @@ import {
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 import { supabaseAdmin } from "@/server/lib/supabaseAdmin";
 import { discussion_likes } from "@/server/db/schema";
+import path from "path";
 
 /**
  * Extracts the storage path from a Supabase public URL.
@@ -442,6 +443,45 @@ export const cohortsApiRouter = createTRPCRouter({
 
       await sweepFolder(cohort.slug);
     }
+
+    
+    const studentProfiles = await db
+        .select({ avatarUrl: profiles.avatarUrl, role: profiles.role })
+        .from(cohort_memberships)
+        .innerJoin(profiles, eq(profiles.id, cohort_memberships.profiles_id))
+        .where(
+          and(
+            eq(cohort_memberships.cohort_id, input.id),
+            eq(profiles.role, "student"),
+          )
+        );
+
+      console.log("Student profiles found:", studentProfiles.length);
+      console.log("Avatar URLs:", studentProfiles.map((p) => p.avatarUrl));
+
+      const avatarPaths = studentProfiles
+  .filter((p) => p.avatarUrl !== null)
+  .map((p) => {
+    const url = p.avatarUrl!;
+    const marker = `/storage/v1/object/public/avatars/`;
+    const idx = url.indexOf(marker);
+    // If it's a full URL, extract the path; otherwise use the value as-is
+    return idx !== -1
+      ? decodeURIComponent(url.slice(idx + marker.length))
+      : url;
+  });
+
+console.log("Final avatar paths to delete:", avatarPaths);
+
+if (avatarPaths.length > 0) {
+  const { error } = await supabaseAdmin.storage
+    .from("avatars")
+    .remove(avatarPaths);
+  if (error) {
+    console.error("Failed to delete student avatars from storage:", error.message);
+  }
+}
+    
 
     // 4. Delete DB rows in dependency order
     const posts = await db

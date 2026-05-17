@@ -11,6 +11,13 @@ import {
   resources,
 } from "@/server/db/schema";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { supabaseAdmin } from "@/server/lib/supabaseAdmin";
+
+function extractStoragePath(url: string, bucket: string): string | null {
+  const marker = `/storage/v1/object/public/${bucket}/`;
+  const idx = url.indexOf(marker);
+  return idx !== -1 ? decodeURIComponent(url.slice(idx + marker.length)) : null;
+}
 
 const ResourceTypeEnum = z.enum(["handout", "recording", "link", "document"]);
 
@@ -176,46 +183,49 @@ export const resourcesRouter = createTRPCRouter({
    * - Enforce cohort-scoped visibility for non-admins
    */
   listByModuleSlug: protectedProcedure
-    .input(
-      z.object({
-        moduleSlug: z.string().min(1),
-        type: ResourceTypeEnum.optional(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const viewer = await getViewer(ctx.subject.id);
-
-      const foundModule = await findModuleBySlugOrThrow(input.moduleSlug);
-
-      const visibilityWhere = isAdmin(viewer)
-        ? undefined
-        : viewer.cohortId !== null
-          ? or(
-              isNull(resources.cohort_id),
-              eq(resources.cohort_id, Number(viewer.cohortId)),
-            )
-          : isNull(resources.cohort_id);
-
-      const baseWhere = and(
-        eq(resources.module_id, foundModule.id),
-        input.type ? eq(resources.type, input.type) : undefined,
-        visibilityWhere,
-      );
-
-      const rows = await db
-        .select({
-          id: resources.id,
-          title: resources.title,
-          type: resources.type,
-          url: resources.url,
-          cohortId: resources.cohort_id,
-          created_by: resources.created_by,
-        })
-        .from(resources)
-        .where(baseWhere);
-
-      return rows.map((r) => mapResourceRowToDto(r, foundModule.slug));
+  .input(
+    z.object({
+      moduleSlug: z.string().min(1),
+      cohortSlug: z.string().min(1),
+      type: ResourceTypeEnum.optional(),
     }),
+  )
+  .query(async ({ ctx, input }) => {
+    const viewer = await getViewer(ctx.subject.id);
+    const foundModule = await findModuleBySlugOrThrow(input.moduleSlug);
+
+    // Look up the cohort ID from the slug
+    const [foundCohort] = await db
+      .select({ id: cohorts.id })
+      .from(cohorts)
+      .where(eq(cohorts.slug, input.cohortSlug))
+      .limit(1);
+
+    if (!foundCohort) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Cohort not found" });
+    }
+
+    // Always filter by the specific cohort being viewed — no more global bleed
+    const baseWhere = and(
+      eq(resources.module_id, foundModule.id),
+      eq(resources.cohort_id, foundCohort.id),
+      input.type ? eq(resources.type, input.type) : undefined,
+    );
+
+    const rows = await db
+      .select({
+        id: resources.id,
+        title: resources.title,
+        type: resources.type,
+        url: resources.url,
+        cohortId: resources.cohort_id,
+        created_by: resources.created_by,
+      })
+      .from(resources)
+      .where(baseWhere);
+
+    return rows.map((r) => mapResourceRowToDto(r, foundModule.slug));
+  }),
 
   /**
    * resources.byId() -> Resource
@@ -557,57 +567,68 @@ export const resourcesRouter = createTRPCRouter({
    * - Deletes the row
    */
   delete: protectedProcedure
-    .input(z.object({ id: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      const viewer = await getViewer(ctx.subject.id);
-      assertAdmin(viewer);
+  .input(z.object({ id: z.string().min(1) }))
+  .mutation(async ({ ctx, input }) => {
+    const viewer = await getViewer(ctx.subject.id);
+    assertAdmin(viewer);
 
-      const resourceId = parseResourceIdOrThrow(input.id);
+    const resourceId = parseResourceIdOrThrow(input.id);
 
-      const [deleted] = await db
-        .delete(resources)
-        .where(eq(resources.id, resourceId))
-        .returning({
-          id: resources.id,
-          title: resources.title,
-          type: resources.type,
-          url: resources.url,
-          cohortId: resources.cohort_id,
-          created_by: resources.created_by,
-          moduleId: resources.module_id,
-        });
+    const [deleted] = await db
+      .delete(resources)
+      .where(eq(resources.id, resourceId))
+      .returning({
+        id: resources.id,
+        title: resources.title,
+        type: resources.type,
+        url: resources.url,
+        cohortId: resources.cohort_id,
+        created_by: resources.created_by,
+        moduleId: resources.module_id,
+      });
 
-      if (!deleted) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Resource not found",
-        });
+    if (!deleted) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
+    }
+
+    if (deleted.moduleId === null) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+    }
+
+    const [foundModule] = await db
+      .select({ slug: modules.slug })
+      .from(modules)
+      .where(eq(modules.id, deleted.moduleId))
+      .limit(1);
+
+    if (!foundModule) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
+    }
+
+    // Delete from storage if it's a Supabase-hosted file
+    // Skip "link" type since those are external URLs, not stored files
+    if (deleted.url && deleted.type !== "link") {
+      const path = extractStoragePath(deleted.url, "module-resources");
+      if (path) {
+        const { error } = await supabaseAdmin.storage
+          .from("module-resources")
+          .remove([path]);
+        if (error) {
+          console.error("Failed to delete resource file from storage:", error.message);
+        }
       }
+    }
 
-      if (deleted.moduleId === null) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
-      }
-
-      const [foundModule] = await db
-        .select({ slug: modules.slug })
-        .from(modules)
-        .where(eq(modules.id, deleted.moduleId))
-        .limit(1);
-
-      if (!foundModule) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
-      }
-
-      return mapResourceRowToDto(
-        {
-          id: deleted.id,
-          title: deleted.title,
-          type: deleted.type,
-          url: deleted.url,
-          cohortId: deleted.cohortId,
-          created_by: deleted.created_by,
-        },
-        foundModule.slug,
-      );
-    }),
+    return mapResourceRowToDto(
+      {
+        id: deleted.id,
+        title: deleted.title,
+        type: deleted.type,
+        url: deleted.url,
+        cohortId: deleted.cohortId,
+        created_by: deleted.created_by,
+      },
+      foundModule.slug,
+    );
+  }),
 });
