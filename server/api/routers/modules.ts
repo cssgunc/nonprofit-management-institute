@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, asc, and } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { db } from "@/server/db";
+import { compareModulesByOrder } from "@/utils/moduleOrder";
 import {
   modules,
   profiles,
@@ -90,7 +91,7 @@ async function requireCohortAccess(userId: string, cohortId: number) {
 }
 
 /**
- * List all modules for a cohort, ordered by module_index.
+ * List all modules for a cohort, ordered by the NPMI learning sequence.
  * Callers receive active status so the UI can show locked modules differently.
  */
 const list = protectedProcedure
@@ -130,7 +131,7 @@ const list = protectedProcedure
       is_active: row.is_active,
     }));
 
-    return result;
+    return result.sort(compareModulesByOrder);
   });
 
 /**

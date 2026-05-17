@@ -59,38 +59,38 @@ const MODULES: ModuleSeed[] = [
   {
     module_index: 1,
     slug: "module-1-introduction",
-    title: "Introduction",
+    title: "Orientation",
     description: "Overview and orientation",
   },
   {
     module_index: 2,
-    slug: "module-2-fundraising-basics",
-    title: "Fundraising Basics",
-    description: "Principles of fundraising",
+    slug: "module-3-governance",
+    title: "Board Governance",
+    description: "Board roles and governance",
   },
   {
     module_index: 3,
-    slug: "module-3-governance",
-    title: "Governance & Board",
-    description: "Board roles and governance",
+    slug: "module-5-programs",
+    title: "Program Design, Management, and Evaluation",
+    description: "Program design, management, and evaluation",
   },
   {
     module_index: 4,
     slug: "module-4-finance",
-    title: "Finance & Budgeting",
-    description: "Basic nonprofit finance",
+    title: "Strategic Planning",
+    description: "Strategic planning for nonprofit organizations",
   },
   {
     module_index: 5,
-    slug: "module-5-programs",
-    title: "Programs & Impact",
-    description: "Program design and measurement",
+    slug: "module-2-fundraising-basics",
+    title: "Fundraising & Financial Management",
+    description: "Fundraising and nonprofit financial management",
   },
   {
     module_index: 6,
     slug: "module-6-operations",
-    title: "Operations & HR",
-    description: "Operations, policies, and HR",
+    title: "Human Resources",
+    description: "Human resources, policies, and operations",
   },
 ];
 
@@ -99,10 +99,18 @@ const DUMMY_PROFILE_ID = "00000000-0000-0000-0000-000000000001";
 async function upsertModules() {
   for (const m of MODULES) {
     await client`
+      UPDATE modules
+      SET module_index = ${-m.module_index}
+      WHERE slug = ${m.slug}
+    `;
+  }
+
+  for (const m of MODULES) {
+    await client`
 			INSERT INTO modules (module_index, slug, title, description)
 			VALUES (${m.module_index}, ${m.slug}, ${m.title}, ${m.description ?? null})
-			ON CONFLICT (module_index) DO UPDATE
-			SET slug = EXCLUDED.slug,
+			ON CONFLICT (slug) DO UPDATE
+			SET module_index = EXCLUDED.module_index,
 					title = EXCLUDED.title,
 					description = EXCLUDED.description
 		`;

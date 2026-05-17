@@ -141,10 +141,15 @@ function useFileUpload(moduleSlug: string, cohortSlug: string) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const acceptFile = (file: File) => {
     if (!file.type.includes("pdf") && !file.name.endsWith(".pdf")) return;
+    if (file.size > 50 * 1024 * 1024) {
+      setFileError("File must be under 50MB.");
+      return;
+    }
     setSelectedFile(file);
   };
 
@@ -254,7 +259,7 @@ function useFileUpload(moduleSlug: string, cohortSlug: string) {
                 browse
               </span>
             </p>
-            <p className="mt-0.5 text-xs text-zinc-400">PDF files only</p>
+            <p className="mt-0.5 text-xs text-zinc-400">PDF only · max 50MB</p>
           </div>
         </div>
       )}
@@ -281,27 +286,27 @@ function useFileUpload(moduleSlug: string, cohortSlug: string) {
   return { selectedFile, upload, deleteOrphan, DropZone, uploadProgress };
 }
 
-// ---------------------------------------------------------------------------
-// Toast (lightweight inline, no extra dependency)
-// ---------------------------------------------------------------------------
+// // ---------------------------------------------------------------------------
+// // Toast (lightweight inline, no extra dependency)
+// // ---------------------------------------------------------------------------
 
-export function useToast() {
-  const [message, setMessage] = useState<string | null>(null);
+// export function useToast() {
+//   const [message, setMessage] = useState<string | null>(null);
 
-  const show = (msg: string) => {
-    setMessage(msg);
-    setTimeout(() => setMessage(null), 3000);
-  };
+//   const show = (msg: string) => {
+//     setMessage(msg);
+//     setTimeout(() => setMessage(null), 3000);
+//   };
 
-  const Toast = () =>
-    message ? (
-      <div className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-zinc-900 px-5 py-3 text-sm font-medium text-white shadow-lg">
-        {message}
-      </div>
-    ) : null;
+//   const Toast = () =>
+//     message ? (
+//       <div className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-zinc-900 px-5 py-3 text-sm font-medium text-white shadow-lg">
+//         {message}
+//       </div>
+//     ) : null;
 
-  return { show, Toast };
-}
+//   return { show, Toast };
+// }
 
 // ---------------------------------------------------------------------------
 // AddWebsiteModal

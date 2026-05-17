@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import AuthPageShell from "@/components/AuthPageShell";
+import { ArrowLeft, KeyRound, Loader2 } from "lucide-react";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -53,55 +55,61 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="auth-brand-bg flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl text-black font-bold text-center mb-2">
-          Set New Password
-        </h1>
-
-        <form onSubmit={handleChangePassword} className="space-y-4">
+    <AuthPageShell title="Set new password">
+      <form onSubmit={handleChangePassword} className="space-y-5">
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
+            New password
+          </label>
           <input
             type="password"
-            placeholder="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 
-                       text-black placeholder-black caret-black
-                       focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+            className="w-full rounded-xl border border-[rgba(40,132,164,0.18)] bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
           />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-              loading
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Updating..." : "Update Password"}
-          </button>
-        </form>
+        </div>
 
         {error && (
-          <div className="mt-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="mt-4 p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             {message}
           </div>
         )}
 
-        <div className="mt-6 text-center text-sm">
-          <Link href={profileHref} className="text-blue-600 hover:underline">
-            Cancel
-          </Link>
-        </div>
-      </div>
-    </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[var(--brand-teal)] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(0,138,171,0.18)] transition hover:bg-[#007997] hover:shadow-[0_14px_28px_rgba(0,138,171,0.24)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Updating...
+            </>
+          ) : (
+            <>
+              <KeyRound className="h-4 w-4" />
+              Update password
+            </>
+          )}
+        </button>
+      </form>
+
+      <p className="mt-7 text-center text-sm text-zinc-600">
+        <Link
+          href={profileHref}
+          className="inline-flex items-center justify-center gap-2 font-semibold text-[var(--brand-teal)] transition hover:text-[#007997]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Cancel
+        </Link>
+      </p>
+    </AuthPageShell>
   );
 }

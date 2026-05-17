@@ -42,9 +42,19 @@ export default function DashboardPage() {
             </div>
             <div className="grid gap-7 px-5 py-6 md:px-7 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center lg:px-8 lg:py-8">
               <div className="max-w-3xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--brand-plum)]">
-                  Welcome back, {firstName}
-                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase tracking-[0.22em]">
+                  <span className="text-[var(--brand-plum)]">
+                    Welcome, {firstName}
+                  </span>
+                  {cohortSlug && (
+                    <>
+                      <span className="hidden h-1.5 w-1.5 rounded-full bg-[var(--brand-lime)] sm:inline-block" />
+                      <span className="text-[var(--brand-teal)]">
+                        Cohort: {cohortSlug}
+                      </span>
+                    </>
+                  )}
+                </div>
                 <h1 className="mt-3 text-[2.25rem] font-semibold tracking-tight text-[#1f2b34] md:text-[2.75rem]">
                   Participant Dashboard
                 </h1>
