@@ -370,82 +370,84 @@ export const cohortsApiRouter = createTRPCRouter({
     }),
 
   deleteCohort: protectedProcedure
-  .input(z.object({ id: z.number() }))
-  .mutation(async ({ ctx, input }) => {
-    await requireAdmin(ctx.subject.id);
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await requireAdmin(ctx.subject.id);
 
-    // Fetch the cohort slug for storage cleanup
-    const [cohort] = await db
-      .select({ slug: cohorts.slug })
-      .from(cohorts)
-      .where(eq(cohorts.id, input.id))
-      .limit(1);
+      // Fetch the cohort slug for storage cleanup
+      const [cohort] = await db
+        .select({ slug: cohorts.slug })
+        .from(cohorts)
+        .where(eq(cohorts.id, input.id))
+        .limit(1);
 
-    if (!cohort) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Cohort not found" });
-    }
-
-    // 1. Collect file-backed resource URLs before deleting rows
-    const cohortResources = await db
-      .select({ url: resources.url, type: resources.type })
-      .from(resources)
-      .where(eq(resources.cohort_id, input.id));
-
-    const urlPaths = cohortResources
-      .filter((r) => r.url && r.type !== "link")
-      .map((r) => {
-        const marker = `/storage/v1/object/public/module-resources/`;
-        const idx = r.url!.indexOf(marker);
-        return idx !== -1
-          ? decodeURIComponent(r.url!.slice(idx + marker.length))
-          : null;
-      })
-      .filter((p): p is string => p !== null);
-
-    // 2. Delete known files from storage
-    if (urlPaths.length > 0) {
-      const { error } = await supabaseAdmin.storage
-        .from("module-resources")
-        .remove(urlPaths);
-      if (error) {
-        console.error("Failed to delete resource files from storage:", error.message);
+      if (!cohort) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Cohort not found" });
       }
-    }
 
-    // 3. Sweep the cohort's storage folder for any orphaned files
-    // (files uploaded to storage but whose DB row was never created or already deleted)
-    if (cohort.slug) {
-      const sweepFolder = async (folderPath: string) => {
-        const { data: items } = await supabaseAdmin.storage
+      // 1. Collect file-backed resource URLs before deleting rows
+      const cohortResources = await db
+        .select({ url: resources.url, type: resources.type })
+        .from(resources)
+        .where(eq(resources.cohort_id, input.id));
+
+      const urlPaths = cohortResources
+        .filter((r) => r.url && r.type !== "link")
+        .map((r) => {
+          const marker = `/storage/v1/object/public/module-resources/`;
+          const idx = r.url!.indexOf(marker);
+          return idx !== -1
+            ? decodeURIComponent(r.url!.slice(idx + marker.length))
+            : null;
+        })
+        .filter((p): p is string => p !== null);
+
+      // 2. Delete known files from storage
+      if (urlPaths.length > 0) {
+        const { error } = await supabaseAdmin.storage
           .from("module-resources")
-          .list(folderPath, { limit: 1000 });
-
-        if (!items || items.length === 0) return;
-
-        const filePaths: string[] = [];
-        for (const item of items) {
-          const fullPath = `${folderPath}/${item.name}`;
-          if (item.metadata) {
-            // It's a file
-            filePaths.push(fullPath);
-          } else {
-            // It's a subfolder — recurse
-            await sweepFolder(fullPath);
-          }
+          .remove(urlPaths);
+        if (error) {
+          console.error(
+            "Failed to delete resource files from storage:",
+            error.message,
+          );
         }
+      }
 
-        if (filePaths.length > 0) {
-          await supabaseAdmin.storage
+      // 3. Sweep the cohort's storage folder for any orphaned files
+      // (files uploaded to storage but whose DB row was never created or already deleted)
+      if (cohort.slug) {
+        const sweepFolder = async (folderPath: string) => {
+          const { data: items } = await supabaseAdmin.storage
             .from("module-resources")
-            .remove(filePaths);
-        }
-      };
+            .list(folderPath, { limit: 1000 });
 
-      await sweepFolder(cohort.slug);
-    }
+          if (!items || items.length === 0) return;
 
-    
-    const studentProfiles = await db
+          const filePaths: string[] = [];
+          for (const item of items) {
+            const fullPath = `${folderPath}/${item.name}`;
+            if (item.metadata) {
+              // It's a file
+              filePaths.push(fullPath);
+            } else {
+              // It's a subfolder — recurse
+              await sweepFolder(fullPath);
+            }
+          }
+
+          if (filePaths.length > 0) {
+            await supabaseAdmin.storage
+              .from("module-resources")
+              .remove(filePaths);
+          }
+        };
+
+        await sweepFolder(cohort.slug);
+      }
+
+      const studentProfiles = await db
         .select({ avatarUrl: profiles.avatarUrl, role: profiles.role })
         .from(cohort_memberships)
         .innerJoin(profiles, eq(profiles.id, cohort_memberships.profiles_id))
@@ -453,52 +455,66 @@ export const cohortsApiRouter = createTRPCRouter({
           and(
             eq(cohort_memberships.cohort_id, input.id),
             eq(profiles.role, "student"),
-          )
+          ),
         );
 
       console.log("Student profiles found:", studentProfiles.length);
-      console.log("Avatar URLs:", studentProfiles.map((p) => p.avatarUrl));
+      console.log(
+        "Avatar URLs:",
+        studentProfiles.map((p) => p.avatarUrl),
+      );
 
       const avatarPaths = studentProfiles
-  .filter((p) => p.avatarUrl !== null)
-  .map((p) => {
-    const url = p.avatarUrl!;
-    const marker = `/storage/v1/object/public/avatars/`;
-    const idx = url.indexOf(marker);
-    // If it's a full URL, extract the path; otherwise use the value as-is
-    return idx !== -1
-      ? decodeURIComponent(url.slice(idx + marker.length))
-      : url;
-  });
+        .filter((p) => p.avatarUrl !== null)
+        .map((p) => {
+          const url = p.avatarUrl!;
+          const marker = `/storage/v1/object/public/avatars/`;
+          const idx = url.indexOf(marker);
+          // If it's a full URL, extract the path; otherwise use the value as-is
+          return idx !== -1
+            ? decodeURIComponent(url.slice(idx + marker.length))
+            : url;
+        });
 
-console.log("Final avatar paths to delete:", avatarPaths);
+      console.log("Final avatar paths to delete:", avatarPaths);
 
-if (avatarPaths.length > 0) {
-  const { error } = await supabaseAdmin.storage
-    .from("avatars")
-    .remove(avatarPaths);
-  if (error) {
-    console.error("Failed to delete student avatars from storage:", error.message);
-  }
-}
-    
+      if (avatarPaths.length > 0) {
+        const { error } = await supabaseAdmin.storage
+          .from("avatars")
+          .remove(avatarPaths);
+        if (error) {
+          console.error(
+            "Failed to delete student avatars from storage:",
+            error.message,
+          );
+        }
+      }
 
-    // 4. Delete DB rows in dependency order
-    const posts = await db
-      .select({ id: discussions_post.id })
-      .from(discussions_post)
-      .where(eq(discussions_post.cohort_id, input.id));
+      // 4. Delete DB rows in dependency order
+      const posts = await db
+        .select({ id: discussions_post.id })
+        .from(discussions_post)
+        .where(eq(discussions_post.cohort_id, input.id));
 
-    if (posts.length > 0) {
+      if (posts.length > 0) {
+        await db.delete(discussion_likes).where(
+          inArray(
+            discussion_likes.post_id,
+            posts.map((p) => p.id),
+          ),
+        );
+      }
+
       await db
-        .delete(discussion_likes)
-        .where(inArray(discussion_likes.post_id, posts.map((p) => p.id)));
-    }
-
-    await db.delete(discussions_post).where(eq(discussions_post.cohort_id, input.id));
-    await db.delete(resources).where(eq(resources.cohort_id, input.id));
-    await db.delete(cohort_memberships).where(eq(cohort_memberships.cohort_id, input.id));
-    await db.delete(cohort_modules).where(eq(cohort_modules.cohort_id, input.id));
-    await db.delete(cohorts).where(eq(cohorts.id, input.id));
-  }),
+        .delete(discussions_post)
+        .where(eq(discussions_post.cohort_id, input.id));
+      await db.delete(resources).where(eq(resources.cohort_id, input.id));
+      await db
+        .delete(cohort_memberships)
+        .where(eq(cohort_memberships.cohort_id, input.id));
+      await db
+        .delete(cohort_modules)
+        .where(eq(cohort_modules.cohort_id, input.id));
+      await db.delete(cohorts).where(eq(cohorts.id, input.id));
+    }),
 });
