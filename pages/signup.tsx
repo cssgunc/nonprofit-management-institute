@@ -28,17 +28,9 @@ export default function SignUp() {
     setMessage("");
     setLoading(true);
 
-    const emailRedirectTo =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/login`
-        : `${process.env.NEXT_PUBLIC_SITE_URL}/login`;
-
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo,
-      },
     });
 
     if (error) {
@@ -46,9 +38,7 @@ export default function SignUp() {
       setLoading(false);
       return;
     } else {
-      setMessage(
-        "Please check your inbox and follow the confirmation link to complete your account setup.",
-      );
+      setMessage("Account created successfully.");
       setLoading(false);
     }
 
@@ -133,7 +123,13 @@ export default function SignUp() {
 
         {message && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {message}
+            {message}{" "}
+            <Link
+              href="/login"
+              className="font-semibold underline decoration-emerald-600 underline-offset-2 transition hover:text-emerald-800"
+            >
+              Click here to log in.
+            </Link>
           </div>
         )}
 
