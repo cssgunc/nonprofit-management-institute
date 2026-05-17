@@ -9,6 +9,10 @@ type CreatePostModalProps = {
   cohortSlug: string;
   moduleId?: number;
   cohortId?: number;
+  parentPostId?: number | null;
+  threadPostId?: number;
+  replyToName?: string;
+  onCreated?: () => void | Promise<void>;
 };
 
 export default function CreatePostModal({
@@ -18,9 +22,14 @@ export default function CreatePostModal({
   cohortSlug,
   moduleId,
   cohortId: cohortId,
+  parentPostId = null,
+  threadPostId,
+  replyToName,
+  onCreated,
 }: CreatePostModalProps) {
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const isReply = parentPostId != null;
 
   const utils = api.useUtils();
 
@@ -38,6 +47,15 @@ export default function CreatePostModal({
         });
       }
 
+      if (threadPostId) {
+        await utils.discussions.getThread.invalidate({
+          postId: threadPostId,
+          cohortSlug,
+        });
+      }
+
+      await onCreated?.();
+
       setBody("");
       setError(null);
       onClose();
@@ -50,7 +68,11 @@ export default function CreatePostModal({
   const handlePost = () => {
     setError(null);
     if (!body.trim()) {
-      setError("Post content cannot be empty.");
+      setError(
+        isReply
+          ? "Reply content cannot be empty."
+          : "Post content cannot be empty.",
+      );
       return;
     }
 
@@ -58,7 +80,7 @@ export default function CreatePostModal({
       body: body.trim(),
       module_id: moduleId,
       cohort_id: cohortId,
-      parent_post_id: null,
+      parent_post_id: parentPostId,
     });
   };
 
@@ -76,7 +98,11 @@ export default function CreatePostModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-[rgba(40,132,164,0.1)] bg-white px-6 py-4">
-          <h2 className="text-lg font-semibold text-zinc-900">Make a Post</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">
+            {isReply
+              ? `Reply${replyToName ? ` to ${replyToName}` : ""}`
+              : "Make a Post"}
+          </h2>
           <button
             onClick={onClose}
             aria-label="Close"
@@ -90,7 +116,11 @@ export default function CreatePostModal({
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Share your thoughts with the cohort..."
+            placeholder={
+              isReply
+                ? "Write your reply..."
+                : "Share your thoughts with the cohort..."
+            }
             className="min-h-[140px] w-full resize-none rounded-xl border border-[rgba(40,132,164,0.18)] bg-white px-4 py-3 text-sm leading-relaxed text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-[var(--brand-teal)] focus:ring-2 focus:ring-[rgba(0,138,171,0.16)]"
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -114,12 +144,12 @@ export default function CreatePostModal({
             {createPost.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Posting...
+                {isReply ? "Replying..." : "Posting..."}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" />
-                Post
+                {isReply ? "Reply" : "Post"}
               </>
             )}
           </button>

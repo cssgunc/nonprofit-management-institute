@@ -68,7 +68,7 @@ export default function SidebarModules({
     setActive(activeId);
   }, [activeId]);
 
-  const moduleCardImage = getModuleCardImage(moduleQuery.data?.module_index);
+  const moduleCardImage = getModuleCardImage(moduleQuery.data);
 
   return (
     <aside

@@ -1,38 +1,47 @@
+import { getModuleOrderKey, type ModuleOrderKey } from "@/utils/moduleOrder";
+
 export const MODULE_CARD_IMAGES: Array<{
-  moduleIndex: number;
+  moduleKey: ModuleOrderKey;
   imageSrc: string;
   imageClassName?: string;
 }> = [
   {
-    moduleIndex: 1,
+    moduleKey: "orientation",
     imageSrc: "/assets/orientation.png",
     imageClassName: "scale-[1.03]",
   },
   {
-    moduleIndex: 2,
-    imageSrc: "/assets/fundraising.png",
-  },
-  {
-    moduleIndex: 3,
+    moduleKey: "board-governance",
     imageSrc: "/assets/board_governance.png",
     imageClassName: "scale-[1.03]",
   },
   {
-    moduleIndex: 4,
+    moduleKey: "program-design-management-evaluation",
+    imageSrc: "/assets/program_design.png",
+  },
+  {
+    moduleKey: "strategic-planning",
     imageSrc: "/assets/strategic_planning.png",
     imageClassName: "translate-y-3 scale-[1.12]",
   },
   {
-    moduleIndex: 5,
-    imageSrc: "/assets/program_design.png",
+    moduleKey: "fundraising-financial-management",
+    imageSrc: "/assets/fundraising.png",
   },
   {
-    moduleIndex: 6,
+    moduleKey: "human-resources",
     imageSrc: "/assets/human_resources.png",
     imageClassName: "translate-y-5 scale-[1.12]",
   },
 ];
 
-export function getModuleCardImage(moduleIndex?: number | null) {
-  return MODULE_CARD_IMAGES.find((image) => image.moduleIndex === moduleIndex);
+type ModuleCardImageInput = {
+  module_index?: number | null;
+  slug?: string | null;
+  title?: string | null;
+};
+
+export function getModuleCardImage(module?: ModuleCardImageInput | null) {
+  const moduleKey = getModuleOrderKey(module);
+  return MODULE_CARD_IMAGES.find((image) => image.moduleKey === moduleKey);
 }

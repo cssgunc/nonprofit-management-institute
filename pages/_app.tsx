@@ -1,6 +1,7 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import Header from "@/components/header";
+import AppFooter from "@/components/AppFooter";
 import { useRouter } from "next/router";
 import { api } from "@/utils/trpc/api";
 import { Toaster } from "sonner";
@@ -14,6 +15,7 @@ function App({ Component, pageProps }: AppProps) {
     "/resetpassword",
     "/changepassword",
     "/cohort-access",
+    "/signout",
   ]);
 
   const shouldShowHeader = !routesWithoutHeader.has(router.pathname);
@@ -35,17 +37,20 @@ function App({ Component, pageProps }: AppProps) {
     <div
       className={
         shouldUseMutedBackground
-          ? `app-shell-bg min-h-screen app-muted-bg ${
+          ? `app-shell-bg flex min-h-screen flex-col app-muted-bg ${
               shouldHideTealPanel ? "app-shell-bg-no-teal" : ""
             }`
-          : ""
+          : "flex min-h-screen flex-col"
       }
     >
       {shouldUseMutedBackground ? (
         <span aria-hidden="true" className="app-shell-panel" />
       ) : null}
       {shouldShowHeader ? <Header /> : null}
-      <Component {...pageProps} />
+      <div className="flex-1">
+        <Component {...pageProps} />
+      </div>
+      <AppFooter />
       <Toaster position="bottom-right" />
     </div>
   );

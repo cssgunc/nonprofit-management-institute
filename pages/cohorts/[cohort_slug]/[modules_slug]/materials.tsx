@@ -7,7 +7,6 @@ import {
   AddWebsiteModal,
   AddDocumentModal,
   AddHandoutModal,
-  useToast,
 } from "@/components/AddResourceModals";
 import { api } from "@/utils/trpc/api";
 import { TRPCClientError } from "@trpc/client";
@@ -15,12 +14,12 @@ import { AlertCircle, Lock, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type OpenModal = "website" | "document" | "handout" | null;
 
 export default function ModuleMaterials() {
   const router = useRouter();
-  const { show: showToast, Toast } = useToast();
 
   // 1. Fetch user profile and determine admin status (matching Dashboard logic)
   const profileQuery = api.profiles.me.useQuery(undefined, {
@@ -301,24 +300,23 @@ export default function ModuleMaterials() {
       {isAdmin && openModal === "website" && (
         <AddWebsiteModal
           {...modalProps}
-          onSuccess={() => showToast("Website added successfully.")}
+          onSuccess={() => toast.success("Website added.")}
         />
       )}
       {isAdmin && openModal === "document" && (
         <AddDocumentModal
           {...modalProps}
-          onSuccess={() => showToast("Document added successfully.")}
+          onSuccess={() => toast.success("Document added.")}
         />
       )}
       {isAdmin && openModal === "handout" && (
         <AddHandoutModal
           {...modalProps}
-          onSuccess={() => showToast("Handout added successfully.")}
+          onSuccess={() => toast.success("Handout added.")}
         />
       )}
 
       {/* Success toast */}
-      <Toast />
     </CohortAccessGuard>
   );
 }
