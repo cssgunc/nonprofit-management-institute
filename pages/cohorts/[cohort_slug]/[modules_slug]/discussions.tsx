@@ -472,6 +472,8 @@ export default function ModuleDiscussions() {
       ? moduleQuery.error.data?.code
       : undefined;
 
+  const visibleThreads = threads.filter((t) => !t.is_deleted);
+
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
       <div className="flex min-h-[calc(100vh-7rem)] w-full items-stretch">
@@ -556,13 +558,13 @@ export default function ModuleDiscussions() {
               <div className="rounded-xl border border-red-200 bg-white p-6 text-sm text-red-600">
                 Failed to load discussions for this module.
               </div>
-            ) : threads.length === 0 ? (
+            ) : visibleThreads.length === 0 ? (
               <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center text-zinc-500">
                 No discussion threads have been posted for this module yet.
               </div>
             ) : (
               <div className="space-y-5">
-                {threads.map((thread: ThreadListItem) => (
+                {visibleThreads.map((thread: ThreadListItem) => (
                   <ThreadPreview
                     key={thread.id}
                     thread={thread}
