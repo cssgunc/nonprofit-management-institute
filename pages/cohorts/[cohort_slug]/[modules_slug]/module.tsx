@@ -84,7 +84,7 @@ export default function ModulePage() {
 
   const { data: recordings, isLoading: recordingsLoading } =
     api.resources.listByModuleSlug.useQuery(
-      { moduleSlug: slug, type: "recording" },
+      { moduleSlug: slug, cohortSlug, type: "recording" },
       { enabled: !!slug && !!cohortSlug, retry: false },
     );
 
@@ -146,6 +146,7 @@ export default function ModulePage() {
         utils.modules.bySlug.invalidate({ slug, cohortSlug }),
         utils.resources.listByModuleSlug.invalidate({
           moduleSlug: slug,
+          cohortSlug,
           type: "recording",
         }),
       ]);

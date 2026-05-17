@@ -17,10 +17,11 @@ export default function Header() {
 
   const cohortSlug = typeof cohort_slug === "string" ? cohort_slug : "";
   const isAdmin = profileQuery.data?.role === "admin";
-  const isAdminUnscoped =
-    !cohortSlug && (isAdmin || router.pathname.startsWith("/admin"));
+  const isAdminRoute = router.pathname.startsWith("/admin");
+  const isAdminUnscoped = !cohortSlug && (isAdmin || isAdminRoute);
   const basePath = cohortSlug ? `/cohorts/${cohortSlug}` : "";
-  const profileHref = cohortSlug ? `${basePath}/profile` : "/";
+  const profileHref = cohortSlug ? `${basePath}/profile` : null;
+  const adminHref = isAdmin && !isAdminRoute ? "/admin/cohorts" : null;
   const logoutHref = cohortSlug
     ? `/signout?cohort_slug=${encodeURIComponent(cohortSlug)}`
     : "/signout";
@@ -45,10 +46,7 @@ export default function Header() {
         { label: "Cohort", href: `${basePath}/contact` },
       ]
     : [];
-  const navLinks = [
-    ...cohortNavLinks,
-    ...(isAdmin ? [{ label: "All Cohorts", href: "/admin/cohorts" }] : []),
-  ];
+  const navLinks = cohortNavLinks;
 
   const currentPath = router.asPath.split("?")[0] ?? "";
   const discussionModulePattern = new RegExp(
@@ -71,10 +69,6 @@ export default function Header() {
 
     if (label === "Cohort") {
       return currentPath.startsWith(`${basePath}/contact`);
-    }
-
-    if (label === "All Cohorts") {
-      return currentPath.startsWith("/admin/cohorts");
     }
 
     return false;
@@ -176,6 +170,7 @@ export default function Header() {
 
         <ProfileMenu
           profileHref={profileHref}
+          adminHref={adminHref}
           logoutHref={logoutHref}
           initials={initials || "?"}
           avatarUrl={avatarUrl}

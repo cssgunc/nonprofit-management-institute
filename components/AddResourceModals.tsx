@@ -335,6 +335,7 @@ export function AddWebsiteModal({
     onSuccess: async () => {
       await utils.resources.listByModuleSlug.invalidate({
         moduleSlug,
+        cohortSlug,
         type: "link",
       });
       onSuccess();
@@ -426,6 +427,7 @@ export function AddDocumentModal({
     onSuccess: async () => {
       await utils.resources.listByModuleSlug.invalidate({
         moduleSlug,
+        cohortSlug,
         type: "document",
       });
       onSuccess();
@@ -521,6 +523,7 @@ export function AddHandoutModal({
     onSuccess: async () => {
       await utils.resources.listByModuleSlug.invalidate({
         moduleSlug,
+        cohortSlug,
         type: "handout",
       });
       onSuccess();
