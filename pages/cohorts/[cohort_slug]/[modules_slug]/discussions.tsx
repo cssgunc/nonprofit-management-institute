@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import CreatePostModal from "@/components/CreatePostModal";
+import DeletePostModal from "@/components/DeletePostModal";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -141,6 +142,7 @@ function ThreadPreview({
   isAdmin,
   expanded,
   onToggleReplies,
+  onReply,
   resolveAvatarUrl,
   onEdit,
   onDelete,
@@ -155,6 +157,7 @@ function ThreadPreview({
   isAdmin: boolean;
   expanded: boolean;
   onToggleReplies: () => void;
+  onReply: (post: DiscussionUiPost, threadId: number) => void;
   resolveAvatarUrl: (avatarPath: string | null) => string | null;
   onEdit: (id: string | number, newContent: string) => void;
   onDelete: (id: string | number) => void;
@@ -203,8 +206,10 @@ function ThreadPreview({
     return (
       <DiscussionPost
         post={topLevelPost}
+        repliesOpen={expanded}
         canManage={isAdmin || thread.author_id === currentUserId}
-        onReply={onToggleReplies}
+        onReply={(post) => onReply(post, thread.id)}
+        onToggleReplies={onToggleReplies}
         onToggleLike={onToggleLike}
         isLikePending={isLikePending}
         onEdit={onEdit}
@@ -245,6 +250,7 @@ function ThreadPreview({
       post={reply}
       isReply
       canManage={reply.canManage}
+      onReply={(post) => onReply(post, thread.id)}
       onToggleLike={onToggleLike}
       isLikePending={isLikePending}
       onEdit={onEdit}
@@ -261,8 +267,10 @@ function ThreadPreview({
         replyCount: countReplies(threadQuery.data),
         replies: [],
       }}
+      repliesOpen={expanded}
       canManage={mappedThread.canManage}
-      onReply={onToggleReplies}
+      onReply={(post) => onReply(post, thread.id)}
+      onToggleReplies={onToggleReplies}
       onToggleLike={onToggleLike}
       isLikePending={isLikePending}
       onEdit={onEdit}
@@ -289,6 +297,11 @@ export default function ModuleDiscussions() {
   >("modules");
   const [expandedThreadId, setExpandedThreadId] = useState<number | null>(null);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<{
+    post: DiscussionUiPost;
+    threadId: number;
+  } | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const expandedThreadIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -365,6 +378,7 @@ export default function ModuleDiscussions() {
           cohortSlug,
         });
       }
+      setDeleteTargetId(null);
     },
   });
 
@@ -413,7 +427,15 @@ export default function ModuleDiscussions() {
   };
   const handleDelete = (id: string | number) => {
     if (typeof id !== "number") return;
-    deletePostMutation.mutate({ post_id: id });
+    setDeleteTargetId(id);
+  };
+  const handleConfirmDelete = () => {
+    if (deleteTargetId === null) return;
+    deletePostMutation.mutate({ post_id: deleteTargetId });
+  };
+  const handleReply = (post: DiscussionUiPost, threadId: number) => {
+    if (typeof post.id !== "number") return;
+    setReplyTarget({ post, threadId });
   };
   const applyLikeOptimistic = (postId: number, nextLiked: boolean) => {
     apiUtils.discussions.listThreadsByModuleSlug.setData(
@@ -510,6 +532,34 @@ export default function ModuleDiscussions() {
               cohortId={moduleQuery.data?.cohort_id}
             />
 
+            <CreatePostModal
+              open={replyTarget !== null}
+              onClose={() => setReplyTarget(null)}
+              moduleSlug={moduleSlug}
+              cohortSlug={cohortSlug}
+              moduleId={moduleQuery.data?.id}
+              cohortId={moduleQuery.data?.cohort_id}
+              parentPostId={
+                typeof replyTarget?.post.id === "number"
+                  ? replyTarget.post.id
+                  : null
+              }
+              threadPostId={replyTarget?.threadId}
+              replyToName={replyTarget?.post.author.name}
+              onCreated={() => {
+                if (replyTarget) {
+                  setExpandedThreadId(replyTarget.threadId);
+                }
+              }}
+            />
+
+            <DeletePostModal
+              open={deleteTargetId !== null}
+              onClose={() => setDeleteTargetId(null)}
+              onConfirm={handleConfirmDelete}
+              isDeleting={deletePostMutation.isPending}
+            />
+
             {moduleQuery.isLoading ? (
               <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500">
                 Loading module...
@@ -573,6 +623,7 @@ export default function ModuleDiscussions() {
                     onToggleLike={handleToggleLike}
                     isLikePending={isLikePending}
                     getDesiredLike={getDesiredLike}
+                    onReply={handleReply}
                     onToggleReplies={() =>
                       setExpandedThreadId((current) =>
                         current === thread.id ? null : thread.id,

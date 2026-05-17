@@ -15,12 +15,16 @@ export default function Header() {
     retry: false,
   });
 
-  const basePath = cohort_slug ? `/cohorts/${cohort_slug as string}` : "";
-  const profileHref = cohort_slug ? `${basePath}/profile` : "/";
-  const logoutHref = cohort_slug
-    ? `/signout?cohort_slug=${encodeURIComponent(cohort_slug as string)}`
+  const cohortSlug = typeof cohort_slug === "string" ? cohort_slug : "";
+  const isAdmin = profileQuery.data?.role === "admin";
+  const isAdminUnscoped =
+    !cohortSlug && (isAdmin || router.pathname.startsWith("/admin"));
+  const basePath = cohortSlug ? `/cohorts/${cohortSlug}` : "";
+  const profileHref = cohortSlug ? `${basePath}/profile` : "/";
+  const logoutHref = cohortSlug
+    ? `/signout?cohort_slug=${encodeURIComponent(cohortSlug)}`
     : "/signout";
-  const logoHref = cohort_slug ? `${basePath}/dashboard` : "/";
+  const logoHref = cohortSlug ? `${basePath}/dashboard` : "/";
   const displayName = profileQuery.data?.full_name?.trim() ?? "";
   const initials = displayName
     .split(/\s+/)
@@ -34,13 +38,17 @@ export default function Header() {
         .getPublicUrl(profileQuery.data.avatar_url).data.publicUrl
     : undefined;
 
-  const navLinks = cohort_slug
+  const cohortNavLinks = cohortSlug
     ? [
         { label: "Dashboard", href: `${basePath}/dashboard` },
         { label: "Discussion", href: `${basePath}/discussion` },
         { label: "Cohort", href: `${basePath}/contact` },
       ]
     : [];
+  const navLinks = [
+    ...cohortNavLinks,
+    ...(isAdmin ? [{ label: "All Cohorts", href: "/admin/cohorts" }] : []),
+  ];
 
   const currentPath = router.asPath.split("?")[0] ?? "";
   const discussionModulePattern = new RegExp(
@@ -65,32 +73,51 @@ export default function Header() {
       return currentPath.startsWith(`${basePath}/contact`);
     }
 
+    if (label === "All Cohorts") {
+      return currentPath.startsWith("/admin/cohorts");
+    }
+
     return false;
   };
+
+  const logoContent = (
+    <>
+      <Image
+        src="/assets/NCCNonProfit_LOGO.png"
+        alt="Center for Nonprofits Logo"
+        width={200}
+        height={80}
+        className="h-14 w-auto md:h-20"
+      />
+      <span className="h-10 w-px bg-[rgba(94,13,139,0.18)] md:h-14" />
+      <Image
+        src="/assets/npmi_logo.png"
+        alt="Nonprofit Management Institute Logo"
+        width={300}
+        height={200}
+        className="h-20 w-auto max-w-[145px] object-contain md:h-32 md:max-w-[235px] xl:h-36 xl:max-w-[265px]"
+      />
+    </>
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--line-soft)] bg-[rgba(252,250,247,0.92)] shadow-[0_8px_28px_rgba(61,52,45,0.06)] backdrop-blur-md">
       <div className="mx-auto flex h-[7rem] items-center px-4 md:px-8 xl:px-12">
-        <Link
-          href={logoHref}
-          className="motion-fade hover-bob flex shrink-0 items-center gap-3 md:gap-4"
-        >
-          <Image
-            src="/assets/NCCNonProfit_LOGO.png"
-            alt="Center for Nonprofits Logo"
-            width={200}
-            height={80}
-            className="h-14 w-auto md:h-20"
-          />
-          <span className="h-10 w-px bg-[rgba(94,13,139,0.18)] md:h-14" />
-          <Image
-            src="/assets/npmi_logo.png"
-            alt="Nonprofit Management Institute Logo"
-            width={300}
-            height={200}
-            className="h-20 w-auto max-w-[145px] object-contain md:h-32 md:max-w-[235px] xl:h-36 xl:max-w-[265px]"
-          />
-        </Link>
+        {isAdminUnscoped ? (
+          <div
+            aria-label="Center for Nonprofits and Nonprofit Management Institute"
+            className="motion-fade flex shrink-0 cursor-default items-center gap-3 md:gap-4"
+          >
+            {logoContent}
+          </div>
+        ) : (
+          <Link
+            href={logoHref}
+            className="motion-fade hover-bob flex shrink-0 items-center gap-3 md:gap-4"
+          >
+            {logoContent}
+          </Link>
+        )}
 
         <nav className="motion-fade motion-delay-1 ml-auto hidden items-center gap-8 lg:flex xl:gap-12">
           {navLinks.map((link) => (
