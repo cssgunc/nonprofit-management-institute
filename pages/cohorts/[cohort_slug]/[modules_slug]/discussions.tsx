@@ -34,10 +34,9 @@ type DiscussionRenderablePost = DiscussionUiPost & {
 };
 
 function countReplies(node: ThreadNode): number {
-  return node.children.reduce(
-    (total, child) => total + 1 + countReplies(child),
-    0,
-  );
+  return node.children
+    .filter((child) => !child.is_deleted)
+    .reduce((total, child) => total + 1 + countReplies(child), 0);
 }
 
 function getAuthorProfile(
@@ -199,6 +198,8 @@ function ThreadPreview({
     getDesiredLike(thread.id),
   );
 
+  if (thread.is_deleted) return null;
+
   topLevelPost.hasLiked = topLevelLikeOverride.hasLiked;
   topLevelPost.likeCount = topLevelLikeOverride.likeCount;
 
@@ -244,21 +245,23 @@ function ThreadPreview({
     getDesiredLike,
   );
 
-  const renderReply = (reply: DiscussionRenderablePost) => (
-    <DiscussionPost
-      key={`reply-${reply.id}`}
-      post={reply}
-      isReply
-      canManage={reply.canManage}
-      onReply={(post) => onReply(post, thread.id)}
-      onToggleLike={onToggleLike}
-      isLikePending={isLikePending}
-      onEdit={onEdit}
-      onDelete={onDelete}
-    >
-      {reply.replies.map(renderReply)}
-    </DiscussionPost>
-  );
+  const renderReply = (reply: DiscussionRenderablePost): React.ReactNode => {
+    if (reply.isDeleted) return null;
+    return (
+      <DiscussionPost
+        key={`reply-${reply.id}`}
+        post={reply}
+        isReply
+        canManage={reply.canManage}
+        onToggleLike={onToggleLike}
+        isLikePending={isLikePending}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      >
+        {reply.replies.map(renderReply)}
+      </DiscussionPost>
+    );
+  };
 
   return (
     <DiscussionPost
@@ -490,6 +493,8 @@ export default function ModuleDiscussions() {
       ? moduleQuery.error.data?.code
       : undefined;
 
+  const visibleThreads = threads.filter((t) => !t.is_deleted);
+
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
       <div className="flex min-h-[calc(100vh-7rem)] w-full items-stretch">
@@ -602,13 +607,13 @@ export default function ModuleDiscussions() {
               <div className="rounded-xl border border-red-200 bg-white p-6 text-sm text-red-600">
                 Failed to load discussions for this module.
               </div>
-            ) : threads.length === 0 ? (
+            ) : visibleThreads.length === 0 ? (
               <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center text-zinc-500">
                 No discussion threads have been posted for this module yet.
               </div>
             ) : (
               <div className="space-y-5">
-                {threads.map((thread: ThreadListItem) => (
+                {visibleThreads.map((thread: ThreadListItem) => (
                   <ThreadPreview
                     key={thread.id}
                     thread={thread}
