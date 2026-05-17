@@ -122,7 +122,7 @@ export default function Login() {
   };
 
   return (
-    <AuthPageShell title="Welcome back">
+    <AuthPageShell title="Login">
       <form onSubmit={handleLogin} className="space-y-5">
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-zinc-700">

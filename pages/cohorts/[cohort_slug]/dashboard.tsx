@@ -44,7 +44,7 @@ export default function DashboardPage() {
               <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase tracking-[0.22em]">
                   <span className="text-[var(--brand-plum)]">
-                    Welcome back, {firstName}
+                    Welcome, {firstName}
                   </span>
                   {cohortSlug && (
                     <>
