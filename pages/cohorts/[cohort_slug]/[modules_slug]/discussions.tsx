@@ -39,8 +39,7 @@ type VisibleReplyPost = {
 
 function countReplies(node: ThreadNode): number {
   return node.children.reduce(
-    (total, child) =>
-      total + (child.is_deleted ? 0 : 1) + countReplies(child),
+    (total, child) => total + (child.is_deleted ? 0 : 1) + countReplies(child),
     0,
   );
 }

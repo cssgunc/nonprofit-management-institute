@@ -180,10 +180,7 @@ function buildTree(postId: number, allPosts: PostWithAuthor[]): PostNode {
   return { ...post, children };
 }
 
-function collectSubtreeIds(
-  rootId: number,
-  allPosts: TreePost[],
-): number[] {
+function collectSubtreeIds(rootId: number, allPosts: TreePost[]): number[] {
   const ids: number[] = [rootId];
   const queue = [rootId];
   while (queue.length) {
