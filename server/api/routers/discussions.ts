@@ -182,7 +182,7 @@ function buildTree(postId: number, allPosts: PostWithAuthor[]): PostNode {
 
 function collectSubtreeIds(
   rootId: number,
-  allPosts: PostWithAuthor[],
+  allPosts: TreePost[],
 ): number[] {
   const ids: number[] = [rootId];
   const queue = [rootId];
@@ -203,6 +203,89 @@ function hasActiveDescendant(postId: number, allPosts: TreePost[]): boolean {
   return children.some(
     (child) => !child.is_deleted || hasActiveDescendant(child.id, allPosts),
   );
+}
+
+function collectDeletedPostsWithoutReplies(allPosts: TreePost[]): number[] {
+  const remainingPosts = new Map(allPosts.map((post) => [post.id, post]));
+  const prunedIds: number[] = [];
+  let foundPrunablePost = true;
+
+  while (foundPrunablePost) {
+    foundPrunablePost = false;
+
+    for (const post of Array.from(remainingPosts.values())) {
+      if (!post.is_deleted) {
+        continue;
+      }
+
+      const hasRemainingReplies = Array.from(remainingPosts.values()).some(
+        (reply) => reply.parent_post_id === post.id,
+      );
+
+      if (!hasRemainingReplies) {
+        remainingPosts.delete(post.id);
+        prunedIds.push(post.id);
+        foundPrunablePost = true;
+      }
+    }
+  }
+
+  return prunedIds;
+}
+
+async function findRootPost(post: PostRow): Promise<PostRow> {
+  let current = post;
+
+  while (current.parent_post_id !== null) {
+    current = await fetchPost(current.parent_post_id);
+  }
+
+  return current;
+}
+
+async function hardDeleteDeletedPostsWithoutReplies(root: PostRow) {
+  if (root.cohort_id === null) {
+    return;
+  }
+
+  const threadPosts = await db
+    .select({
+      id: discussions_post.id,
+      parent_post_id: discussions_post.parent_post_id,
+      is_deleted: discussions_post.is_deleted,
+    })
+    .from(discussions_post)
+    .where(
+      root.module_id === null
+        ? and(
+            isNull(discussions_post.module_id),
+            eq(discussions_post.cohort_id, root.cohort_id),
+          )
+        : and(
+            eq(discussions_post.module_id, root.module_id),
+            eq(discussions_post.cohort_id, root.cohort_id),
+          ),
+    );
+
+  if (!threadPosts.some((post) => post.id === root.id)) {
+    return;
+  }
+
+  const subtreeIds = new Set(collectSubtreeIds(root.id, threadPosts));
+  const subtreePosts = threadPosts.filter((post) => subtreeIds.has(post.id));
+  const prunedIds = collectDeletedPostsWithoutReplies(subtreePosts);
+
+  if (prunedIds.length === 0) {
+    return;
+  }
+
+  await db
+    .delete(discussion_likes)
+    .where(inArray(discussion_likes.post_id, prunedIds));
+
+  await db
+    .delete(discussions_post)
+    .where(inArray(discussions_post.id, prunedIds));
 }
 
 export const discussionsRouter = createTRPCRouter({
@@ -620,9 +703,13 @@ export const discussionsRouter = createTRPCRouter({
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 
+      const root = await findRootPost(post);
+
       await db
         .update(discussions_post)
         .set({ is_deleted: true, body: "[This post has been deleted.]" })
         .where(eq(discussions_post.id, input.post_id));
+
+      await hardDeleteDeletedPostsWithoutReplies(root);
     }),
 });
