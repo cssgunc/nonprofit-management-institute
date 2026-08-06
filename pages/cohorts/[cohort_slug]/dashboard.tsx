@@ -76,13 +76,13 @@ export default function DashboardPage() {
                 <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                   <Link
                     href={cohortBasePath ? `${cohortBasePath}/discussion` : "#"}
-                    className="inline-flex items-center justify-center rounded-full bg-[var(--brand-plum)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#4f0b75]"
+                    className="inline-flex items-center justify-center rounded-full bg-[var(--brand-plum)] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#4f0b75] active:translate-y-0"
                   >
                     Open Discussions
                   </Link>
                   <Link
                     href={cohortBasePath ? `${cohortBasePath}/contact` : "#"}
-                    className="inline-flex items-center justify-center rounded-full border border-[rgba(0,138,171,0.26)] bg-white/65 px-4 py-2.5 text-sm font-semibold text-[var(--brand-teal)] transition hover:bg-white"
+                    className="inline-flex items-center justify-center rounded-full border border-[rgba(0,138,171,0.26)] bg-white/65 px-4 py-2.5 text-sm font-semibold text-[var(--brand-teal)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white active:translate-y-0"
                   >
                     View Cohort
                   </Link>

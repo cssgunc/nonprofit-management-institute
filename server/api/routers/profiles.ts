@@ -167,7 +167,7 @@ const getContactsBySlug = protectedProcedure
 
     await requireCohortAccess(ctx.subject.id, cohort.id);
 
-    const rows = await db
+    const memberRows = await db
       .select({
         id: profiles.id,
         full_name: profiles.full_name,
@@ -186,7 +186,25 @@ const getContactsBySlug = protectedProcedure
       .where(eq(cohorts.slug, input.cohort_slug))
       .orderBy(asc(profiles.role), asc(profiles.full_name), asc(profiles.id));
 
-    return rows;
+    const adminRows = await db
+      .select({
+        id: profiles.id,
+        full_name: profiles.full_name,
+        role: profiles.role,
+        email: profiles.email,
+        job_role: profiles.jobRole,
+        organization: profiles.organization,
+        avatar_url: profiles.avatarUrl,
+      })
+      .from(profiles)
+      .where(and(eq(profiles.role, "admin"), eq(profiles.is_active, true)))
+      .orderBy(asc(profiles.full_name), asc(profiles.id));
+
+    const contactsById = new Map<string, (typeof memberRows)[number]>();
+    for (const admin of adminRows) contactsById.set(admin.id, admin);
+    for (const member of memberRows) contactsById.set(member.id, member);
+
+    return Array.from(contactsById.values());
   });
 
 /**
