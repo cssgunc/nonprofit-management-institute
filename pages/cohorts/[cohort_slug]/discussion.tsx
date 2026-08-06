@@ -27,11 +27,22 @@ type DiscussionRenderablePost = DiscussionUiPost & {
   canManage: boolean;
   replies: DiscussionRenderablePost[];
 };
+type VisibleReplyPost = {
+  isDeleted?: boolean;
+  replies?: VisibleReplyPost[];
+};
 
 function countReplies(node: ThreadNode): number {
   return node.children.reduce(
-    (total, child) => total + 1 + countReplies(child),
+    (total, child) =>
+      total + (child.is_deleted ? 0 : 1) + countReplies(child),
     0,
+  );
+}
+
+function hasVisibleReplies(post: VisibleReplyPost): boolean {
+  return (post.replies ?? []).some(
+    (reply) => !reply.isDeleted || hasVisibleReplies(reply),
   );
 }
 
@@ -237,21 +248,27 @@ function ThreadPreview({
     getDesiredLike,
   );
 
-  const renderReply = (reply: DiscussionRenderablePost) => (
-    <DiscussionPost
-      key={`reply-${reply.id}`}
-      post={reply}
-      isReply
-      canManage={reply.canManage}
-      onReply={(post) => onReply(post, thread.id)}
-      onToggleLike={onToggleLike}
-      isLikePending={isLikePending}
-      onEdit={onEdit}
-      onDelete={onDelete}
-    >
-      {reply.replies.map(renderReply)}
-    </DiscussionPost>
-  );
+  const renderReply = (reply: DiscussionRenderablePost): React.ReactNode => {
+    if (reply.isDeleted && !hasVisibleReplies(reply)) {
+      return null;
+    }
+
+    return (
+      <DiscussionPost
+        key={`reply-${reply.id}`}
+        post={reply}
+        isReply
+        canManage={reply.canManage}
+        onReply={(post) => onReply(post, thread.id)}
+        onToggleLike={onToggleLike}
+        isLikePending={isLikePending}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      >
+        {reply.replies.map(renderReply)}
+      </DiscussionPost>
+    );
+  };
 
   return (
     <DiscussionPost

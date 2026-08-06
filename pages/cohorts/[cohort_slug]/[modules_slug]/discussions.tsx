@@ -32,11 +32,23 @@ type DiscussionRenderablePost = DiscussionUiPost & {
   canManage: boolean;
   replies: DiscussionRenderablePost[];
 };
+type VisibleReplyPost = {
+  isDeleted?: boolean;
+  replies?: VisibleReplyPost[];
+};
 
 function countReplies(node: ThreadNode): number {
-  return node.children
-    .filter((child) => !child.is_deleted)
-    .reduce((total, child) => total + 1 + countReplies(child), 0);
+  return node.children.reduce(
+    (total, child) =>
+      total + (child.is_deleted ? 0 : 1) + countReplies(child),
+    0,
+  );
+}
+
+function hasVisibleReplies(post: VisibleReplyPost): boolean {
+  return (post.replies ?? []).some(
+    (reply) => !reply.isDeleted || hasVisibleReplies(reply),
+  );
 }
 
 function getAuthorProfile(
@@ -198,8 +210,6 @@ function ThreadPreview({
     getDesiredLike(thread.id),
   );
 
-  if (thread.is_deleted) return null;
-
   topLevelPost.hasLiked = topLevelLikeOverride.hasLiked;
   topLevelPost.likeCount = topLevelLikeOverride.likeCount;
 
@@ -246,7 +256,10 @@ function ThreadPreview({
   );
 
   const renderReply = (reply: DiscussionRenderablePost): React.ReactNode => {
-    if (reply.isDeleted) return null;
+    if (reply.isDeleted && !hasVisibleReplies(reply)) {
+      return null;
+    }
+
     return (
       <DiscussionPost
         key={`reply-${reply.id}`}
@@ -493,8 +506,6 @@ export default function ModuleDiscussions() {
       ? moduleQuery.error.data?.code
       : undefined;
 
-  const visibleThreads = threads.filter((t) => !t.is_deleted);
-
   return (
     <CohortAccessGuard cohortSlug={cohortSlug}>
       <div className="flex min-h-[calc(100vh-7rem)] w-full items-stretch">
@@ -607,13 +618,13 @@ export default function ModuleDiscussions() {
               <div className="rounded-xl border border-red-200 bg-white p-6 text-sm text-red-600">
                 Failed to load discussions for this module.
               </div>
-            ) : visibleThreads.length === 0 ? (
+            ) : threads.length === 0 ? (
               <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center text-zinc-500">
                 No discussion threads have been posted for this module yet.
               </div>
             ) : (
               <div className="space-y-5">
-                {visibleThreads.map((thread: ThreadListItem) => (
+                {threads.map((thread: ThreadListItem) => (
                   <ThreadPreview
                     key={thread.id}
                     thread={thread}

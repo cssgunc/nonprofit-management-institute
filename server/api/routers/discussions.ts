@@ -115,6 +115,7 @@ type PostWithAuthor = PostRow & {
   viewer_has_liked: boolean;
 };
 type PostNode = PostWithAuthor & { children: PostNode[] };
+type TreePost = Pick<PostRow, "id" | "parent_post_id" | "is_deleted">;
 
 async function enrichPostsWithLikes(
   posts: Array<
@@ -196,6 +197,14 @@ function collectSubtreeIds(
   return ids;
 }
 
+function hasActiveDescendant(postId: number, allPosts: TreePost[]): boolean {
+  const children = allPosts.filter((p) => p.parent_post_id === postId);
+
+  return children.some(
+    (child) => !child.is_deleted || hasActiveDescendant(child.id, allPosts),
+  );
+}
+
 export const discussionsRouter = createTRPCRouter({
   listGeneralThreads: protectedProcedure
     .input(z.object({ cohortSlug: z.string() }))
@@ -224,12 +233,17 @@ export const discussionsRouter = createTRPCRouter({
           and(
             isNull(discussions_post.module_id),
             eq(discussions_post.cohort_id, cohort.id),
-            isNull(discussions_post.parent_post_id),
           ),
         )
         .orderBy(desc(discussions_post.created_at));
 
-      return enrichPostsWithLikes(rows, ctx.subject.id);
+      const visibleThreads = rows.filter(
+        (post) =>
+          post.parent_post_id === null &&
+          (!post.is_deleted || hasActiveDescendant(post.id, rows)),
+      );
+
+      return enrichPostsWithLikes(visibleThreads, ctx.subject.id);
     }),
 
   listThreadsByModuleSlug: protectedProcedure
@@ -269,12 +283,17 @@ export const discussionsRouter = createTRPCRouter({
           and(
             eq(discussions_post.module_id, foundModule.id),
             eq(discussions_post.cohort_id, cohort.id),
-            isNull(discussions_post.parent_post_id),
           ),
         )
         .orderBy(desc(discussions_post.created_at));
 
-      return enrichPostsWithLikes(rows, ctx.subject.id);
+      const visibleThreads = rows.filter(
+        (post) =>
+          post.parent_post_id === null &&
+          (!post.is_deleted || hasActiveDescendant(post.id, rows)),
+      );
+
+      return enrichPostsWithLikes(visibleThreads, ctx.subject.id);
     }),
 
   listRepliesByParentPostId: protectedProcedure

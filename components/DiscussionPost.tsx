@@ -477,9 +477,9 @@ function TopLevelPost({
       </div>
 
       {/* Reply count pill */}
-      {!isDeleted && !editing && (
+      {!editing && (!isDeleted || replyCount > 0) && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          {onToggleLike && (
+          {!isDeleted && onToggleLike && (
             <button
               type="button"
               onClick={(e) => {
@@ -501,28 +501,30 @@ function TopLevelPost({
               </span>
             </button>
           )}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleReplies?.(post);
-            }}
-            title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-              repliesOpen
-                ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-                : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-green-200 hover:bg-green-50 hover:text-green-700"
-            }`}
-          >
-            {repliesOpen ? (
-              <ChevronUp className="h-3.5 w-3.5 flex-shrink-0" />
-            ) : (
-              <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
-            )}
-            <span>{repliesToggleLabel}</span>
-          </button>
-          {onReply && (
+          {(!isDeleted || replyCount > 0) && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleReplies?.(post);
+              }}
+              title={replyCount === 1 ? "1 reply" : `${replyCount} replies`}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                repliesOpen
+                  ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                  : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+              }`}
+            >
+              {repliesOpen ? (
+                <ChevronUp className="h-3.5 w-3.5 flex-shrink-0" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+              )}
+              <span>{repliesToggleLabel}</span>
+            </button>
+          )}
+          {!isDeleted && onReply && (
             <button
               type="button"
               onClick={(e) => {
