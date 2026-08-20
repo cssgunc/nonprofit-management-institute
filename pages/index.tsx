@@ -1,13 +1,42 @@
+import type { GetServerSideProps } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { createTRPCContext } from "@/server/api/trpc";
+import { createCaller } from "@/server/api/root";
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
+  const ctx = await createTRPCContext({
+    req: req as NextApiRequest,
+    res: res as NextApiResponse,
+  } as Parameters<typeof createTRPCContext>[0]);
+
+  if (!ctx.subject) {
+    return { redirect: { destination: "/login", permanent: false } };
+  }
+
+  const caller = createCaller(ctx);
+
+  try {
+    const profile = await caller.profiles.me();
+    if (profile.role === "admin") {
+      return {
+        redirect: { destination: "/admin/cohorts", permanent: false },
+      };
+    }
+
+    const cohort = await caller.cohorts.hasCohortMembership({});
+    return {
+      redirect: {
+        destination: cohort
+          ? `/cohorts/${cohort.slug}/dashboard`
+          : "/cohort-access",
+        permanent: false,
+      },
+    };
+  } catch {
+    return { redirect: { destination: "/login", permanent: false } };
+  }
+};
+
 export default function Home() {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-black px-6">
-      <h1 className="text-3xl font-bold text-white">Home</h1>
-      <p className="text-zinc-400">
-        This is the home page, the main landing page for the Nonprofit
-        Management Institute. Other pages are accessible currently by using
-        /signup or /login and any unknown routes will be redirected to the 404
-        page.
-      </p>
-    </div>
-  );
+  return null;
 }

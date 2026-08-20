@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "@/utils/trpc/api";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
+import Link from "next/link";
 import AuthPageShell from "@/components/AuthPageShell";
 import { ArrowLeft, HelpCircle, KeyRound, Loader2 } from "lucide-react";
 
@@ -117,7 +118,28 @@ export default function CohortAccessPage() {
           />
         </div>
 
-        <div className="rounded-xl border border-[rgba(40,132,164,0.14)] bg-white/75 px-4 py-4">
+        <div className="space-y-3 rounded-xl border border-[rgba(40,132,164,0.14)] bg-white/75 px-4 py-4">
+          <div className="max-h-40 overflow-y-auto rounded-lg border border-[rgba(40,132,164,0.12)] bg-[rgba(255,253,248,0.6)] px-3 py-3 text-xs leading-relaxed text-zinc-600">
+            <p className="mb-2 font-semibold text-zinc-800">Terms of Use</p>
+            <p className="mb-2">
+              By using the Center’s website, you agree to its Terms of Use.
+              Website materials are provided for educational and informational
+              purposes only and should be adapted to your organization’s needs,
+              with legal counsel consulted when appropriate. Materials may not
+              be reproduced, distributed, or used commercially without
+              permission and are protected by applicable intellectual property
+              laws.
+            </p>
+            <p>
+              The Center does not guarantee the accuracy or completeness of
+              website content and is not responsible for damages resulting from
+              its use. Use of the website and external links is at your own
+              risk. The Terms of Use may be updated periodically, and continued
+              use of the website constitutes acceptance of any changes. Use of
+              the website is governed by North Carolina law.
+            </p>
+          </div>
+
           <label className="flex cursor-pointer items-start gap-3 text-sm text-zinc-700">
             <input
               type="checkbox"
@@ -134,9 +156,6 @@ export default function CohortAccessPage() {
             <span className="leading-relaxed">
               <span className="font-semibold text-zinc-800">
                 I agree to the Terms and Conditions
-              </span>{" "}
-              <span className="text-zinc-500">
-                [Lorem ipsum dolor sit amet]
               </span>
               <span className="ml-1 font-bold text-red-600">*</span>
             </span>
@@ -167,6 +186,16 @@ export default function CohortAccessPage() {
           )}
         </button>
       </form>
+
+      <p className="mt-7 text-center text-sm text-zinc-600">
+        Not you?{" "}
+        <Link
+          href="/signout"
+          className="font-semibold text-[var(--brand-teal)] transition hover:text-[#007997]"
+        >
+          Sign out
+        </Link>
+      </p>
     </AuthPageShell>
   );
 }

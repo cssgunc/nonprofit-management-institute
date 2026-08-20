@@ -5,6 +5,19 @@ import { db } from "@/server/db";
 import { cohort_memberships, cohorts, profiles } from "@/server/db/schema";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { NewUser } from "@/server/models/inputs";
+import { supabaseAdmin } from "@/server/lib/supabaseAdmin";
+
+/**
+ * Extracts the storage path from a Supabase public URL.
+ * e.g. "https://xxx.supabase.co/storage/v1/object/public/avatars/user-123_167..."
+ * → "user-123_167..."
+ * Returns null if the URL doesn't belong to the given bucket.
+ */
+function extractStoragePath(url: string, bucket: string): string | null {
+  const marker = `/storage/v1/object/public/${bucket}/`;
+  const idx = url.indexOf(marker);
+  return idx !== -1 ? decodeURIComponent(url.slice(idx + marker.length)) : null;
+}
 
 const ProfileSchema = z.object({
   id: z.string(),
@@ -245,10 +258,29 @@ const handleNewUser = protectedProcedure //COMPLETED AND TESTED
 const updateProfilePicture = protectedProcedure
   .input(z.object({ avatar_url: z.string().nullable() }))
   .mutation(async ({ ctx, input }) => {
+    const [previous] = await db
+      .select({ avatarUrl: profiles.avatarUrl })
+      .from(profiles)
+      .where(eq(profiles.id, ctx.subject.id));
+
     await db
       .update(profiles)
       .set({ avatarUrl: input.avatar_url })
       .where(eq(profiles.id, ctx.subject.id));
+
+    if (previous?.avatarUrl && previous.avatarUrl !== input.avatar_url) {
+      const path = extractStoragePath(previous.avatarUrl, "avatars");
+      const { error } = await supabaseAdmin.storage
+        .from("avatars")
+        .remove([path ?? previous.avatarUrl]);
+      if (error) {
+        console.error(
+          "Failed to delete previous avatar from storage:",
+          error.message,
+        );
+      }
+    }
+
     return;
   });
 

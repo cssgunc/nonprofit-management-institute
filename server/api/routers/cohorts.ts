@@ -448,7 +448,11 @@ export const cohortsApiRouter = createTRPCRouter({
       }
 
       const studentProfiles = await db
-        .select({ avatarUrl: profiles.avatarUrl, role: profiles.role })
+        .select({
+          id: profiles.id,
+          avatarUrl: profiles.avatarUrl,
+          role: profiles.role,
+        })
         .from(cohort_memberships)
         .innerJoin(profiles, eq(profiles.id, cohort_memberships.profiles_id))
         .where(
@@ -488,6 +492,17 @@ export const cohortsApiRouter = createTRPCRouter({
             error.message,
           );
         }
+      }
+
+      const studentIdsWithAvatars = studentProfiles
+        .filter((p) => p.avatarUrl !== null)
+        .map((p) => p.id);
+
+      if (studentIdsWithAvatars.length > 0) {
+        await db
+          .update(profiles)
+          .set({ avatarUrl: null })
+          .where(inArray(profiles.id, studentIdsWithAvatars));
       }
 
       // 4. Delete DB rows in dependency order
