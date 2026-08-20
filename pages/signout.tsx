@@ -1,15 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { ArrowLeft, Loader2, LogOut } from "lucide-react";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "",
-);
+import { createSupabaseComponentClient } from "@/utils/supabase/clients/component";
 
 export default function SignOut() {
   const router = useRouter();
+  const supabase = createSupabaseComponentClient();
   const [loading, setLoading] = useState(false);
 
   const handleCancel = () => {

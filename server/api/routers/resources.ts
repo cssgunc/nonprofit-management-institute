@@ -440,6 +440,28 @@ export const resourcesRouter = createTRPCRouter({
         });
       }
 
+      // Delete the old file from storage if the URL changed and the old
+      // value was a Supabase-hosted file (not a "link" to an external URL)
+      if (
+        input.url !== undefined &&
+        input.url !== exists.url &&
+        exists.url &&
+        exists.type !== "link"
+      ) {
+        const oldPath = extractStoragePath(exists.url, "module-resources");
+        if (oldPath) {
+          const { error } = await supabaseAdmin.storage
+            .from("module-resources")
+            .remove([oldPath]);
+          if (error) {
+            console.error(
+              "Failed to delete previous resource file from storage:",
+              error.message,
+            );
+          }
+        }
+      }
+
       if (!exists.moduleSlug) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Module not found" });
       }

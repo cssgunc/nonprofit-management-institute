@@ -5,10 +5,10 @@ export default function AppFooter() {
         <p>
           Technical difficulties? Please reach out to{" "}
           <a
-            href="tel:+11234567891"
+            href="mailto:lcmorales@ncnonprofits.org"
             className="font-medium text-[var(--brand-teal)] transition hover:text-[#007997]"
           >
-            +1(234) 567 8910
+            lcmorales@ncnonprofits.org
           </a>
           .
         </p>
