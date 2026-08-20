@@ -173,7 +173,7 @@ export default function AdminCohortsPage() {
             <div className="flex flex-col gap-5 px-6 py-5">
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
-                  Cohort Slug
+                  Cohort Name
                 </label>
                 <input
                   type="text"
