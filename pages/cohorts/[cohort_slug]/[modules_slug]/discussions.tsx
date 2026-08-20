@@ -265,6 +265,7 @@ function ThreadPreview({
         post={reply}
         isReply
         canManage={reply.canManage}
+        onReply={(post) => onReply(post, thread.id)}
         onToggleLike={onToggleLike}
         isLikePending={isLikePending}
         onEdit={onEdit}
