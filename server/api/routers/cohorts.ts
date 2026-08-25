@@ -494,18 +494,45 @@ export const cohortsApiRouter = createTRPCRouter({
         }
       }
 
-      const studentIdsWithAvatars = studentProfiles
-        .filter((p) => p.avatarUrl !== null)
-        .map((p) => p.id);
+      const studentIds = studentProfiles.map((p) => p.id);
 
-      if (studentIdsWithAvatars.length > 0) {
+      // 4. Fully remove student accounts (not admins): detach their content,
+      // drop any cross-cohort memberships/likes, delete their profile row,
+      // then delete the underlying Supabase Auth account so their email is
+      // freed up for reuse. This is scoped to *all* of a student's data, not
+      // just this cohort, since we're about to hard-delete their profile row
+      // and profiles.id is referenced by discussions_post/discussion_likes/
+      // cohort_memberships from FK constraints regardless of which cohort
+      // they belong to.
+      if (studentIds.length > 0) {
         await db
-          .update(profiles)
-          .set({ avatarUrl: null })
-          .where(inArray(profiles.id, studentIdsWithAvatars));
+          .update(discussions_post)
+          .set({ author_id: null })
+          .where(inArray(discussions_post.author_id, studentIds));
+
+        await db
+          .delete(discussion_likes)
+          .where(inArray(discussion_likes.profile_id, studentIds));
+
+        await db
+          .delete(cohort_memberships)
+          .where(inArray(cohort_memberships.profiles_id, studentIds));
+
+        await db.delete(profiles).where(inArray(profiles.id, studentIds));
+
+        for (const studentId of studentIds) {
+          const { error } =
+            await supabaseAdmin.auth.admin.deleteUser(studentId);
+          if (error) {
+            console.error(
+              `Failed to delete Supabase Auth account for student ${studentId}:`,
+              error.message,
+            );
+          }
+        }
       }
 
-      // 4. Delete DB rows in dependency order
+      // 5. Delete remaining DB rows in dependency order
       const posts = await db
         .select({ id: discussions_post.id })
         .from(discussions_post)
