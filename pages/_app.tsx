@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
+import Head from "next/head";
 import Header from "@/components/header";
 import AppFooter from "@/components/AppFooter";
 import { useRouter } from "next/router";
@@ -34,25 +35,34 @@ function App({ Component, pageProps }: AppProps) {
     router.pathname === "/cohorts/[cohort_slug]/profile";
 
   return (
-    <div
-      className={
-        shouldUseMutedBackground
-          ? `app-shell-bg flex min-h-screen flex-col app-muted-bg ${
-              shouldHideTealPanel ? "app-shell-bg-no-teal" : ""
-            }`
-          : "flex min-h-screen flex-col"
-      }
-    >
-      {shouldUseMutedBackground ? (
-        <span aria-hidden="true" className="app-shell-panel" />
-      ) : null}
-      {shouldShowHeader ? <Header /> : null}
-      <div className="flex-1">
-        <Component {...pageProps} />
+    <>
+      <Head>
+        <title>Nonprofit Management Institute (NPMI)</title>
+        <meta
+          name="description"
+          content="A cohort-based learning hub for the North Carolina Center for Nonprofits — session recordings, lesson plans, handouts, and discussion forums for each cohort."
+        />
+      </Head>
+      <div
+        className={
+          shouldUseMutedBackground
+            ? `app-shell-bg flex min-h-screen flex-col app-muted-bg ${
+                shouldHideTealPanel ? "app-shell-bg-no-teal" : ""
+              }`
+            : "flex min-h-screen flex-col"
+        }
+      >
+        {shouldUseMutedBackground ? (
+          <span aria-hidden="true" className="app-shell-panel" />
+        ) : null}
+        {shouldShowHeader ? <Header /> : null}
+        <div className="flex-1">
+          <Component {...pageProps} />
+        </div>
+        <AppFooter />
+        <Toaster position="bottom-right" />
       </div>
-      <AppFooter />
-      <Toaster position="bottom-right" />
-    </div>
+    </>
   );
 }
 
