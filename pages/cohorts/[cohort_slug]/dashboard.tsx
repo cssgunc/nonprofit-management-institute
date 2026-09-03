@@ -56,7 +56,7 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <h1 className="mt-3 text-[2.25rem] font-semibold tracking-tight text-[#1f2b34] md:text-[2.75rem]">
-                  Participant Dashboard
+                  Participant Hub
                 </h1>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-[#62636a]">
                   Review active course modules, learning materials, and

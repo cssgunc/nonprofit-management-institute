@@ -24,7 +24,7 @@ export default function AuthPageShell({
                 Nonprofit Management Institute
               </p>
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#1f2b34] sm:text-4xl">
-                Participant Dashboard
+                Participant Hub
               </h1>
             </div>
 
